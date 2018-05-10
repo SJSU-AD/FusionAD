@@ -1,0 +1,3 @@
+<launch>
+  <node name="hello_world_caller_node" pkg="hello_world_caller" type="hello_world_caller_node" output = "screen" />
+</launch>
