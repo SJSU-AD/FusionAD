@@ -1,0 +1,32 @@
+<package>
+
+  <name>velodyne_puck_driver</name>
+  <version>1.2.0</version>
+  <description>
+    ROS device driver for Velodyne PUCK VLP-16.
+  </description>
+  <maintainer email="sunke.polyu@gmail.com">Ke Sun</maintainer>
+  <author> Jack O'Quin</author>
+  <author>Patrick Beeson</author>
+  <author>Michael Quinlan</author>
+  <author>Yaxin Liu </author>
+  <author>Ke Sun </author>
+  <license>GNU General Public License V3.0</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>diagnostic_updater</build_depend>
+  <build_depend>nodelet</build_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>velodyne_puck_msgs</build_depend>
+
+  <run_depend>diagnostic_updater</run_depend>
+  <run_depend>nodelet</run_depend>
+  <run_depend>roscpp</run_depend>
+  <run_depend>velodyne_puck_msgs</run_depend>
+
+  <export>
+    <nodelet plugin="${prefix}/nodelet_velodyne_puck.xml"/>
+  </export>
+
+</package>

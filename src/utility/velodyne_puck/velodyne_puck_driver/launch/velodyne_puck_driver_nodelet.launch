@@ -1,0 +1,16 @@
+<launch>
+
+  <!-- start nodelet manager and load driver nodelet -->
+  <node pkg="nodelet" type="nodelet"
+    name="velodyne_puck_nodelet_manager"
+    args="manager" output="screen"/>
+
+  <node pkg="nodelet" type="nodelet"
+    name="velodyne_puck_driver_nodelet"
+    args="load velodyne_puck_driver/VelodynePuckDriverNodelet
+    velodyne_puck_nodelet_manager" >
+    <param name="frame_id" value="velodyne"/>
+    <param name="device_ip" value="192.168.1.201"/>
+  </node>
+
+</launch>

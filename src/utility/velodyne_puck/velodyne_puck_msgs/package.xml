@@ -1,0 +1,21 @@
+<package>
+
+  <name>velodyne_puck_msgs</name>
+  <version>1.2.0</version>
+  <description>
+    ROS message definitions for Velodyne 3D LIDARs.
+  </description>
+  <maintainer email="sunke.polyu@gmail.com">Ke Sun</maintainer>
+  <author>Jack O'Quin</author>
+  <author>Ke Sun</author>
+  <license>GNU General Public License V3.0</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>message_generation</build_depend>
+  <build_depend>std_msgs</build_depend>
+
+  <run_depend>message_runtime</run_depend>
+  <run_depend>std_msgs</run_depend>
+
+</package>

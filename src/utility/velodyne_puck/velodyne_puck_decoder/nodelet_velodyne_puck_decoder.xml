@@ -1,0 +1,10 @@
+<library path="lib/libvelodyne_puck_decoder_nodelet">
+  <class name="velodyne_puck_decoder/VelodynePuckDecoderNodelet"
+         type="velodyne_puck_decoder::VelodynePuckDecoderNodelet"
+         base_class_type="nodelet::Nodelet">
+    <description>
+      Aggregates points from multiple packets, publishing VelodynePuckSweep msg defined
+      in velodyne_puck_msgs.
+    </description>
+  </class>
+</library>

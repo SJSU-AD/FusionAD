@@ -1,0 +1,9 @@
+<library path="lib/libvelodyne_puck_driver_nodelet">
+  <class name="velodyne_puck_driver/VelodynePuckDriverNodelet"
+         type="velodyne_puck_driver::VelodynePuckDriverNodelet"
+         base_class_type="nodelet::Nodelet">
+    <description>
+      Publish one Velodyne raw data packet each time.
+    </description>
+  </class>
+</library>
