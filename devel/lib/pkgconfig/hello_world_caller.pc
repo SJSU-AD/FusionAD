@@ -1,0 +1,8 @@
+prefix=/home/mensonli/FusionAD/devel
+
+Name: hello_world_caller
+Description: Description of hello_world_caller
+Version: 0.0.0
+Cflags: -I/home/mensonli/FusionAD/src/utility/hello_world_caller/include
+Libs: -L/home/mensonli/FusionAD/devel/lib 
+Requires: roscpp rospy std_msgs

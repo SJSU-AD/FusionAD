@@ -1,0 +1,6 @@
+set(rqt_gps_rtk_plugin_SETUP_PY_VERSION "1.5.0")
+set(rqt_gps_rtk_plugin_SETUP_PY_SCRIPTS "")
+set(rqt_gps_rtk_plugin_SETUP_PY_PACKAGES "rqt_gps_rtk_plugin")
+set(rqt_gps_rtk_plugin_SETUP_PY_PACKAGE_DIRS "src/rqt_gps_rtk_plugin")
+set(rqt_gps_rtk_plugin_SETUP_PY_MODULES "")
+set(rqt_gps_rtk_plugin_SETUP_PY_MODULE_DIRS "")

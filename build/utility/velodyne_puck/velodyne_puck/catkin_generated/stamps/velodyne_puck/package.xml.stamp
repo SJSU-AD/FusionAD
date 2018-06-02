@@ -1,0 +1,23 @@
+<package>
+
+  <name>velodyne_puck</name>
+  <version>1.2.0</version>
+  <description>
+    Basic ROS support for the Velodyne 3D LIDARs.
+  </description>
+  <maintainer email="sunke.polyu@gmail.com">Ke Sun</maintainer>
+  <author> Jack O'Quin</author>
+  <author> Ke Sun</author>
+  <license>GNU General Public License V3.0</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <run_depend>velodyne_puck_driver</run_depend>
+  <run_depend>velodyne_puck_msgs</run_depend>
+  <run_depend>velodyne_puck_decoder</run_depend>
+
+  <export>
+    <metapackage/>
+  </export>
+
+</package>

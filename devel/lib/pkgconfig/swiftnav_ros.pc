@@ -1,0 +1,8 @@
+prefix=/home/mensonli/FusionAD/devel
+
+Name: swiftnav_ros
+Description: Description of swiftnav_ros
+Version: 0.0.1
+Cflags: -I/home/mensonli/FusionAD/src/utility/swiftnav_ros/include
+Libs: -L/home/mensonli/FusionAD/devel/lib -lsbp_device -lswiftnav_ros_driver
+Requires: diagnostic_updater roscpp sensor_msgs std_srvs

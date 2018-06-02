@@ -1,0 +1,13 @@
+(cl:defpackage velodyne_puck_msgs-msg
+  (:use )
+  (:export
+   "<VELODYNEPUCKPACKET>"
+   "VELODYNEPUCKPACKET"
+   "<VELODYNEPUCKPOINT>"
+   "VELODYNEPUCKPOINT"
+   "<VELODYNEPUCKSCAN>"
+   "VELODYNEPUCKSCAN"
+   "<VELODYNEPUCKSWEEP>"
+   "VELODYNEPUCKSWEEP"
+  ))
+

@@ -1,0 +1,8 @@
+prefix=/home/mensonli/FusionAD/devel
+
+Name: piksi_rtk_kml
+Description: Description of piksi_rtk_kml
+Version: 1.5.0
+Cflags: 
+Libs: -L/home/mensonli/FusionAD/devel/lib 
+Requires: piksi_rtk_msgs geometry_msgs

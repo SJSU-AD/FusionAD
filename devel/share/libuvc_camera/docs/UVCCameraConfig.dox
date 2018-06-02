@@ -1,0 +1,41 @@
+\subsubsection parameters ROS parameters
+
+Reads and maintains the following parameters on the ROS server
+
+- \b "~vendor" : \b [str] Vendor ID, hex digits (use camera of any vendor if null). min: , default: , max: 
+- \b "~product" : \b [str] Product ID, hex digits (use camera of any model if null). min: , default: , max: 
+- \b "~serial" : \b [str] Serial number, arbitrary string (use camera of any serial number if null). min: , default: , max: 
+- \b "~index" : \b [int] Index into the list of cameras that match the above parameters. min: 0, default: 0, max: 2147483647
+- \b "~width" : \b [int] Image width. min: 0, default: 640, max: 2147483647
+- \b "~height" : \b [int] Image height. min: 0, default: 480, max: 2147483647
+- \b "~video_mode" : \b [str] Format of video stream from camera. min: , default: uncompressed, max: 
+- \b "~frame_rate" : \b [double] Camera speed, frames per second. min: 0.1, default: 15.0, max: 1000.0
+- \b "~timestamp_method" : \b [str] Method for determining the timestamp. min: , default: start, max: 
+- \b "~frame_id" : \b [str] ROS tf frame of reference, resolved with tf_prefix unless absolute. min: , default: camera, max: 
+- \b "~camera_info_url" : \b [str] Path to camera calibration file. min: , default: , max: 
+- \b "~scanning_mode" : \b [int] Scanning mode. min: 0, default: 0, max: 1
+- \b "~auto_exposure" : \b [int] Auto exposure mode. min: 0, default: 3, max: 3
+- \b "~auto_exposure_priority" : \b [int] In auto mode or shutter priority mode, allow the device to vary frame rate. min: 0, default: 0, max: 1
+- \b "~exposure_absolute" : \b [double] Length of exposure, seconds. min: 0.0001, default: 0.0, max: 10.0
+- \b "~iris_absolute" : \b [double] Aperture, f. min: 0.0, default: 0.0, max: 655.35
+- \b "~auto_focus" : \b [bool] Maintain focus automatically. min: False, default: True, max: True
+- \b "~focus_absolute" : \b [int] Absolute focal distance, millimeters. min: 0, default: 0, max: 65536
+- \b "~pan_absolute" : \b [int] Pan (clockwise), arc seconds. min: -648000, default: 0, max: 648000
+- \b "~tilt_absolute" : \b [int] Tilt (up), arc seconds. min: -648000, default: 0, max: 648000
+- \b "~roll_absolute" : \b [int] Roll (clockwise), degrees. min: -180, default: 0, max: 180
+- \b "~privacy" : \b [bool] Image capture disabled. min: False, default: False, max: True
+- \b "~backlight_compensation" : \b [int] Backlight compensation, device-dependent (zero for none, increasing compensation above zero). min: 0, default: 0, max: 65536
+- \b "~brightness" : \b [int] Brightness, device dependent. min: -32768, default: 0, max: 32767
+- \b "~contrast" : \b [int] Contrast, device dependent. min: -32768, default: 0, max: 32767
+- \b "~gain" : \b [int] Gain, device dependent. min: 0, default: 0, max: 65536
+- \b "~power_line_frequency" : \b [int] Power line frequency anti-flicker processing. min: 0, default: 0, max: 2
+- \b "~auto_hue" : \b [bool] Automatic hue control. min: False, default: False, max: True
+- \b "~hue" : \b [double] Hue, degrees. min: -180.0, default: 0.0, max: 180.0
+- \b "~saturation" : \b [int] Saturation, device dependent (zero for grayscale). min: 0, default: 0, max: 65536
+- \b "~sharpness" : \b [int] Image sharpness, device dependent. min: 0, default: 0, max: 65536
+- \b "~gamma" : \b [double] Gamma. min: 0.01, default: 1.0, max: 5.0
+- \b "~auto_white_balance" : \b [bool] Automatic white balance. min: False, default: False, max: True
+- \b "~white_balance_temperature" : \b [int] White balance temperature, degrees. min: 0, default: 0, max: 65536
+- \b "~white_balance_BU" : \b [double] Blue or U component of white balance, device-dependent. min: 0.0, default: 0.0, max: 65536.0
+- \b "~white_balance_RV" : \b [double] Red or V component of white balance, device-dependent. min: 0.0, default: 0.0, max: 65536.0
+

@@ -1,0 +1,43 @@
+file(REMOVE_RECURSE
+  "CMakeFiles/piksi_rtk_msgs_generate_messages_nodejs"
+  "/home/mensonli/FusionAD/devel/share/gennodejs/ros/piksi_rtk_msgs/msg/VelEcef.js"
+  "/home/mensonli/FusionAD/devel/share/gennodejs/ros/piksi_rtk_msgs/msg/MagRaw.js"
+  "/home/mensonli/FusionAD/devel/share/gennodejs/ros/piksi_rtk_msgs/msg/ImuRawMulti.js"
+  "/home/mensonli/FusionAD/devel/share/gennodejs/ros/piksi_rtk_msgs/msg/VelNed.js"
+  "/home/mensonli/FusionAD/devel/share/gennodejs/ros/piksi_rtk_msgs/msg/Observation.js"
+  "/home/mensonli/FusionAD/devel/share/gennodejs/ros/piksi_rtk_msgs/msg/InfoWifiCorrections.js"
+  "/home/mensonli/FusionAD/devel/share/gennodejs/ros/piksi_rtk_msgs/msg/ReceiverState.js"
+  "/home/mensonli/FusionAD/devel/share/gennodejs/ros/piksi_rtk_msgs/msg/Heartbeat.js"
+  "/home/mensonli/FusionAD/devel/share/gennodejs/ros/piksi_rtk_msgs/msg/BaselineEcef.js"
+  "/home/mensonli/FusionAD/devel/share/gennodejs/ros/piksi_rtk_msgs/msg/BasePosEcef.js"
+  "/home/mensonli/FusionAD/devel/share/gennodejs/ros/piksi_rtk_msgs/msg/DeviceMonitor_V2_3_15.js"
+  "/home/mensonli/FusionAD/devel/share/gennodejs/ros/piksi_rtk_msgs/msg/ReceiverState_V2_3_15.js"
+  "/home/mensonli/FusionAD/devel/share/gennodejs/ros/piksi_rtk_msgs/msg/UartState.js"
+  "/home/mensonli/FusionAD/devel/share/gennodejs/ros/piksi_rtk_msgs/msg/TrackingState_V2_3_15.js"
+  "/home/mensonli/FusionAD/devel/share/gennodejs/ros/piksi_rtk_msgs/msg/GpsTimeMulti.js"
+  "/home/mensonli/FusionAD/devel/share/gennodejs/ros/piksi_rtk_msgs/msg/UtcTimeMulti.js"
+  "/home/mensonli/FusionAD/devel/share/gennodejs/ros/piksi_rtk_msgs/msg/ImuAuxMulti.js"
+  "/home/mensonli/FusionAD/devel/share/gennodejs/ros/piksi_rtk_msgs/msg/Dops.js"
+  "/home/mensonli/FusionAD/devel/share/gennodejs/ros/piksi_rtk_msgs/msg/PosLlhMulti.js"
+  "/home/mensonli/FusionAD/devel/share/gennodejs/ros/piksi_rtk_msgs/msg/TrackingState_V2_2_15.js"
+  "/home/mensonli/FusionAD/devel/share/gennodejs/ros/piksi_rtk_msgs/msg/Log.js"
+  "/home/mensonli/FusionAD/devel/share/gennodejs/ros/piksi_rtk_msgs/msg/DopsMulti.js"
+  "/home/mensonli/FusionAD/devel/share/gennodejs/ros/piksi_rtk_msgs/msg/GpsTime.js"
+  "/home/mensonli/FusionAD/devel/share/gennodejs/ros/piksi_rtk_msgs/msg/PosLlh.js"
+  "/home/mensonli/FusionAD/devel/share/gennodejs/ros/piksi_rtk_msgs/msg/UartState_V2_3_15.js"
+  "/home/mensonli/FusionAD/devel/share/gennodejs/ros/piksi_rtk_msgs/msg/ReceiverState_V2_2_15.js"
+  "/home/mensonli/FusionAD/devel/share/gennodejs/ros/piksi_rtk_msgs/msg/BaselineHeading.js"
+  "/home/mensonli/FusionAD/devel/share/gennodejs/ros/piksi_rtk_msgs/msg/AgeOfCorrections.js"
+  "/home/mensonli/FusionAD/devel/share/gennodejs/ros/piksi_rtk_msgs/msg/BaselineNed.js"
+  "/home/mensonli/FusionAD/devel/share/gennodejs/ros/piksi_rtk_msgs/msg/TrackingState.js"
+  "/home/mensonli/FusionAD/devel/share/gennodejs/ros/piksi_rtk_msgs/msg/PosEcef.js"
+  "/home/mensonli/FusionAD/devel/share/gennodejs/ros/piksi_rtk_msgs/msg/BasePosLlh.js"
+  "/home/mensonli/FusionAD/devel/share/gennodejs/ros/piksi_rtk_msgs/srv/SettingsReadResp.js"
+  "/home/mensonli/FusionAD/devel/share/gennodejs/ros/piksi_rtk_msgs/srv/SettingsWrite.js"
+  "/home/mensonli/FusionAD/devel/share/gennodejs/ros/piksi_rtk_msgs/srv/SettingsReadReq.js"
+)
+
+# Per-language clean rules from dependency scanning.
+foreach(lang )
+  include(CMakeFiles/piksi_rtk_msgs_generate_messages_nodejs.dir/cmake_clean_${lang}.cmake OPTIONAL)
+endforeach()

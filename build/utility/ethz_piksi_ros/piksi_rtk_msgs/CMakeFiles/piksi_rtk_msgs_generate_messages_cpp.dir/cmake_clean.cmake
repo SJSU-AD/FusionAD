@@ -1,0 +1,43 @@
+file(REMOVE_RECURSE
+  "CMakeFiles/piksi_rtk_msgs_generate_messages_cpp"
+  "/home/mensonli/FusionAD/devel/include/piksi_rtk_msgs/VelEcef.h"
+  "/home/mensonli/FusionAD/devel/include/piksi_rtk_msgs/MagRaw.h"
+  "/home/mensonli/FusionAD/devel/include/piksi_rtk_msgs/ImuRawMulti.h"
+  "/home/mensonli/FusionAD/devel/include/piksi_rtk_msgs/VelNed.h"
+  "/home/mensonli/FusionAD/devel/include/piksi_rtk_msgs/Observation.h"
+  "/home/mensonli/FusionAD/devel/include/piksi_rtk_msgs/InfoWifiCorrections.h"
+  "/home/mensonli/FusionAD/devel/include/piksi_rtk_msgs/ReceiverState.h"
+  "/home/mensonli/FusionAD/devel/include/piksi_rtk_msgs/Heartbeat.h"
+  "/home/mensonli/FusionAD/devel/include/piksi_rtk_msgs/BaselineEcef.h"
+  "/home/mensonli/FusionAD/devel/include/piksi_rtk_msgs/BasePosEcef.h"
+  "/home/mensonli/FusionAD/devel/include/piksi_rtk_msgs/DeviceMonitor_V2_3_15.h"
+  "/home/mensonli/FusionAD/devel/include/piksi_rtk_msgs/ReceiverState_V2_3_15.h"
+  "/home/mensonli/FusionAD/devel/include/piksi_rtk_msgs/UartState.h"
+  "/home/mensonli/FusionAD/devel/include/piksi_rtk_msgs/TrackingState_V2_3_15.h"
+  "/home/mensonli/FusionAD/devel/include/piksi_rtk_msgs/GpsTimeMulti.h"
+  "/home/mensonli/FusionAD/devel/include/piksi_rtk_msgs/UtcTimeMulti.h"
+  "/home/mensonli/FusionAD/devel/include/piksi_rtk_msgs/ImuAuxMulti.h"
+  "/home/mensonli/FusionAD/devel/include/piksi_rtk_msgs/Dops.h"
+  "/home/mensonli/FusionAD/devel/include/piksi_rtk_msgs/PosLlhMulti.h"
+  "/home/mensonli/FusionAD/devel/include/piksi_rtk_msgs/TrackingState_V2_2_15.h"
+  "/home/mensonli/FusionAD/devel/include/piksi_rtk_msgs/Log.h"
+  "/home/mensonli/FusionAD/devel/include/piksi_rtk_msgs/DopsMulti.h"
+  "/home/mensonli/FusionAD/devel/include/piksi_rtk_msgs/GpsTime.h"
+  "/home/mensonli/FusionAD/devel/include/piksi_rtk_msgs/PosLlh.h"
+  "/home/mensonli/FusionAD/devel/include/piksi_rtk_msgs/UartState_V2_3_15.h"
+  "/home/mensonli/FusionAD/devel/include/piksi_rtk_msgs/ReceiverState_V2_2_15.h"
+  "/home/mensonli/FusionAD/devel/include/piksi_rtk_msgs/BaselineHeading.h"
+  "/home/mensonli/FusionAD/devel/include/piksi_rtk_msgs/AgeOfCorrections.h"
+  "/home/mensonli/FusionAD/devel/include/piksi_rtk_msgs/BaselineNed.h"
+  "/home/mensonli/FusionAD/devel/include/piksi_rtk_msgs/TrackingState.h"
+  "/home/mensonli/FusionAD/devel/include/piksi_rtk_msgs/PosEcef.h"
+  "/home/mensonli/FusionAD/devel/include/piksi_rtk_msgs/BasePosLlh.h"
+  "/home/mensonli/FusionAD/devel/include/piksi_rtk_msgs/SettingsReadResp.h"
+  "/home/mensonli/FusionAD/devel/include/piksi_rtk_msgs/SettingsWrite.h"
+  "/home/mensonli/FusionAD/devel/include/piksi_rtk_msgs/SettingsReadReq.h"
+)
+
+# Per-language clean rules from dependency scanning.
+foreach(lang )
+  include(CMakeFiles/piksi_rtk_msgs_generate_messages_cpp.dir/cmake_clean_${lang}.cmake OPTIONAL)
+endforeach()
