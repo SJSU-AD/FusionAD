@@ -1,5 +1,5 @@
 set(_CATKIN_CURRENT_PACKAGE "ethz_piksi_ros")
-set(ethz_piksi_ros_VERSION "1.5.0")
+set(ethz_piksi_ros_VERSION "1.6.1")
 set(ethz_piksi_ros_MAINTAINER "Marco Tranzatto <marcot@ethz.ch>")
 set(ethz_piksi_ros_PACKAGE_FORMAT "2")
 set(ethz_piksi_ros_BUILD_DEPENDS )

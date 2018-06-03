@@ -298,7 +298,7 @@ Qt5Widgets_DIR:PATH=/usr/lib/x86_64-linux-gnu/cmake/Qt5Widgets
 RT_LIBRARY:FILEPATH=/usr/lib/x86_64-linux-gnu/librt.so
 
 //Path to a library.
-SBP:FILEPATH=SBP-NOTFOUND
+SBP:FILEPATH=/usr/local/lib/libsbp.so
 
 //Enable debian style python package layout
 SETUPTOOLS_DEB_LAYOUT:BOOL=ON
@@ -338,6 +338,9 @@ actionlib_msgs_DIR:PATH=/opt/ros/kinetic/share/actionlib_msgs/cmake
 
 //The directory containing a CMake configuration file for angles.
 angles_DIR:PATH=/opt/ros/kinetic/share/angles/cmake
+
+//The directory containing a CMake configuration file for any_worker.
+any_worker_DIR:PATH=any_worker_DIR-NOTFOUND
 
 //The directory containing a CMake configuration file for bond.
 bond_DIR:PATH=/opt/ros/kinetic/share/bond/cmake
@@ -614,7 +617,7 @@ rqt_gui_DIR:PATH=/opt/ros/kinetic/share/rqt_gui/cmake
 rqt_gui_cpp_DIR:PATH=/opt/ros/kinetic/share/rqt_gui_cpp/cmake
 
 //Dependencies for the target
-sbp_device_LIB_DEPENDS:STATIC=general;SBP-NOTFOUND;
+sbp_device_LIB_DEPENDS:STATIC=general;/usr/local/lib/libsbp.so;
 
 //The directory containing a CMake configuration file for sensor_msgs.
 sensor_msgs_DIR:PATH=/opt/ros/kinetic/share/sensor_msgs/cmake
@@ -879,7 +882,7 @@ CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_NM
 CMAKE_NM-ADVANCED:INTERNAL=1
 //number of local generators
-CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=25
+CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=14
 //ADVANCED property for variable: CMAKE_OBJCOPY
 CMAKE_OBJCOPY-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_OBJDUMP

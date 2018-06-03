@@ -9,6 +9,7 @@
 # modified environment variables
 export CMAKE_PREFIX_PATH="/home/mensonli/FusionAD/devel:$CMAKE_PREFIX_PATH"
 export LD_LIBRARY_PATH="/home/mensonli/FusionAD/devel/lib:$LD_LIBRARY_PATH"
+export PATH="/home/mensonli/FusionAD/devel/bin:$PATH"
 export PKG_CONFIG_PATH="/home/mensonli/FusionAD/devel/lib/pkgconfig:$PKG_CONFIG_PATH"
 export PWD="/home/mensonli/FusionAD/build"
 export PYTHONPATH="/home/mensonli/FusionAD/devel/lib/python2.7/dist-packages:$PYTHONPATH"

@@ -1,5 +1,5 @@
 set(_CATKIN_CURRENT_PACKAGE "piksi_v2_rtk_ros")
-set(piksi_v2_rtk_ros_VERSION "1.5.0")
+set(piksi_v2_rtk_ros_VERSION "1.6.1")
 set(piksi_v2_rtk_ros_MAINTAINER "Marco Tranzatto <marcot@ethz.ch>")
 set(piksi_v2_rtk_ros_PACKAGE_FORMAT "2")
 set(piksi_v2_rtk_ros_BUILD_DEPENDS "rospy" "piksi_rtk_msgs" "sensor_msgs" "geometry_msgs")

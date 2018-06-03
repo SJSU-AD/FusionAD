@@ -2,7 +2,7 @@ prefix=/home/mensonli/FusionAD/install
 
 Name: piksi_rtk_msgs
 Description: Description of piksi_rtk_msgs
-Version: 1.5.0
+Version: 1.6.1
 Cflags: -I/home/mensonli/FusionAD/install/include
 Libs: -L/home/mensonli/FusionAD/install/lib 
 Requires: message_runtime std_msgs geometry_msgs
