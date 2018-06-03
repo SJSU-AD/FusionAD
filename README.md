@@ -7,3 +7,5 @@ FusionAD is an autonomous driving software stack developed by engineering studen
 ```
 sh ext_package_build.sh
 ```
+### Development:
+Please pull from the branch "develop", not master.
