@@ -1,8 +1,0 @@
-prefix=/home/mensonli/FusionAD/devel
-
-Name: piksi_rtk_kml
-Description: Description of piksi_rtk_kml
-Version: 1.6.1
-Cflags: 
-Libs: -L/home/mensonli/FusionAD/devel/lib 
-Requires: geometry_msgs piksi_rtk_msgs roslib rospy

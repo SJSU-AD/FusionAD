@@ -1,8 +1,0 @@
-prefix=/home/mensonli/FusionAD/install
-
-Name: perception
-Description: Description of perception
-Version: 0.0.0
-Cflags: 
-Libs: -L/home/mensonli/FusionAD/install/lib 
-Requires: 

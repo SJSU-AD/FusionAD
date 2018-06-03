@@ -1,8 +1,0 @@
-prefix=/home/mensonli/FusionAD/devel
-
-Name: piksi_multi_rtk_ros
-Description: Description of piksi_multi_rtk_ros
-Version: 1.6.1
-Cflags: 
-Libs: -L/home/mensonli/FusionAD/devel/lib 
-Requires: geometry_msgs sensor_msgs piksi_rtk_msgs roslib rospy

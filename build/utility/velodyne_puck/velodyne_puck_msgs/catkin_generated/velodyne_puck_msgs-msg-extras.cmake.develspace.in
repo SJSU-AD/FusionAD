@@ -1,2 +1,0 @@
-set(velodyne_puck_msgs_MESSAGE_FILES "/home/mensonli/FusionAD/src/utility/velodyne_puck/velodyne_puck_msgs/msg/VelodynePuckPacket.msg;/home/mensonli/FusionAD/src/utility/velodyne_puck/velodyne_puck_msgs/msg/VelodynePuckPoint.msg;/home/mensonli/FusionAD/src/utility/velodyne_puck/velodyne_puck_msgs/msg/VelodynePuckScan.msg;/home/mensonli/FusionAD/src/utility/velodyne_puck/velodyne_puck_msgs/msg/VelodynePuckSweep.msg")
-set(velodyne_puck_msgs_SERVICE_FILES "")

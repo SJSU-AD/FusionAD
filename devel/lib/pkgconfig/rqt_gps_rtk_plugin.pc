@@ -1,8 +1,0 @@
-prefix=/home/mensonli/FusionAD/devel
-
-Name: rqt_gps_rtk_plugin
-Description: Description of rqt_gps_rtk_plugin
-Version: 1.5.0
-Cflags: 
-Libs: -L/home/mensonli/FusionAD/devel/lib -lrqt_gps_rtk_plugin
-Requires: rqt_gui rqt_gui_cpp piksi_rtk_msgs sensor_msgs

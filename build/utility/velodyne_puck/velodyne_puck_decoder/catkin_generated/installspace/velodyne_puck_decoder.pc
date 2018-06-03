@@ -1,8 +1,0 @@
-prefix=/home/mensonli/FusionAD/install
-
-Name: velodyne_puck_decoder
-Description: Description of velodyne_puck_decoder
-Version: 1.2.0
-Cflags: -I/home/mensonli/FusionAD/install/include -I/usr/include
-Libs: -L/home/mensonli/FusionAD/install/lib 
-Requires: roscpp nodelet sensor_msgs pluginlib pcl_ros pcl_conversions velodyne_puck_msgs

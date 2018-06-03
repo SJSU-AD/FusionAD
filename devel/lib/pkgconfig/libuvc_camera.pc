@@ -1,8 +1,0 @@
-prefix=/home/mensonli/FusionAD/devel
-
-Name: libuvc_camera
-Description: Description of libuvc_camera
-Version: 0.0.10
-Cflags: -I/home/mensonli/FusionAD/devel/include
-Libs: -L/home/mensonli/FusionAD/devel/lib -llibuvc_camera_nodelet
-Requires: roscpp camera_info_manager dynamic_reconfigure image_transport nodelet sensor_msgs

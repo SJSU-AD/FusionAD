@@ -1,8 +1,0 @@
-prefix=/home/mensonli/FusionAD/devel
-
-Name: piksi_v2_rtk_ros
-Description: Description of piksi_v2_rtk_ros
-Version: 1.6.1
-Cflags: 
-Libs: -L/home/mensonli/FusionAD/devel/lib 
-Requires: piksi_rtk_msgs sensor_msgs geometry_msgs

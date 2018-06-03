@@ -1,8 +1,0 @@
-prefix=/home/mensonli/FusionAD/devel
-
-Name: velodyne_puck_driver
-Description: Description of velodyne_puck_driver
-Version: 1.2.0
-Cflags: -I/home/mensonli/FusionAD/src/utility/velodyne_puck/velodyne_puck_driver/include
-Libs: -L/home/mensonli/FusionAD/devel/lib 
-Requires: roscpp diagnostic_updater nodelet velodyne_puck_msgs
