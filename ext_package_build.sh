@@ -10,3 +10,11 @@ cd build
 cmake ../
 make
 sudo make install   # install headers and libraries into /usr/local
+
+cd ~
+git clone https://github.com/ktossell/libuvc
+cd libuvc
+mkdir build
+cd build
+cmake ..
+make && sudo make install
