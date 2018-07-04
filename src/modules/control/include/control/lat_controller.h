@@ -30,7 +30,7 @@ namespace fusionad
           double computeNonLinControlTerm(const double &linear_velocity, const double &position, const double &waypoint);
           double computeCrossTrackError(const double &routeTheta, const double &dx, const double &delta_y);
           double computeSteeringAngle(const Eigen::Vector2d &vehPos, const Eigen::Vector2d &targetPos, 
-                                      const std::vector<double> &route, 
+                                      const std::vector<double> &routeX, const std::vector<double> &routeY,
                                       const double &vehSpeed, const int &wpIndex);
       };
     }

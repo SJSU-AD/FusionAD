@@ -29,9 +29,28 @@ namespace lat_controller{
 
   }
   double stanley::computeSteeringAngle(const Eigen::Vector2d &vehPos, const Eigen::Vector2d &targetPos, 
-                                      const std::vector<double> &route, 
+                                      const std::vector<double> &routeX, const std::vector<double> &routeY,
                                       const double &vehSpeed, const int &wpIndex)
   {
+    Eigen::pathMatrix42d trimmedRoute;
+    //Stored the trimmed route into the matrix
+    if(wpIndex != 0)
+    {
+      for(int j = wpIndex+2 , i = 0 ; j >= wpIndex-1 , i < 4 ; j--, i++)
+      {
+        trimmedRoute(i,0) = routeX[j];
+        trimmedRoute(i,1) = routeY[j];
+      }
+    }
+    else if(wpIndex == 0)
+    {
+      for(int j = wpIndex+3 , i = 0; j >= wpIndex , i < 4; j-- , i++)
+      {
+        trimmedRoute(i,0) = routeX[j];
+        trimmedRoute(i,1) = routeY[j];
+      }
+    }
+    //Now the trimmed route matrix is populated
 
   }
 }
