@@ -1,4 +1,7 @@
 #!/usr/bin/python
+
+"""This is the file used to publish the frames of the video on the topic "chatter"""
+
 import numpy as np
 import rospy
 from rospy.numpy_msg import numpy_msg
@@ -7,6 +10,7 @@ from sensor_msgs.msg import Image
 import random
 import os
 import cv2
+
 def simpub():
         #initiate the node
 	rospy.init_node('simpub')

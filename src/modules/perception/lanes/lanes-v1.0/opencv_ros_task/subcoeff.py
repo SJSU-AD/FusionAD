@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import rospy
-from beginner_tutorials.msg import video
+from perception.msg import video
 
 #callback function
 def MessageReceived(msg):
