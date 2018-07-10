@@ -26,7 +26,7 @@ namespace fusionad
           //ROS --> steering message.
           typedef Eigen::Matrix<double, 4, 2> pathMatrix42d; 
           double computeHeadingError(const double &vehHeading, const double &pathHeading);
-          double computePathHeading(const Eigen::pathMatrix42d &trajectory, const Eigen::Vector2d &pos, const int &targetIndex);
+          double computePathHeading(const Eigen::pathMatrix42d &trajectory, const int &targetIndex);
           double computeNonLinControlTerm(const double &linear_velocity, const double &position, const double &waypoint);
           double computeCrossTrackError(const double &routeTheta, const double &dx, const double &delta_y);
           double computeSteeringAngle(const Eigen::Vector2d &vehPos, const Eigen::Vector2d &targetPos, 
