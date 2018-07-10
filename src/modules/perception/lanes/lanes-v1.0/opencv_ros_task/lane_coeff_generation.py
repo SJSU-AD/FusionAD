@@ -1,7 +1,16 @@
 #!/usr/bin/python
 
-"""This is the file used to subscribe to the topic chatter and then calculate the coefficients and then publish them on coeffs"""
+"""This is the file used to calculate the coefficients for lane detection
 
+Subscribes to: 
+    /simpub_img_cap/image_raw
+
+Publishes to: 
+    /lane_coeff_generation/coeffs
+"""
+
+from __future__ import division
+from __future__ import print_function
 import rospy
 from rospy.numpy_msg import numpy_msg
 from perception.msg import video
@@ -20,7 +29,7 @@ x6=0
 y6=0
 mleft=0
 mright=0
-pub=rospy.Publisher('coeffs',video,queue_size=1000)
+pub=rospy.Publisher('/lane_coeff_generation/coeffs',video,queue_size=1000)
 msg=video()
 
 def poseMessageReceived(pic):
@@ -87,7 +96,7 @@ def poseMessageReceived(pic):
     lines2 = cv2.HoughLinesP(edges[:,int(img.shape[1]-img.shape[1]/3):],1,np.pi/180,100,40,1)
     
     if lines is not None:
-	rospy.loginfo("here2")
+        rospy.loginfo("here2")
         for x1,y1,x2,y2 in lines[0]:
             x5=x1
             y5=y1
@@ -114,7 +123,7 @@ def poseMessageReceived(pic):
     rospy.loginfo("here3")
     
     if lines2 is not None:
-	rospy.loginfo("here4")
+        rospy.loginfo("here4")
         for x1,y1,x2,y2 in lines2[0]:
             x3=x1
             y3=y1
@@ -123,14 +132,45 @@ def poseMessageReceived(pic):
             cv2.line(img[:,int(img.shape[1]-img.shape[1]/3):],(x1,y1),(x2,y2),(0,255,0),5)
     
     #slope and intercept calculations
+    print("===mleft values===")
+    print("x3:", x3,
+          "x4:", x4,
+          "y3:", y3,
+          "y4:", y4)
+    
     if(x3-x4!=0):
-    	mleft=float((y3-y4)/(x3-x4))
+        mleft=float((y3-y4)/(x3-x4))
 	
+    # test values for verification:
+    print("===cleft values===")
+    print("x4:", x4,
+          "y4:", y4,
+          "y3:", y3,
+          "x4:", x4,
+          "x3:", x3,
+          "y4:", y4)
+
     cleft=float((-(x4*(y4-y3))/(x4-x3))+y4)
     
+    print("===mright values===")
+    print("x5:", x5,
+          "x6:", x6,
+          "y5:", y5,
+          "y6:", y6)
+
     if(x5-x6!=0):
-    	mright=float((y5-y6)/(x5-x6))
-	cright=float((-(x6*(y6-y5))/(x6-x5))+y6)
+        mright=float((y5-y6)/(x5-x6))
+
+    print("===cright values===")
+    print("x6:", x6,
+          "y6:", y6,
+          "y5:", y5,
+          "x6:", x6,
+          "x5:", x5,
+          "y6:", y6)
+
+    cright=float((-(x6*(y6-y5))/(x6-x5))+y6)
+    
     msg.m1=mleft
     msg.m2=mright
     msg.c1=cleft
@@ -143,7 +183,7 @@ if __name__ == '__main__':
         #initialize node
         rospy.init_node('subscribevideo')
         #create subscriber object
-        rospy.Subscriber('chatter', Image, poseMessageReceived,
+        rospy.Subscriber('/simpub_img_cap/image_raw', Image, poseMessageReceived,
                          queue_size=1000)
         #wait for message to be published so callback can be called
         rospy.spin()

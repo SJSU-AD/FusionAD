@@ -1,6 +1,13 @@
 #!/usr/bin/python
 
-"""This is the file used to publish the frames of the video on the topic "chatter"""
+"""This is the file used to publish the frames of the video 
+
+Subscribes to:
+    None
+
+Publishes to:
+    /simpub_img_cap/image_raw
+"""
 
 import numpy as np
 import rospy
@@ -15,9 +22,9 @@ def simpub():
         #initiate the node
 	rospy.init_node('simpub')
         #create the cap object
-	cap=cv2.VideoCapture('/home/naruarjun/catkin_ws/src/beginner_tutorials/images/project_video.avi')
+	cap=cv2.VideoCapture(1)
 	#create the publisher object	
-	pub=rospy.Publisher('chatter',Image,queue_size=1000)
+	pub=rospy.Publisher('/simpub_img_cap/image_raw',Image,queue_size=1000)
 	#create the converter for the image into a transmittable message	
 	converter=CvBridge()
         #check if node has been killed or not
@@ -28,12 +35,18 @@ def simpub():
 			if ret==False:
 				rospy.loginfo("False")
 				os.system('rosnode kill --all')
+
 			#convert from a numpy array to ros image		
 			msg=converter.cv2_to_imgmsg(img,"bgr8")
-		        #publish the message
+		        
+			#publish the message
 			pub.publish(msg)
-		        #print in terminal
+		        
+			#print in terminal
 			rospy.loginfo(img)
+
+			# view image
+			# cv2.imshow('raw input video', img)
 		else:
 			rospy.loginfo("cap is not opened")
 			os.system('rosnode kill --all')

@@ -1,6 +1,16 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+"""Logs detected lane info to screen.
+Subscribed to:
+    /lane_coeff_generation/coeffs
+
+Publishes to:
+    None
+"""
+
+from __future__ import division
+from __future__ import print_function
 import rospy
 from perception.msg import video
 
@@ -16,7 +26,7 @@ if __name__ == '__main__':
 	#initialize the node
         rospy.init_node('subscribe_to_coeff')
 	#create subscriber object        
-	rospy.Subscriber('coeffs', video, MessageReceived,
+	rospy.Subscriber('/lane_coeff_generation/coeffs', video, MessageReceived,
                          queue_size=1000)
 
 	#wait for message to be published        
