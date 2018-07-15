@@ -9,6 +9,9 @@ Publishes to:
     /simpub_img_cap/image_raw
 """
 
+from __future__ import division
+from __future__ import print_function
+
 import numpy as np
 import rospy
 from rospy.numpy_msg import numpy_msg

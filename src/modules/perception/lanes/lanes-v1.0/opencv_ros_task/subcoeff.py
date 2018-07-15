@@ -11,6 +11,7 @@ Publishes to:
 
 from __future__ import division
 from __future__ import print_function
+
 import rospy
 from perception.msg import video
 
