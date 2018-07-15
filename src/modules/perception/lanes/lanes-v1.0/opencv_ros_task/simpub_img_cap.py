@@ -60,8 +60,8 @@ def simpub():
 def main():
 	try:
 		simpub()
-	except rospy.ROSInterruptException:
-		pass
+	except rospy.ROSInterruptException as e:
+		print(e)
 
 if __name__ == '__main__':
 	main()

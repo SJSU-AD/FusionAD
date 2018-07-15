@@ -202,8 +202,8 @@ def main():
         rospy.Subscriber('/simpub_img_cap/image_raw', Image, poseMessageReceived, queue_size=1000)
         #wait for message to be published so callback can be called
         rospy.spin()
-    except rospy.ROSInterruptException:
-	    pass
+    except rospy.ROSInterruptException as e:
+	    print(e)
 
 if __name__ == '__main__':
     main()
