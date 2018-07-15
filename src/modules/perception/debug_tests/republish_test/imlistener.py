@@ -6,10 +6,10 @@ Listens to images from "imlistener" topic and shows the image on the screen
 Taken from page 14 of: https://www.cvl.isy.liu.se/education/graduate/opencv/Lecture14_ROSPython.pdf
 
 Subscribes to: 
-    /simpub_img_cap/image_raw
+    /imtalker/image_raw
 
 Publishes to: 
-    /lane_coeff_generation/coeffs
+    None
 """
 
 from __future__ import division
