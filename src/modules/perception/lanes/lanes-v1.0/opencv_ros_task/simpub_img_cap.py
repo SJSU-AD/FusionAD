@@ -22,7 +22,7 @@ def simpub():
         #initiate the node
 	rospy.init_node('simpub')
         #create the cap object
-	cap=cv2.VideoCapture(1)
+	cap=cv2.VideoCapture(0)
 	#create the publisher object	
 	pub=rospy.Publisher('/simpub_img_cap/image_raw',Image,queue_size=1000)
 	#create the converter for the image into a transmittable message	

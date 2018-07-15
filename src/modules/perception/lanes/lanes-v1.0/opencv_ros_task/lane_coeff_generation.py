@@ -139,8 +139,11 @@ def poseMessageReceived(pic):
           "y4:", y4)
     
     if(x3-x4!=0):
-        mleft=float((y3-y4)/(x3-x4))
-	
+        mleft = float((y3-y4)/(x3-x4))
+    else:
+        mleft = 0
+        print("x4-x3=0... will not compute cleft")
+
     # test values for verification:
     print("===cleft values===")
     print("x4:", x4,
@@ -150,7 +153,11 @@ def poseMessageReceived(pic):
           "x3:", x3,
           "y4:", y4)
 
-    cleft=float((-(x4*(y4-y3))/(x4-x3))+y4)
+    if(x4-x3!=0):
+        cleft = float((-(x4*(y4-y3))/(x4-x3))+y4)
+    else:
+        cleft = 0
+        print("x4-x3=0... will not compute cleft")
     
     print("===mright values===")
     print("x5:", x5,
@@ -159,7 +166,10 @@ def poseMessageReceived(pic):
           "y6:", y6)
 
     if(x5-x6!=0):
-        mright=float((y5-y6)/(x5-x6))
+        mright = float((y5-y6)/(x5-x6))
+    else:
+        mright = 0
+        print("x5-x6=0... will not compute mright")
 
     print("===cright values===")
     print("x6:", x6,
@@ -169,12 +179,17 @@ def poseMessageReceived(pic):
           "x5:", x5,
           "y6:", y6)
 
-    cright=float((-(x6*(y6-y5))/(x6-x5))+y6)
+    if(x6-x5!=0):
+        cright = float((-(x6*(y6-y5))/(x6-x5))+y6)
+    else:
+        cright = 0
+        print("x6-x5=0... will not compute cright")
     
-    msg.m1=mleft
-    msg.m2=mright
-    msg.c1=cleft
-    msg.c2=cright
+    
+    msg.m1 = mleft
+    msg.m2 = mright
+    msg.c1 = cleft
+    msg.c2 = cright
     #publish the slope and intercets in a new topic
     pub.publish(msg)
 
