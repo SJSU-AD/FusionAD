@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 """This is the file used to calculate the coefficients for lane detection
 
@@ -194,14 +194,16 @@ def poseMessageReceived(pic):
     #publish the slope and intercets in a new topic
     pub.publish(msg)
 
-if __name__ == '__main__':
+def main():
     try:
         #initialize node
         rospy.init_node('subscribevideo')
         #create subscriber object
-        rospy.Subscriber('/simpub_img_cap/image_raw', Image, poseMessageReceived,
-                         queue_size=1000)
+        rospy.Subscriber('/simpub_img_cap/image_raw', Image, poseMessageReceived, queue_size=1000)
         #wait for message to be published so callback can be called
         rospy.spin()
     except rospy.ROSInterruptException:
-	pass
+	    pass
+
+if __name__ == '__main__':
+    main()

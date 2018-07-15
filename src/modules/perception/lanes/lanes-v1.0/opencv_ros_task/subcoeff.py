@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 """Logs detected lane info to screen.
@@ -21,16 +21,19 @@ def MessageReceived(msg):
     rospy.loginfo(' slopel=' + str(msg.m1)
                   + ' slope2=' + str(msg.m2) + '  inter1=' + str(msg.c1)+ '  inter2=' + str(msg.c2))
 
-
-if __name__ == '__main__':
+def main():
     try:
 	#initialize the node
         rospy.init_node('subscribe_to_coeff')
-	#create subscriber object        
-	rospy.Subscriber('/lane_coeff_generation/coeffs', video, MessageReceived,
-                         queue_size=1000)
+	
+    #create subscriber object        
+	rospy.Subscriber('/lane_coeff_generation/coeffs', video, MessageReceived, queue_size=1000)
 
 	#wait for message to be published        
 	rospy.spin()
+
     except rospy.ROSInterruptException:
 		pass
+        
+if __name__ == '__main__':
+    main()
