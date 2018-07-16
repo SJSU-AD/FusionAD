@@ -22,12 +22,12 @@ namespace lat_controller{
     }
     else
     {
-      cout << "Heading Error Calculation Is Not Finite!" << endl;
+      std::cout << "Heading Error Calculation Is Not Finite!" << std::endl;
       return std::numeric_limits<double>::quiet_NaN();
     }    
   }
   
-  double stanley::computePathHeading(const Eigen::pathMatrix42d &trajectory, const int &targetIndex)
+  double stanley::computePathHeading(const pathMatrix42d &trajectory, const int &targetIndex)
   {
     //TODO: Complete path Heading interpolation
     Eigen::Matrix4d designMatrix;
@@ -42,8 +42,8 @@ namespace lat_controller{
                       trajectory(2,1),
                       trajectory(3,1);
 
-    ColPivHouseholderQR<Matrix4d> dec(designMatrix);
-    Vector4d x = dec.solve(responseVector);  
+    Eigen::ColPivHouseholderQR<Eigen::Matrix4d> dec(designMatrix);
+    Eigen::Vector4d x = dec.solve(responseVector);  
 
     Eigen::Vector3d pathYawCoeff;
     pathYawCoeff << pathYawCoeff(0)*3,
@@ -66,7 +66,7 @@ namespace lat_controller{
     double b = targetYpos - (pathSlope * targetXpos);
     
     //Find the next Y point of the slope to get the linear interpolated vector
-    double nextYslope = (pathslope)*(nextXpos) + b;
+    double nextYslope = (pathSlope*nextXpos) + b;
 
     //Linear interpolate the vector
     double heading_dx = nextXpos - targetXpos;
@@ -75,11 +75,11 @@ namespace lat_controller{
     double pathHeadingTheta = atan2(heading_dy, heading_dx);
 
     //The derived path heading should match the two possible heading theta from slope
-    if(pathHeadngTheta != atan(slope))
+    if(pathHeadingTheta != atan(pathSlope))
     {
-      if(pathHeadingTheta != (atan(slope) + 3.14159265))
+      if(pathHeadingTheta != (atan(pathSlope) + 3.14159265))
       {
-        cout << "Path Heading don't match predicted slope value!" << endl;
+        std::cout << "Path Heading don't match predicted slope value!" << std::endl;
         return std::numeric_limits<double>::quiet_NaN();
       }
     }
@@ -101,7 +101,7 @@ namespace lat_controller{
     }
     else
     {
-      cout << "Lateral Error Calculation Is Not Finite!" << endl;
+      std::cout << "Lateral Error Calculation Is Not Finite!" << std::endl;
       return std::numeric_limits<double>::quiet_NaN();
     }    
   }
@@ -112,7 +112,7 @@ namespace lat_controller{
                                       const double &vehSpeed, const int &wpIndex, const double& vehTheta, const double &gain)
   {
     int trimmedIndex;
-    Eigen::pathMatrix42d trimmedRoute;
+    pathMatrix42d trimmedRoute;
     //Stuff the trimmed route into the matrix
     if(wpIndex != 0)
     {
@@ -145,14 +145,14 @@ namespace lat_controller{
     //Find heading difference between vehicle orientation and the path
     double headingDelta = computeHeadingError(vehTheta , pathTheta);
     //Apply stanley kinematic control law
-    double steeringAngle = headingDelta + std::atan((controlGain * crossTrackError)/vehSpeed);
+    double steeringAngle = headingDelta + std::atan((gain * crossTrackError)/vehSpeed);
     if(std::isfinite(steeringAngle))
     {
       return steeringAngle;
     }
     else
     {
-      cout << "Steering Angle Calculation Is Not Finite!" << endl;
+      std::cout << "Steering Angle Calculation Is Not Finite!" << std::endl;
       return std::numeric_limits<double>::quiet_NaN();
     }
   }

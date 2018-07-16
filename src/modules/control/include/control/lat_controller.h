@@ -26,7 +26,7 @@ class stanley
     //ROS --> steering message.
     typedef Eigen::Matrix<double, 4, 2> pathMatrix42d; 
     double computeHeadingError(const double &vehHeading, const double &pathHeading);
-    double computePathHeading(const Eigen::pathMatrix42d &trajectory, const int &targetIndex);
+    double computePathHeading(const pathMatrix42d &trajectory, const int &targetIndex);
     double computeCrossTrackError(const double &routeTheta, const double &dx, const double &delta_y);
     double computeSteeringAngle(const Eigen::Vector2d &vehPos, const Eigen::Vector2d &targetPos, 
                                 const std::vector<double> &routeX, const std::vector<double> &routeY,
