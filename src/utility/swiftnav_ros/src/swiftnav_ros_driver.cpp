@@ -222,8 +222,8 @@ namespace swiftnav_ros
       llh_msg->altitude = llh.height;
 
       // populate the covariance matrix
-      double h_covariance = pow(llh.h_accuracy * 1e-3, 2);  // Convert mm to m and take the ^2 for going from std to cov
-      double v_covariance = pow(llh.v_accuracy * 1e-3, 2);  // Convert mm to m and take the ^2 for going from std to cov
+      double h_covariance = llh.h_accuracy * llh.h_accuracy * 10e-6;
+      double v_covariance = llh.v_accuracy * llh.v_accuracy * 10e-6;
       llh_msg->position_covariance[0]  = h_covariance;   // x = 0, 0 
       llh_msg->position_covariance[4]  = h_covariance;   // y = 1, 1 
       llh_msg->position_covariance[8]  = v_covariance;   // z = 2, 2 
@@ -276,8 +276,8 @@ namespace swiftnav_ros
         rtk_odom_msg->pose.pose.orientation.w = 0;
 
         // populate the pose covariance matrix if we have a good fix
-        double h_covariance = pow(sbp_ned.h_accuracy * 1e-3, 2);
-        double v_covariance = pow(sbp_ned.v_accuracy * 1e-3, 2);
+        double h_covariance = (sbp_ned.h_accuracy * sbp_ned.h_accuracy) / 1.0e-6;
+        double v_covariance = (sbp_ned.v_accuracy * sbp_ned.v_accuracy) / 1.0e-6;
 
         // Pose x/y/z covariance 
         rtk_odom_msg->pose.covariance[0]  = h_covariance;   // x = 0, 0 in the 6x6 cov matrix
@@ -340,8 +340,8 @@ void vel_ned_callback(u16 sender_id, u8 len, u8 msg[], void *context)
         driver->rtk_vel_north = sbp_vel.n/1000.0;
         driver->rtk_vel_east = sbp_vel.e/1000.0;
         driver->rtk_vel_up = -sbp_vel.d/1000.0;
-        driver->rtk_vel_h_covariance = pow(sbp_vel.h_accuracy * 1e-3, 2);
-        driver->rtk_vel_v_covariance = pow(sbp_vel.v_accuracy * 1e-3, 2);
+        driver->rtk_vel_h_covariance = (sbp_vel.h_accuracy * sbp_vel.h_accuracy) * 10e-6;
+        driver->rtk_vel_v_covariance = (sbp_vel.v_accuracy * sbp_vel.h_accuracy) * 10e-6;
 
 		return;
 	}
