@@ -1,4 +1,6 @@
 # Advanced Lane Detection
+CREDIT: https://github.com/georgesung/advanced_lane_detection
+
 ![annotated](output_images/annotated_test2.png)
 ## Overview
 Detect lanes using computer vision techniques. This project is part of the [Udacity Self-Driving Car Nanodegree](https://www.udacity.com/drive), and much of the code is leveraged from the lecture notes.
