@@ -85,6 +85,7 @@ def annotate_image(img_in):
 			detected = False
 
 	vehicle_offset = calc_vehicle_offset(undist, left_fit, right_fit)
+	print("vehicle offset is:", vehicle_offset)
 
 	# Perform final visualization on top of original undistorted image
 	result = final_viz(undist, left_fit, right_fit, m_inv, left_curve, right_curve, vehicle_offset)

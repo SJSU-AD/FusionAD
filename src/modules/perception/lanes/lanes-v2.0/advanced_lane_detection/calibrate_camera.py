@@ -60,10 +60,11 @@ def calibrate_camera():
 			corners_list.append(corners)
 
 			# Draw and display the corners
-			#cv2.drawChessboardCorners(img, (nx, ny), corners, ret)
-			#plt.imshow(img)
-			#plt.show()
-			#print('Found corners for %s' % fname)
+			# cv2.drawChessboardCorners(img, (nx, ny), corners, ret)
+			# plt.imshow(img)
+			# plt.show()
+			# print('Found corners for %s' % fname)
+			# cv2.waitKey(0)
 		else:
 			print('Warning: ret = %s for %s' % (ret, fname))
 
@@ -79,10 +80,12 @@ if __name__ == '__main__':
 	mtx, dist = calibrate_camera()
 	save_dict = {'mtx': mtx, 'dist': dist}
 	with open('calibrate_camera.p', 'wb') as f:
-		pickle.dump(save_dict, f)
+		pickle.dump(save_dict, f, protocol=2)
 
 	# Undistort example calibration image
 	img = mpimg.imread('camera_cal/calibration5.jpg')
+	cv2.imshow("Test Image Before", img)
+	cv2.waitKey(0)
 	dst = cv2.undistort(img, mtx, dist, None, mtx)
 	plt.imshow(dst)
 	plt.savefig('example_images/undistort_calibration.png')
