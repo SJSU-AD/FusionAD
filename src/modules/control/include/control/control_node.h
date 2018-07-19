@@ -16,7 +16,7 @@ class control_node
     control_node();
     ~control_node();
   private:
-
+    ros::NodeHandle control_nh;
 
 
 };
