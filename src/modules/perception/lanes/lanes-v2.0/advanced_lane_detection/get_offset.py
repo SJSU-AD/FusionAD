@@ -15,6 +15,7 @@ from line_fit import line_fit, tune_fit, final_viz, calc_curve, calc_vehicle_off
 # Global variables (just to make the moviepy video annotation work)
 with open('calibrate_camera.p', 'rb') as f:
 	save_dict = pickle.load(f)
+
 mtx = save_dict['mtx']
 dist = save_dict['dist']
 window_size = 5  # how many frames for line smoothing
@@ -85,34 +86,20 @@ def get_offset(img_in):
 			detected = False
 
 	vehicle_offset = calc_vehicle_offset(undist, left_fit, right_fit)
+	float_offset_value= vehicle_offset.item()
+	#Return the offset in type 'float'. 
+	#vehicle_offset is a numpy.Float64 but we just want the float value to be able to publish
+	return float_offset_value
 
-	return vehicle_offset
+# if __name__ == '__main__':
+# 	cap = cv2.VideoCapture('project_video.mp4')
 
-if __name__ == "__main__":
-	# cap = cv2.VideoCapture('project_video.mp4')
+# 	while(True):
+# 		ret, frame = cap.read()
+# 		print(get_offset(frame))
 
-	# while(True):
-	# 	# Capture frame-by-frame
-	# 	ret, frame = cap.read()
-	# 	# img = mpimg.imread(frame)
-
-	# 	print(get_offset(frame))
-
-	# 	# Display the resulting frame
-	# 	cv2.imshow('original', frame)
-	# 	if cv2.waitKey(1) & 0xFF == ord('q'):
-	# 		break
-
-	# # When everything done, release the capture
-	# cap.release()
-	# cv2.destroyAllWindows()
-
-
-    # Show example annotated image on screen for sanity check
-	img_file = 'test_images/test2.jpg'
-	img = mpimg.imread(img_file)
-	result = get_offset(img)
-	# result = get_offset(img)
-	# result = get_offset(img)
-	plt.imshow(result)
-	plt.show()
+# 		cv2.imshow('original', frame)
+# 		if cv2.waitKey(2) & 0xFF == ord('q'):
+# 			break
+# 	cap.release()
+# 	cv2.destroyAllWindows()

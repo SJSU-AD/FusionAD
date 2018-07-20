@@ -9,7 +9,7 @@ def calibrate_camera():
 	# Mapping each calibration image to number of checkerboard corners
 	# Everything is (9,6) for now
 	objp_dict = {
-		1: (9, 5),
+		1: (9, 6),
 		2: (9, 6),
 		3: (9, 6),
 		4: (9, 6),
