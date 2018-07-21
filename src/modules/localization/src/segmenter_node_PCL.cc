@@ -88,8 +88,8 @@ void segmenter::messageCallback(const velodyne_puck_msgs::VelodynePuckSweep::Con
 
 
 void segmenter::parseInput(pcl::PointCloud<pcl::PointXYZI>::Ptr& out_cloud, 
-                           std::vector<pcl::PointIndices::Ptr>& scan_indices, 
-                           const velodyne_puck_msgs::VelodynePuckSweep::ConstPtr& in_cloud)
+                            std::vector<pcl::PointIndices::Ptr>& scan_indices, 
+                            const velodyne_puck_msgs::VelodynePuckSweep::ConstPtr& in_cloud)
 {
   std::ofstream file;
   int cur_index = 0;

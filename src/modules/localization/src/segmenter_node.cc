@@ -111,7 +111,6 @@ void segmenter::parseInput(std::vector<Vec3>& in, PointCloudSegmenter& seg,
       //}
     } 
   }
-  
 }
 
 
