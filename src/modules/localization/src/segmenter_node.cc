@@ -134,7 +134,7 @@ std::vector<pcl::PointIndices> segmenter::GenerateOutput(std::vector<Vec3>& pts)
     point.x = v_it->x;
     point.y = v_it->y;
     point.z = v_it->z;
-    point.intensity = v_it->intensity;
+    point.intensity = v_it->label;
 
     final_point_cloud->points.push_back(point);
     ++final_point_cloud->width;
