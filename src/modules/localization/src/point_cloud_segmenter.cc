@@ -297,7 +297,7 @@ std::vector<Vec3> PointCloudSegmenter::ScanLineRun(std::vector<Vec3>& cloud) {
   }
 
   //Index scanlines by theta
-  for (s_it = scanlines.begin(); s_it != scanlines.end(); s_it++) {
+  for (s_it = scanlines.end()-1; s_it != scanlines.begin()-1; s_it--) {
     if (s_it->points.size() == 0) {
       //(s_it - 1)->points.insert((s_it - 1)->points.end(), s_it->points.begin(), s_it->points.end());
       scanlines.erase(s_it);
