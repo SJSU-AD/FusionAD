@@ -140,7 +140,7 @@ std::vector<pcl::PointIndices> segmenter::GenerateOutput(std::vector<Vec3>& pts)
     ++final_point_cloud->width;
 
     std::map<int, size_t>::iterator m_it = label_index_map.find(v_it->label);
-    if (m_it != m.end())
+    if (m_it != label_index_map.end())
     {
       cluster_indices[(*m_it).second].indices.push_back(cur_point_index);
     } else 
