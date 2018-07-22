@@ -47,24 +47,27 @@ std::ostream& operator<<(std::ostream& os, const Vec3& vec) {
 void  PointCloudSegmenter::GroundPlaneFitting(std::vector<Vec3>& cloud) {
   int start_s = clock(); //Take start timestamp
 
-  int seg_size = (cloud.size() / n_segs);
+  i//nt seg_size = (cloud.size() / n_segs);
+  int segment_size = (2 * max_x) / n_segs
   std::vector<Vec3> cloud_segs[n_segs];
 
   std::vector<Vec3>::iterator it;
   int i = 0, cur_seg = 0;
 
   //Sort points in current segment by x value for segmentation
-  std::sort(cloud.begin(), cloud.end(), CompareX);
+  //std::sort(cloud.begin(), cloud.end(), CompareX);
 
   for (it = cloud.begin(); it != cloud.end(); it++, i++) {
-    if (i == seg_size) {
-      if ((cur_seg + 1) != n_segs) {
-        cur_seg++;
-        i = 0;
-      }
-    }
-
-    cloud_segs[cur_seg].push_back(*it);
+    int group = (it->x+max_x) / segment_size;
+    cloud_segs[group].push_back(*it);
+    
+    // if (i == seg_size) {
+    //   if ((cur_seg + 1) != n_segs) {
+    //     cur_seg++;
+    //     i = 0;
+    //   }
+    // }
+    // cloud_segs[cur_seg].push_back(*it);
   }
 
   std::vector<Vec3> cur_p_gnd;  //Pts belonging to ground surface in current segment iteration
