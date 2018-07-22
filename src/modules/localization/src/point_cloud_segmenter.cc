@@ -421,7 +421,7 @@ void PointCloudSegmenter::FindRuns(Scanline& cur_scanline) {
           if (i == cur_scanline.points.size() - 1 && start_run && cur_scanline.points[i].distance(cur_scanline.points[0]) < this->th_run) 
           {
             cur_scanline.s_queue[0] = cur_scanline.s_queue.back();
-            cur_scanline.s_queue.erase(cur_scanline.s_queue.size() - 1); 
+            cur_scanline.s_queue.erase(cur_scanline.s_queue.end() - 1); 
           }
         }
       }
