@@ -47,13 +47,13 @@ void segmenter::MessageCallback(const velodyne_puck_msgs::VelodynePuckSweep::Con
 {
   ROS_INFO("Message Recieved");
   int n_iters = 3;
-  int n_lpr = 15;
-  int n_segs = 2;
-  double seed_thresh = 0.2; //meters
-  double dist_thresh = 0.1; //meters
+  int n_lpr = 20;
+  int n_segs = 3;
+  float seed_thresh = 0.4; //meters
+  float dist_thresh = 0.2; //meters
 
-  double th_run = 0.6;
-  double th_merge = 1.3;
+  float th_run = 0.5;
+  float th_merge = 1.0;
   int x_max = 40;
   int y_max = 40;
   int n_scanlines = 16;
