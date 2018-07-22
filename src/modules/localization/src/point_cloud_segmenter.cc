@@ -11,6 +11,7 @@
 #include <iostream>
 #include <ctime>
 #include <string>
+#include <map>
 #include "segmenter/point_cloud_segmenter.h"
 #include "segmenter/nanoflann.h"
 
@@ -176,7 +177,7 @@ void PointCloudSegmenter::ExtractInitialSeeds(std::vector<Vec3>& cloud_seg, std:
     1. Calculate the centroid of the points
     2. Calculate the covariance matrix of the points relative to the centroid
     3. Find the main axis (the component of the plane normal which will have the largest absolute value)
-       and do simple linear regression along that axis
+        and do simple linear regression along that axis
 */
 Vec3 PointCloudSegmenter::CalculatePlaneNormal(std::vector<Vec3>& cur_p_gnd) {
   int n = cur_p_gnd.size();
@@ -201,7 +202,7 @@ Vec3 PointCloudSegmenter::CalculatePlaneNormal(std::vector<Vec3>& cur_p_gnd) {
 
     //Calc covarience matrix
     double xx = 0, xy = 0, xz = 0,
-           yy = 0, yz = 0, zz = 0;
+          yy = 0, yz = 0, zz = 0;
 
     Vec3 r;
 
@@ -421,13 +422,12 @@ void PointCloudSegmenter::FindRuns(Scanline& cur_scanline) {
 
 /*
   Update Labels:
-    1. Loop through all runs
-    2. For each point in each run, find its nearest neigbor
-       in the above scanline
-    3. If there are neigbors within th->merge:
-         Pick the min label of the label candidates and merge all labels to that one
-       Else:
-         Set all labels in run to newlabel and increment newlabel
+    1.Loop through all runs
+    2.For each point in each run, find its nearest neigbor in the above scanline
+    3.If there are neigbors within th->merge:
+        Pick the min label of the label candidates and merge all labels to that one
+      Else:
+        Set all labels in run to newlabel and increment newlabel
 */
 void PointCloudSegmenter::UpdateLabels(Scanline &scan_current, Scanline &scan_above) {
   std::vector<int> labels_to_merge;
@@ -580,4 +580,3 @@ std::vector<Vec3> PointCloudSegmenter::ExtractClusters( std::vector<Scanline>& s
   }
   return out_points;
 }
-

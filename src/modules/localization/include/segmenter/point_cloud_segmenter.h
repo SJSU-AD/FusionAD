@@ -169,6 +169,6 @@ class PointCloudSegmenter {
 
     void ResolveMerge(int x, int y);
 
-    std::vector<Vec3> ExtractClusters( std::vector<Scanline>& scanlines );
+    std::vector<Vec3> ExtractClusters(std::vector<Scanline>& scanlines);
 };
 

@@ -32,19 +32,19 @@ int main(int argc, char** argv)
   }
 }
 
-void segmenter::initRosComm()
+void segmenter::InitRosComm()
 {
   segmenter_pub = segmenter_nh.advertise<sensor_msgs::PointCloud2>("clusters", 10);
   segmenter_sub = segmenter_nh.subscribe("velodyne_sweep", 100, &segmenter::messageCallback, this);
   ROS_INFO("Subscriber has been set");
 }
 
-void segmenter::publishSegments()
+void segmenter::PublishSegments()
 {
   
 }
 
-void segmenter::messageCallback(const velodyne_puck_msgs::VelodynePuckSweep::ConstPtr& msg)
+void segmenter::MessageCallback(const velodyne_puck_msgs::VelodynePuckSweep::ConstPtr& msg)
 {
   ROS_INFO("Message Recieved");
   int n_iters = 3;
@@ -59,15 +59,19 @@ void segmenter::messageCallback(const velodyne_puck_msgs::VelodynePuckSweep::Con
   int y_max = 40;
   int n_scanlines = 16;
 
+  pcl::PointCloud<pcl::PointXYZI>::Ptr final_point_cloud(new pcl::PointCloud<pcl::PointXYZI>());
+  std::vector<pcl::PointIndices> clusters;
+
   std::vector<Vec3> input_cloud;
   std::vector<Vec3> predicted_ground;
   std::vector<Vec3> predicted_not_ground;
   std::vector<Vec3> predicted_clusters;
+ 
 
   PointCloudSegmenter segmenter(x_max, y_max, n_iters, n_lpr, n_segs, seed_thresh, dist_thresh, n_scanlines, th_run, th_merge);
 
   //int time1 = clock();
-  parseInput(input_cloud, segmenter, msg);
+  ParseInput(input_cloud, segmenter, msg);
   //std::cout << "Input size: " << input_cloud.size() << std::endl;
 
   segmenter.GroundPlaneFitting(input_cloud);
@@ -77,13 +81,13 @@ void segmenter::messageCallback(const velodyne_puck_msgs::VelodynePuckSweep::Con
 
   predicted_clusters = segmenter.ScanLineRun(predicted_not_ground);
 
-  generateOutput(predicted_clusters);
+  clusters = GenerateOutput(predicted_clusters);
   //int time2 = clock();
   //std::cout << "Segmentation runtime: " << (time2 - time1) / double(CLOCKS_PER_SEC) * 1000 << " ms\n" << std::endl;
 }
 
 
-void segmenter::parseInput(std::vector<Vec3>& in, PointCloudSegmenter& seg,  
+void segmenter::ParseInput(std::vector<Vec3>& in, PointCloudSegmenter& seg,  
      			   const velodyne_puck_msgs::VelodynePuckSweep::ConstPtr& cloud)
 {
   for (int i = 0; i < 15; i++)
@@ -114,31 +118,49 @@ void segmenter::parseInput(std::vector<Vec3>& in, PointCloudSegmenter& seg,
 }
 
 
-void segmenter::generateOutput(std::vector<Vec3>& pts)
+std::vector<pcl::PointIndices>segmenter::GenerateOutput(std::vector<Vec3>& pts)
 {
-  std::ofstream file;
-  file.open ("test_output.txt"); 
- 
-  pcl::PointCloud<pcl::PointXYZI>::Ptr point_cloud(
-    new pcl::PointCloud<pcl::PointXYZI>());
-  point_cloud->header.frame_id = "/velodyne";
-  point_cloud->height = 1;
+  std::vector<pcl::PointIndices> cluster_indices;
+  std::map<int, size_t> label_index_map;
+  int cur_point_index = 0;
+  size_t cluster_count = 0;
 
-  std::vector<Vec3>::iterator it;
+  pcl::PointCloud<pcl::PointXYZI>::Ptr final_point_cloud(new pcl::PointCloud<pcl::PointXYZI>());
+  final_point_cloud->header.frame_id = "/velodyne";
+  final_point_cloud->height = 1;
 
-  for (it = pts.begin(); it != pts.end(); it++) {
+  std::vector<Vec3>::iterator v_it;
+
+  for (v_it = pts.begin(); v_it != pts.end(); v_it++) {
     pcl::PointXYZI point;
-    point.x = it->x;
-    point.y = it->y;
-    point.z = it->z;
-    point.intensity = it->label;
-    point_cloud->points.push_back(point);
-    ++point_cloud->width;
-    file << point.x << " " << point.y << " " << point.z << " " << point.intensity << "\n";
+    point.x = v_it->x;
+    point.y = v_it->y;
+    point.z = v_it->z;
+    point.intensity = v_it->intensity;
+
+    final_point_cloud->points.push_back(point);
+    ++final_point_cloud->width;
+
+    std::map<int, size_t>::iterator m_it = m.find(v_it->label);
+    if (m_it != m.end())
+    {
+      clusters[(*m_it).second].indices.push_back(cur_point_index);
+    } else 
+    {
+      cluster_indices.resize(cluster_count + 1);
+      cluster_indices[cluster_count].indices.push_back(cur_point_index);
+
+      std::pair<int, size_t> label_index_pair;
+      label_index_pair.first = v_it->label;
+      label_index_pair.second = cluster_count;
+
+      label_index_map.insert(label_index_pair);
+      ++cluster_count;
+    }
+
+    ++cur_point_index;
   }
 
-  std::cout << "Out Size: " << point_cloud->width << std::endl;
-
-  segmenter_pub.publish(point_cloud);
-  file.close();
+  //std::cout << "Out Size: " << point_cloud->width << std::endl;
+  segmenter_pub.publish(final_point_cloud);
 }

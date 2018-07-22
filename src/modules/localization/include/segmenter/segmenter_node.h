@@ -18,17 +18,17 @@ class segmenter
   public:
     segmenter();
     ~segmenter();
-    void initRosComm();
-    void publishSegments();
+    void InitRosComm();
+    void PublishSegments();
 
   private:
     ros::NodeHandle segmenter_nh;
     ros::Publisher segmenter_pub;
     ros::Subscriber segmenter_sub;
-    void messageCallback(const velodyne_puck_msgs::VelodynePuckSweep::ConstPtr& msg);
-    void parseInput(std::vector<Vec3>& in, PointCloudSegmenter& seg, 
+    void MessageCallback(const velodyne_puck_msgs::VelodynePuckSweep::ConstPtr& msg);
+    void ParseInput(std::vector<Vec3>& in, PointCloudSegmenter& seg, 
                     const velodyne_puck_msgs::VelodynePuckSweep::ConstPtr& cloud);
-    void generateOutput(std::vector<Vec3>& pts);
+    std::vector<pcl::PointIndices> GenerateOutput(std::vector<Vec3>& pts);
 };
 
 #endif
