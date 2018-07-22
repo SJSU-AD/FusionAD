@@ -59,7 +59,11 @@ void  PointCloudSegmenter::GroundPlaneFitting(std::vector<Vec3>& cloud) {
   for (it = cloud.begin(); it != cloud.end(); it++, i++) {
     if (it->x < max_x) {
       group = (it->x+max_x) / segment_size;
-      cloud_segs[group].push_back(*it);
+      if (group < n_segs) {
+        cloud_segs[group].push_back(*it);
+      } else {
+        std::cout << "uh oh" << std::endl;
+      }
     } 
   }
 
