@@ -6,7 +6,7 @@ Publishes the lane offset from raw image input as a data type Float32
 Subscribes to:
     /imtalker/image_raw
 Publishes to:
-    None
+    /lane_offset
 
 """
 import rospy
@@ -31,9 +31,6 @@ def interpretImage(msg):
     # Open bridge to convert image message to a matrix (Mat)
     cvBridge= CvBridge()
     
-    # Set the rate in Hz
-    rate= rospy.Rate(10)
-    
     # Get frame recieved
     frameRecieved= cvBridge.imgmsg_to_cv2(msg)  
     
@@ -43,8 +40,6 @@ def interpretImage(msg):
         lane_offset= get_offset(frameRecieved)  
         offset_publisher.publish(lane_offset)
         rospy.loginfo("Lane offset: %f",lane_offset)
-        
-    rate.sleep()
 
 if __name__ == '__main__':
     try:
