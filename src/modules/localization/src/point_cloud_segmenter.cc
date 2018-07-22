@@ -47,8 +47,8 @@ std::ostream& operator<<(std::ostream& os, const Vec3& vec) {
 void  PointCloudSegmenter::GroundPlaneFitting(std::vector<Vec3>& cloud) {
   int start_s = clock(); //Take start timestamp
 
-  i//nt seg_size = (cloud.size() / n_segs);
-  int segment_size = (2 * max_x) / n_segs
+  //int seg_size = (cloud.size() / n_segs);
+  int segment_size = (2 * max_x) / n_segs;
   std::vector<Vec3> cloud_segs[n_segs];
 
   std::vector<Vec3>::iterator it;
