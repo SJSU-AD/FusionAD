@@ -79,7 +79,7 @@ void segmenter::MessageCallback(const velodyne_puck_msgs::VelodynePuckSweep::Con
   predicted_ground = segmenter.GetGroundPoints();
   predicted_not_ground = segmenter.GetNonGroundPoints();
 
-  predicted_clusters = segmenter.ScanLineRun(predicted_not_ground);
+  predicted_clusters = segmenter.ScanLineRun(segmenter.p_all);
 
   clusters = GenerateOutput(predicted_clusters);
   //int time2 = clock();
@@ -118,7 +118,7 @@ void segmenter::ParseInput(std::vector<Vec3>& in, PointCloudSegmenter& seg,
 }
 
 
-std::vector<pcl::PointIndices>segmenter::GenerateOutput(std::vector<Vec3>& pts)
+std::vector<pcl::PointIndices> segmenter::GenerateOutput(std::vector<Vec3>& pts)
 {
   std::vector<pcl::PointIndices> cluster_indices;
   std::map<int, size_t> label_index_map;
@@ -163,4 +163,6 @@ std::vector<pcl::PointIndices>segmenter::GenerateOutput(std::vector<Vec3>& pts)
 
   //std::cout << "Out Size: " << point_cloud->width << std::endl;
   segmenter_pub.publish(final_point_cloud);
+
+  return cluster_indices;
 }
