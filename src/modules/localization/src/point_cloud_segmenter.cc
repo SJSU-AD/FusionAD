@@ -297,11 +297,11 @@ std::vector<Vec3> PointCloudSegmenter::ScanLineRun(std::vector<Vec3>& cloud) {
   }
 
   //Index scanlines by theta
-  for (s_it = scanlines.end()-1; s_it != scanlines.begin()-1; s_it--) {
+  for (s_it = scanlines.begin(); s_it != scanlines.end(); s_it++) {
     if (s_it->points.size() == 0) {
       //(s_it - 1)->points.insert((s_it - 1)->points.end(), s_it->points.begin(), s_it->points.end());
       scanlines.erase(s_it);
-      s_it--;
+      s_it++;
     } else {
       //std::sort(s_it->points.begin(), s_it->points.end(), CompareTheta);
 
@@ -319,7 +319,7 @@ std::vector<Vec3> PointCloudSegmenter::ScanLineRun(std::vector<Vec3>& cloud) {
   //std::cout << "Num Scanlines: " << scanlines.size() << std::endl;
 
   //Assign inital labels
-  Scanline* scan_above = &scanlines[0];
+  Scanline* scan_above = &scanlines[scanlines.size() - 1];
   Scanline* scan_current = nullptr;
   FindRuns(*scan_above);
   int start_index;
@@ -337,7 +337,7 @@ std::vector<Vec3> PointCloudSegmenter::ScanLineRun(std::vector<Vec3>& cloud) {
   }
 
   //Find runs for all subsequent scanlines and propogate labels
-  for (int i = 1; i < scanlines.size(); i++) {
+  for (int i = scanlines.size() - 2; i >= 0; i--) {
     scan_current = &(scanlines[i]);
     FindRuns(*scan_current);
     UpdateLabels(*scan_current, *scan_above);
@@ -476,7 +476,7 @@ void PointCloudSegmenter::UpdateLabels(Scanline &scan_current, Scanline &scan_ab
 
   if (scan_current.s_queue.size() != scan_current.e_queue.size()) 
   {
-    std:: cout << "Start & End: " << scan_current.s_queue.size() << "  " << scan_current.e_queue.size() << std::endl;
+    std::cout << "Start & End: " << scan_current.s_queue.size() << "  " << scan_current.e_queue.size() << std::endl;
     return;
   }
 
@@ -487,13 +487,12 @@ void PointCloudSegmenter::UpdateLabels(Scanline &scan_current, Scanline &scan_ab
 
     if (start_index > end_index)
     {
-      int nearest_label;
 
       for (int k = start_index; k < scan_current.points.size(); k++) 
       {
         if (scan_current.points[k].label != -3) 
         {
-          int nearest_label = FindNearestNeighbor(scan_current, scan_above, start_index, scan_current.points.size()-1, k);
+          int nearest_label = FindNearestNeighbor(scan_current, scan_above, start_index, end_index, k);
 
           if (nearest_label != -1 && std::find(labels_to_merge.begin(), labels_to_merge.end(), nearest_label) == labels_to_merge.end()) 
           {
@@ -506,7 +505,7 @@ void PointCloudSegmenter::UpdateLabels(Scanline &scan_current, Scanline &scan_ab
       {
         if (scan_current.points[k].label != -3) 
         {
-          nearest_label = FindNearestNeighbor(scan_current, scan_above, 0, end_index, k);
+          int nearest_label = FindNearestNeighbor(scan_current, scan_above, start_index, end_index, k);
 
           if (nearest_label != -1 && std::find(labels_to_merge.begin(), labels_to_merge.end(), nearest_label) == labels_to_merge.end()) 
           {
@@ -603,7 +602,7 @@ void PointCloudSegmenter::MergeOperation(int u, int v) {
 void PointCloudSegmenter::SetRunLabel(Scanline &scan_current, int start_index, int end_index, int set_label) {
   int k;
 
-  if (start_index < end_index) 
+  if (start_index <= end_index) 
   {
     for (k = start_index; k <= end_index; k++) 
     {
@@ -630,9 +629,9 @@ void PointCloudSegmenter::SetRunLabel(Scanline &scan_current, int start_index, i
   TODO: Implement smart indexing and kdtree
 */
 int PointCloudSegmenter::FindNearestNeighbor(Scanline& scan_current, Scanline& scan_above, int start_index, int end_index, int point_index) {
-  double conversion_factor = scan_above.points.size() / scan_current.points.size();
-  int above_start = floor(start_index * conversion_factor);
-  int above_end = floor(end_index * conversion_factor);
+  //double conversion_factor = scan_above.points.size() / scan_current.points.size();
+  //int above_start = floor(start_index * conversion_factor);
+  //int above_end = floor(end_index * conversion_factor);
 
   // Determine nearest point to search at
   Vec3 current = scan_current.points[point_index];
