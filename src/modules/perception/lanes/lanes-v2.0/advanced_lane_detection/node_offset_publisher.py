@@ -36,10 +36,14 @@ def interpretImage(msg):
     
     # With given frame publish information about the offset
     # Only publish if image is not empty
-    if frameRecieved is not None:
-        lane_offset= get_offset(frameRecieved)  
-        offset_publisher.publish(lane_offset)
-        rospy.loginfo("Lane offset: %f",lane_offset)
+    try:
+        if frameRecieved is not None:
+            lane_offset= get_offset(frameRecieved)  
+            offset_publisher.publish(lane_offset)
+            rospy.loginfo("Lane offset: %f",lane_offset)
+    except TypeError as e:
+        rospy.loginfo("No lane detected")
+        offset_publisher.publish(-9999)
 
 if __name__ == '__main__':
     try:
