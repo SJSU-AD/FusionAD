@@ -57,13 +57,10 @@ void  PointCloudSegmenter::GroundPlaneFitting(std::vector<Vec3>& cloud) {
   //Sort points in current segment by x value for segmentation
   int group;
   for (it = cloud.begin(); it != cloud.end(); it++, i++) {
-    if ((int)it->x != max_x) {
+    if (it->x < max_x) {
       group = (it->x+max_x) / segment_size;
-    } else {
-      group = n_segs-1;
-    }
-    
-    cloud_segs[group].push_back(*it);
+      cloud_segs[group].push_back(*it);
+    } 
   }
 
   std::vector<Vec3> cur_p_gnd;  //Pts belonging to ground surface in current segment iteration
