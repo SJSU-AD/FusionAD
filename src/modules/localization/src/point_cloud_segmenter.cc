@@ -366,21 +366,28 @@ void PointCloudSegmenter::FindRuns(Scanline& cur_scanline) {
   std::vector<Vec3>::iterator it;
   bool start_run = true;
 
-  while (cur_scanline.points[i].label == -3) {
+  if (cur_scanline.points[0].label == -3 || cur_scanline.points.back().label == -3)
+  {
     start_run = false;
+  }
+
+  while (cur_scanline.points[i].label == -3) 
+  {
     i++;
   }
 
-  if (i < cur_scanline.points.size() ) {
+  if (i < cur_scanline.points.size() ) 
+  {
     cur_scanline.s_queue.push_back(i);
 
-    if (i == cur_scanline.points.size() - 1){
+    if (i == cur_scanline.points.size() - 1)
+    {
       cur_scanline.e_queue.push_back(i);
       return;
     }
-
-    i += 1;
-  } else {
+    ++i;
+  } else 
+  {
     return;
   }
 
@@ -394,10 +401,15 @@ void PointCloudSegmenter::FindRuns(Scanline& cur_scanline) {
       if (prev_p->label == -3) 
       {
         //Start new run if immediately after gnd pt
-        if (i == cur_scanline.points.size() - 1 && start_run && cur_scanline.points[i].distance(cur_scanline.points[0]) < this->th_run) 
+        if (i == cur_scanline.points.size() - 1) 
         {
-
-          cur_scanline.s_queue[0] = i;
+          if (start_run && (cur_scanline.points[i]).distance(cur_scanline.points[0]) < this->th_run)
+          {
+            cur_scanline.s_queue[0] = i;
+          } else {
+            cur_scanline.s_queue.push_back(i);
+            cur_scanline.e_queue.push_back(i);
+          }
         } else 
         {
           cur_scanline.s_queue.push_back(i);
@@ -409,19 +421,30 @@ void PointCloudSegmenter::FindRuns(Scanline& cur_scanline) {
         {
           cur_scanline.e_queue.push_back(i - 1);
 
-          if (i == cur_scanline.points.size() - 1 && start_run && cur_scanline.points[i].distance(cur_scanline.points[0]) < this->th_run) 
+          if (i == cur_scanline.points.size() - 1) 
           {
-            cur_scanline.s_queue[0] = i;
-          }else 
+            if (start_run && (cur_scanline.points[i]).distance(cur_scanline.points[0]) < this->th_run)
+            {
+              cur_scanline.s_queue[0] = i;
+            } else {
+              cur_scanline.s_queue.push_back(i);
+              cur_scanline.e_queue.push_back(i);
+            }
+          } else 
           {
             cur_scanline.s_queue.push_back(i);
           }
         } else 
         {
-          if (i == cur_scanline.points.size() - 1 && start_run && cur_scanline.points[i].distance(cur_scanline.points[0]) < this->th_run) 
+          if (i == cur_scanline.points.size() - 1) 
           {
-            cur_scanline.s_queue[0] = cur_scanline.s_queue.back();
-            cur_scanline.s_queue.erase(cur_scanline.s_queue.end() - 1); 
+            if (start_run && (cur_scanline.points[i]).distance(cur_scanline.points[0]) < this->th_run)
+            {
+              cur_scanline.s_queue[0] = cur_scanline.s_queue.back();
+              cur_scanline.s_queue.erase(cur_scanline.s_queue.end() - 1); 
+            } else {
+              cur_scanline.e_queue.push_back(i);
+            }
           }
         }
       }
@@ -451,21 +474,58 @@ void PointCloudSegmenter::UpdateLabels(Scanline &scan_current, Scanline &scan_ab
   int start_index;
   int end_index;
 
-  if (scan_current.s_queue.size() != scan_current.e_queue.size()) {
-    //std:: cout << "Start & End: " << scan_current.s_queue.size() << "  " << scan_current.e_queue.size() << std::endl;
+  if (scan_current.s_queue.size() != scan_current.e_queue.size()) 
+  {
+    std:: cout << "Start & End: " << scan_current.s_queue.size() << "  " << scan_current.e_queue.size() << std::endl;
     return;
   }
 
-  for (int i = 0; i < scan_current.s_queue.size(); i++) {
+  for (int i = 0; i < scan_current.s_queue.size(); i++) 
+  {
     start_index = scan_current.s_queue[i];
     end_index = scan_current.e_queue[i];
 
-    for (int k = start_index; k <= end_index; k++) {
-      if (scan_current.points[k].label != -3) {
-        int nearest_label = FindNearestNeighbor(scan_current, scan_above, start_index, end_index, k);
+    if (start_index > end_index)
+    {
+      int nearest_label;
 
-        if (nearest_label != -1 && std::find(labels_to_merge.begin(), labels_to_merge.end(), nearest_label) == labels_to_merge.end()) {
-          labels_to_merge.push_back( nearest_label );
+      for (int k = start_index; k < scan_current.points.size(); k++) 
+      {
+        if (scan_current.points[k].label != -3) 
+        {
+          int nearest_label = FindNearestNeighbor(scan_current, scan_above, start_index, scan_current.points.size()-1, k);
+
+          if (nearest_label != -1 && std::find(labels_to_merge.begin(), labels_to_merge.end(), nearest_label) == labels_to_merge.end()) 
+          {
+            labels_to_merge.push_back( nearest_label );
+          }
+        }
+      }
+
+      for (int k = 0; k <= end_index; k++) 
+      {
+        if (scan_current.points[k].label != -3) 
+        {
+          nearest_label = FindNearestNeighbor(scan_current, scan_above, 0, end_index, k);
+
+          if (nearest_label != -1 && std::find(labels_to_merge.begin(), labels_to_merge.end(), nearest_label) == labels_to_merge.end()) 
+          {
+            labels_to_merge.push_back( nearest_label );
+          }
+        }
+      }
+    } else
+    {
+      for (int k = start_index; k <= end_index; k++) 
+      {
+        if (scan_current.points[k].label != -3) 
+        {
+          int nearest_label = FindNearestNeighbor(scan_current, scan_above, start_index, end_index, k);
+
+          if (nearest_label != -1 && std::find(labels_to_merge.begin(), labels_to_merge.end(), nearest_label) == labels_to_merge.end()) 
+          {
+            labels_to_merge.push_back( nearest_label );
+          }
         }
       }
     }
