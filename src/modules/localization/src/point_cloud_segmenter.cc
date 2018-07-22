@@ -297,7 +297,7 @@ std::vector<Vec3> PointCloudSegmenter::ScanLineRun(std::vector<Vec3>& cloud) {
   }
 
   //Index scanlines by theta
-  for (s_it = scanlines.begin(); s_it != scanlines.end(); s_it++) {
+  for (s_it = scanlines.end() - 1; s_it != scanlines.begin() - 1 ; s_it--) {
     if (s_it->points.size() == 0) {
       //(s_it - 1)->points.insert((s_it - 1)->points.end(), s_it->points.begin(), s_it->points.end());
       scanlines.erase(s_it);
@@ -325,7 +325,7 @@ std::vector<Vec3> PointCloudSegmenter::ScanLineRun(std::vector<Vec3>& cloud) {
   int start_index;
   int end_index;
 
-  for (int i = 0; i < scan_above->s_queue.size(); i++) {
+  for (int i = 0; i < scan_above->s_queue.size() ; i++) {
     start_index = scan_above->s_queue[i];
     end_index = scan_above->e_queue[i];
 
@@ -364,8 +364,10 @@ void PointCloudSegmenter::FindRuns(Scanline& cur_scanline) {
   int i = 0;
 
   std::vector<Vec3>::iterator it;
+  bool start_run = true;
 
   while (cur_scanline.points[i].label == -3) {
+    start_run = false;
     i++;
   }
 
@@ -382,27 +384,45 @@ void PointCloudSegmenter::FindRuns(Scanline& cur_scanline) {
     return;
   }
 
-  for (; i < cur_scanline.points.size(); i++) {
+  for (; i < cur_scanline.points.size(); i++) 
+  {
     Vec3* cur_p = &cur_scanline.points[i];
     Vec3* prev_p = &cur_scanline.points[i-1];
 
-    if (cur_p->label != -3) {
-
-      if (prev_p->label == -3) {
+    if (cur_p->label != -3) 
+    {
+      if (prev_p->label == -3) 
+      {
         //Start new run if immediately after gnd pt
-        cur_scanline.s_queue.push_back(i);
-        if (i == cur_scanline.points.size() - 1) {
-          cur_scanline.e_queue.push_back(i);
-        }
-      } else {
-        //check distance to prev point
-        if ( (cur_scanline.points[i]).distance(cur_scanline.points[i-1]) > this->th_run ) {
-          cur_scanline.e_queue.push_back(i - 1);
+        if (i == cur_scanline.points.size() - 1 && start_run && cur_scanline.points[i].distance(cur_scanline.points[0]) < this->th_run) 
+        {
+
+          cur_scanline.s_queue[0] = i;
+        } else 
+        {
           cur_scanline.s_queue.push_back(i);
         }
+      } else 
+      {
+        //check distance to prev point
+        if ( (cur_scanline.points[i]).distance(cur_scanline.points[i-1]) > this->th_run ) 
+        {
+          cur_scanline.e_queue.push_back(i - 1);
 
-        if (i == cur_scanline.points.size() - 1) {
-            cur_scanline.e_queue.push_back(i);
+          if (i == cur_scanline.points.size() - 1 && start_run && cur_scanline.points[i].distance(cur_scanline.points[0]) < this->th_run) 
+          {
+            cur_scanline.s_queue[0] = i;
+          }else 
+          {
+            cur_scanline.s_queue.push_back(i);
+          }
+        } else 
+        {
+          if (i == cur_scanline.points.size() - 1 && start_run && cur_scanline.points[i].distance(cur_scanline.points[0]) < this->th_run) 
+          {
+            cur_scanline.s_queue[0] = cur_scanline.s_queue.back();
+            cur_scanline.s_queue.erase(cur_scanline.s_queue.size() - 1); 
+          }
         }
       }
     } else {
@@ -521,9 +541,26 @@ void PointCloudSegmenter::MergeOperation(int u, int v) {
         s_queue and e_queue to reduce vector accesses.
 */
 void PointCloudSegmenter::SetRunLabel(Scanline &scan_current, int start_index, int end_index, int set_label) {
-  for (int k = start_index; k <= end_index; k++) {
-    scan_current.points[k].label = set_label;
+  int k;
+
+  if (start_index < end_index) 
+  {
+    for (k = start_index; k <= end_index; k++) 
+    {
+      scan_current.points[k].label = set_label;
+    }
+  } else 
+  {
+    for (k = start_index; k < scan_current.points.size(); k++) 
+    {
+      scan_current.points[k].label = set_label;
+    }
+    for (k = 0; k <= end_index; k++) 
+    {
+      scan_current.points[k].label = set_label;
+    }
   }
+  
 }
 
 
