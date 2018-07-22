@@ -8,29 +8,51 @@ import pickle
 def calibrate_camera():
 	# Mapping each calibration image to number of checkerboard corners
 	# Everything is (9,6) for now
-	objp_dict = {
-		1: (9, 5),
-		2: (9, 6),
-		3: (9, 6),
-		4: (9, 6),
-		5: (9, 6),
-		6: (9, 6),
-		7: (9, 6),
-		8: (9, 6),
-		9: (9, 6),
-		10: (9, 6),
-		11: (9, 6),
-		12: (9, 6),
-		13: (9, 6),
-		14: (9, 6),
-		15: (9, 6),
-		16: (9, 6),
-		17: (9, 6),
-		18: (9, 6),
-		19: (9, 6),
-		20: (9, 6),
-	}
+	# objp_dict = {
+	# 	1: (9, 5),
+	# 	2: (9, 6),
+	# 	3: (9, 6),
+	# 	4: (9, 6),
+	# 	5: (9, 6),
+	# 	6: (9, 6),
+	# 	7: (9, 6),
+	# 	8: (9, 6),
+	# 	9: (9, 6),
+	# 	10: (9, 6),
+	# 	11: (9, 6),
+	# 	12: (9, 6),
+	# 	13: (9, 6),
+	# 	14: (9, 6),
+	# 	15: (9, 6),
+	# 	16: (9, 6),
+	# 	17: (9, 6),
+	# 	18: (9, 6),
+	# 	19: (9, 6),
+	# 	20: (9, 6),
+	# }
 
+	objp_dict = {
+		1: (7, 7),
+		2: (7, 7),
+		3: (7, 7),
+		4: (7, 7),
+		5: (7, 7),
+		6: (7, 7),
+		7: (7, 7),
+		8: (7, 7),
+		9: (7, 7),
+		10: (7, 7),
+		11: (7, 7),
+		12: (7, 7),
+		13: (7, 7),
+		14: (7, 7),
+		15: (7, 7),
+		16: (7, 7),
+		# 17: (7, 7),
+		# 18: (7, 7),
+		# 19: (7, 7),
+		# 20: (7, 7),
+	}
 	# List of object points and corners for calibration
 	objp_list = []
 	corners_list = []
@@ -44,7 +66,7 @@ def calibrate_camera():
 		objp[:,:2] = np.mgrid[0:nx, 0:ny].T.reshape(-1,2)
 
 		# Make a list of calibration images
-		fname = 'camera_cal/calibration%s.jpg' % str(k)
+		fname = 'elp_camera_cal/calibration%s.jpg' % str(k)
 		img = cv2.imread(fname)
 
 		# Convert to grayscale
@@ -60,11 +82,11 @@ def calibrate_camera():
 			corners_list.append(corners)
 
 			# Draw and display the corners
-			# cv2.drawChessboardCorners(img, (nx, ny), corners, ret)
-			# plt.imshow(img)
-			# plt.show()
-			# print('Found corners for %s' % fname)
-			# cv2.waitKey(0)
+			cv2.drawChessboardCorners(img, (nx, ny), corners, ret)
+			plt.imshow(img)
+			plt.show()
+			print('Found corners for %s' % fname)
+			cv2.waitKey(0)
 		else:
 			print('Warning: ret = %s for %s' % (ret, fname))
 
@@ -83,7 +105,7 @@ if __name__ == '__main__':
 		pickle.dump(save_dict, f, protocol=2)
 
 	# Undistort example calibration image
-	img = mpimg.imread('camera_cal/calibration5.jpg')
+	img = mpimg.imread('elp_camera_cal/calibration5.jpg')
 	cv2.imshow("Test Image Before", img)
 	cv2.waitKey(0)
 	dst = cv2.undistort(img, mtx, dist, None, mtx)

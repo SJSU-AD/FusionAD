@@ -29,7 +29,8 @@ def main():
     rate= rospy.Rate(30)
     
     #initialize camera
-    cap= cv2.VideoCapture("project_video.mp4")
+    # cap= cv2.VideoCapture("project_video.mp4")
+    cap= cv2.VideoCapture(0)
     print "Camera Initialized"
     
     while not rospy.is_shutdown():
