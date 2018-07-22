@@ -1,3 +1,15 @@
+#!/usr/bin/env python
+
+"""
+Subscribes to raw video and displays the video.
+
+Subscribes to:
+    /raw_USBcamera_images
+Publishes to:
+    None
+
+"""
+
 import cv2
 import rospy
 import numpy as numpy

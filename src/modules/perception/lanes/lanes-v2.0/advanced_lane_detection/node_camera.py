@@ -1,4 +1,15 @@
 #!/usr/bin/env python
+
+"""
+Publishes raw video from OpenCV VideoCapture.
+
+Subscribes to:
+    None
+Publishes to:
+    /raw_USBcamera_images
+
+"""
+
 import cv2
 import rospy
 import roslib
@@ -14,11 +25,11 @@ def main():
     bridge= CvBridge()
     
     #Create publisher  and to publish raw image data
-    pub= rospy.Publisher("/raw_USBcamera_images", Image, queue_size=1)
-    rate= rospy.Rate(10)
+    pub= rospy.Publisher("/raw_USBcamera_images", Image, queue_size=1000)
+    rate= rospy.Rate(30)
     
     #initialize camera
-    cap= cv2.VideoCapture(1)
+    cap= cv2.VideoCapture("project_video.mp4")
     print "Camera Initialized"
     
     while not rospy.is_shutdown():
