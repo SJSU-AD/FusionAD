@@ -20,7 +20,7 @@ int main(int argc, char** argv)
 {
   ros::init(argc, argv, "segmenter_node");
   segmenter segmenter_object;
-  segmenter_object.initRosComm();
+  segmenter_object.InitRosComm();
 
   ros::Rate loop_rate(6);
 
@@ -35,7 +35,7 @@ int main(int argc, char** argv)
 void segmenter::InitRosComm()
 {
   segmenter_pub = segmenter_nh.advertise<sensor_msgs::PointCloud2>("clusters", 10);
-  segmenter_sub = segmenter_nh.subscribe("velodyne_sweep", 100, &segmenter::messageCallback, this);
+  segmenter_sub = segmenter_nh.subscribe("velodyne_sweep", 100, &segmenter::MessageCallback, this);
   ROS_INFO("Subscriber has been set");
 }
 
@@ -101,9 +101,7 @@ void segmenter::ParseInput(std::vector<Vec3>& in, PointCloudSegmenter& seg,
       point.x = vlp_point.x; //(vlp_point.x * std::cos(theta)) + (vlp_point.z * std::sin(theta));
       point.y = vlp_point.y;
       point.z = vlp_point.z + 1; //(vlp_point.x * std::sin(theta)) + (vlp_point.z * std::cos(theta));
-      //point.r = vlp_point.distance;
       point.intensity = vlp_point.intensity;
-      //point.azimuth = vlp_point.azimuth;
       point.label = -1; //TODO!!
       point.scanline = i;
 
@@ -141,10 +139,10 @@ std::vector<pcl::PointIndices> segmenter::GenerateOutput(std::vector<Vec3>& pts)
     final_point_cloud->points.push_back(point);
     ++final_point_cloud->width;
 
-    std::map<int, size_t>::iterator m_it = m.find(v_it->label);
+    std::map<int, size_t>::iterator m_it = label_index_map.find(v_it->label);
     if (m_it != m.end())
     {
-      clusters[(*m_it).second].indices.push_back(cur_point_index);
+      cluster_indices[(*m_it).second].indices.push_back(cur_point_index);
     } else 
     {
       cluster_indices.resize(cluster_count + 1);
