@@ -100,8 +100,8 @@ class PointCloudSegmenter {
     double th_run;
     double th_merge;
 
-    int max_x;
-    int max_y;
+    float max_x;
+    float max_y;
 
     PointCloudSegmenter() {
       n_iter = 0;

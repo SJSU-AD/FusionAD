@@ -96,20 +96,19 @@ void segmenter::ParseInput(std::vector<Vec3>& in, PointCloudSegmenter& seg,
 
     for (int j = 0; j < cloud->scans[i].points.size(); j++) 
     {
-      vlp_point = cloud->scans[i].points[j];
-      point.x = vlp_point.x; //(vlp_point.x * std::cos(theta)) + (vlp_point.z * std::sin(theta));
-      point.y = vlp_point.y;
-      point.z = vlp_point.z + 1; //(vlp_point.x * std::sin(theta)) + (vlp_point.z * std::cos(theta));
-      point.intensity = vlp_point.intensity;
-      point.label = -1; //TODO!!
-      point.scanline = i;
 
-      //if (point.r > 0) 
-      //{
-        if (point.x < seg.max_x && point.x > -seg.max_x && point.y < seg.max_y && point.y > -seg.max_y) {
-          in.push_back(point); 
-        }
-      //}
+      vlp_point = cloud->scans[i].points[j];
+
+      if (vlp_point.x < seg.max_x && vlp_point.x > -seg.max_x && vlp_point.y < seg.max_y && vlp_point.y > -seg.max_y) {
+        point.x = vlp_point.x; //(vlp_point.x * std::cos(theta)) + (vlp_point.z * std::sin(theta));
+        point.y = vlp_point.y;
+        point.z = vlp_point.z + 1; //(vlp_point.x * std::sin(theta)) + (vlp_point.z * std::cos(theta));
+        point.intensity = vlp_point.intensity;
+        point.label = -1; //TODO!!
+        point.scanline = i;
+
+        in.push_back(point); 
+      }
     } 
   }
 }

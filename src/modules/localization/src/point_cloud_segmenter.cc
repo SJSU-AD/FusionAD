@@ -45,10 +45,10 @@ std::ostream& operator<<(std::ostream& os, const Vec3& vec) {
         calculate the new estimated
 */
 void  PointCloudSegmenter::GroundPlaneFitting(std::vector<Vec3>& cloud) {
-  int start_s = clock(); //Take start timestamp
+  //int start_s = clock(); //Take start timestamp
 
   //int seg_size = (cloud.size() / n_segs);
-  int segment_size = (2 * max_x) / n_segs;
+  float segment_size = (2 * max_x) / n_segs;
   std::vector<Vec3> cloud_segs[n_segs];
 
   std::vector<Vec3>::iterator it;
@@ -57,13 +57,9 @@ void  PointCloudSegmenter::GroundPlaneFitting(std::vector<Vec3>& cloud) {
   //Sort points in current segment by x value for segmentation
   int group;
   for (it = cloud.begin(); it != cloud.end(); it++, i++) {
-    if (it->x < max_x) {
-      group = (it->x+max_x) / segment_size;
-      if (group < n_segs) {
-        cloud_segs[group].push_back(*it);
-      } else {
-        std::cout << "uh oh" << std::endl;
-      }
+    group = int((it->x+max_x) / segment_size);
+    if (group < n_segs) {
+      cloud_segs[group].push_back(*it);
     } 
   }
 
@@ -126,7 +122,7 @@ void  PointCloudSegmenter::GroundPlaneFitting(std::vector<Vec3>& cloud) {
 
   }
 
-  int stop_s = clock(); //Take end timestamp
+  //int stop_s = clock(); //Take end timestamp
   //std::cout << "GPF runtime: " << (stop_s - start_s) / double(CLOCKS_PER_SEC) * 1000 << " ms" << std::endl;
 }
 
