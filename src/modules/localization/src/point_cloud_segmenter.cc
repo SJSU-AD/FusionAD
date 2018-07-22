@@ -319,7 +319,7 @@ std::vector<Vec3> PointCloudSegmenter::ScanLineRun(std::vector<Vec3>& cloud) {
   //std::cout << "Num Scanlines: " << scanlines.size() << std::endl;
 
   //Assign inital labels
-  Scanline* scan_above = &scanlines[0];
+  Scanline* scan_above = &(scanlines.back());
   Scanline* scan_current = nullptr;
   FindRuns(*scan_above);
   int start_index;
@@ -338,7 +338,7 @@ std::vector<Vec3> PointCloudSegmenter::ScanLineRun(std::vector<Vec3>& cloud) {
 
   //Find runs for all subsequent scanlines and propogate labels
   //std::vector<Scanline>::reverse_iterator rs_it;
-  for (int i = 1; i < scanlines.size(); i++) {
+  for (int i = scanlines.size() - 2; i >= 0; i--) {
     scan_current = &(scanlines[i]);
     FindRuns(*scan_current);
     UpdateLabels(*scan_current, *scan_above);
