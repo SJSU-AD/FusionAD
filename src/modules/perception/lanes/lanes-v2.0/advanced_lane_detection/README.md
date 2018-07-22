@@ -1,6 +1,11 @@
 # Advanced Lane Detection
 CREDIT: https://github.com/georgesung/advanced_lane_detection
 
+## Changes
+Added the file offset_publisher_node.py to this repository. 
+* This file creates a node that utilizes the 'get_offset()' function from the get_offset.py to publish the lane offset of an image.
+* This 'offset_publisher_node' also subscribes to raw camera images as input to calculate the lane offset in real time.
+
 ![annotated](output_images/annotated_test2.png)
 ## Overview
 Detect lanes using computer vision techniques. This project is part of the [Udacity Self-Driving Car Nanodegree](https://www.udacity.com/drive), and much of the code is leveraged from the lecture notes.

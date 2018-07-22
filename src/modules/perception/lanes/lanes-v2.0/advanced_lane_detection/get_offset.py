@@ -91,15 +91,15 @@ def get_offset(img_in):
 	#vehicle_offset is a numpy.Float64 but we just want the float value to be able to publish
 	return float_offset_value
 
-# if __name__ == '__main__':
-# 	cap = cv2.VideoCapture('project_video.mp4')
+if __name__ == '__main__':
+	cap = cv2.VideoCapture('project_video.mp4')
 
-# 	while(True):
-# 		ret, frame = cap.read()
-# 		print(get_offset(frame))
+	while(True):
+		ret, frame = cap.read()
+		print(get_offset(frame))
 
-# 		cv2.imshow('original', frame)
-# 		if cv2.waitKey(2) & 0xFF == ord('q'):
-# 			break
-# 	cap.release()
-# 	cv2.destroyAllWindows()
+		cv2.imshow('original', frame)
+		if cv2.waitKey(2) & 0xFF == ord('q'):
+			break
+	cap.release()
+	cv2.destroyAllWindows()
