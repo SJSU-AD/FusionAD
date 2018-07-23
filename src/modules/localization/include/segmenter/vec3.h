@@ -8,7 +8,7 @@ class Vec3 {
     float z;
     //float r;
     float intensity;
-    //float azimuth;
+    //float theta;
     int label;
     int scanline;
 
@@ -17,6 +17,7 @@ class Vec3 {
     Vec3(float a, float b, float c) : x(a), y(b), z(c) {
       //r = sqrt(x*x + y*y);
       label = -1;
+      //theta = atan2(y, x) - 3.14159265/2;
       //azimuth = atan2(y, x) - 3.14159265/2;
     }
 

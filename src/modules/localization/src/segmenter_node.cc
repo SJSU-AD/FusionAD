@@ -52,8 +52,8 @@ void segmenter::MessageCallback(const velodyne_puck_msgs::VelodynePuckSweep::Con
   float seed_thresh = 0.4; //meters
   float dist_thresh = 0.2; //meters
 
-  float th_run = 0.5;
-  float th_merge = 1.0;
+  float th_run = 0.7;
+  float th_merge = 1.3;
   int x_max = 40;
   int y_max = 40;
   int n_scanlines = 16;
@@ -89,7 +89,8 @@ void segmenter::MessageCallback(const velodyne_puck_msgs::VelodynePuckSweep::Con
 void segmenter::ParseInput(std::vector<Vec3>& in, PointCloudSegmenter& seg,  
      			   const velodyne_puck_msgs::VelodynePuckSweep::ConstPtr& cloud)
 {
-  for (int i = 0; i < 15; i++)
+  float origin[] = {0,0,0};
+  for (int i = 15; i >= 0; i--)
   {
     Vec3 point;
     velodyne_puck_msgs::VelodynePuckPoint vlp_point;
@@ -99,15 +100,19 @@ void segmenter::ParseInput(std::vector<Vec3>& in, PointCloudSegmenter& seg,
 
       vlp_point = cloud->scans[i].points[j];
 
-      if (vlp_point.x < seg.max_x && vlp_point.x > -seg.max_x && vlp_point.y < seg.max_y && vlp_point.y > -seg.max_y) {
+      if (vlp_point.x < seg.max_x && vlp_point.x > -seg.max_x && vlp_point.y < seg.max_y && vlp_point.y > -seg.max_y) 
+      {
         point.x = vlp_point.x; //(vlp_point.x * std::cos(theta)) + (vlp_point.z * std::sin(theta));
         point.y = vlp_point.y;
-        point.z = vlp_point.z + 1; //(vlp_point.x * std::sin(theta)) + (vlp_point.z * std::cos(theta));
+        point.z = vlp_point.z; //(vlp_point.x * std::sin(theta)) + (vlp_point.z * std::cos(theta));
         point.intensity = vlp_point.intensity;
         point.label = -1; //TODO!!
         point.scanline = i;
 
-        in.push_back(point); 
+        if(point.distance_squared(origin) > 4) 
+        {
+          in.push_back(point);
+        } 
       }
     } 
   }
@@ -157,7 +162,7 @@ std::vector<pcl::PointIndices> segmenter::GenerateOutput(std::vector<Vec3>& pts)
     ++cur_point_index;
   }
 
-  //std::cout << "Out Size: " << point_cloud->width << std::endl;
+  std::cout << "Cluster Count: " << cluster_indices.size() << std::endl;
   segmenter_pub.publish(final_point_cloud);
 
   return cluster_indices;

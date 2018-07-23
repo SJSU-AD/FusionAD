@@ -161,7 +161,7 @@ class PointCloudSegmenter {
 
     void SetRunLabel(Scanline &scan_current, int start_index, int end_index, int label);
 
-    int FindNearestNeighbor(Scanline& scan_current, Scanline& scan_above, int start_index, int end_index, int point_index);
+    int FindNearestNeighbor(Scanline& scan_current, Scanline& scan_above, int point_index);
 
     void MergeLabels(std::vector<int>& labels_to_merge, int min_label);
 

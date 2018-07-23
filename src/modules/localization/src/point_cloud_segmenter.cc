@@ -23,13 +23,9 @@ bool CompareZ(Vec3 const& a, Vec3 const& b) {
   return a.z < b.z;
 }
 
-bool CompareX(Vec3 const& a, Vec3 const& b) {
-  return a.x < b.x;
-}
-
-/*bool CompareTheta(Vec3 const& a, Vec3 const& b) {
-  return a.theta_horizontal < b.theta_horizontal;
-}*/
+// bool CompareTheta(Vec3 const& a, Vec3 const& b) {
+//   return a.theta < b.theta;
+// }
 
 // Allows Vec3 to be printed directly to std::cout or std::cerr
 std::ostream& operator<<(std::ostream& os, const Vec3& vec) {
@@ -45,9 +41,6 @@ std::ostream& operator<<(std::ostream& os, const Vec3& vec) {
         calculate the new estimated
 */
 void  PointCloudSegmenter::GroundPlaneFitting(std::vector<Vec3>& cloud) {
-  //int start_s = clock(); //Take start timestamp
-
-  //int seg_size = (cloud.size() / n_segs);
   float segment_size = (2 * max_x) / n_segs;
   std::vector<Vec3> cloud_segs[n_segs];
 
@@ -121,17 +114,16 @@ void  PointCloudSegmenter::GroundPlaneFitting(std::vector<Vec3>& cloud) {
     cur_p_list.clear();
 
   }
-
-  //int stop_s = clock(); //Take end timestamp
-  //std::cout << "GPF runtime: " << (stop_s - start_s) / double(CLOCKS_PER_SEC) * 1000 << " ms" << std::endl;
 }
 
 
 /*
   Calculate Lowest Point Representative and calculate inital seed points using th_seeds
 */
-void PointCloudSegmenter::ExtractInitialSeeds(std::vector<Vec3>& cloud_seg, std::vector<Vec3>& seeds) {
-  if (!cloud_seg.empty()) {
+void PointCloudSegmenter::ExtractInitialSeeds(std::vector<Vec3>& cloud_seg, std::vector<Vec3>& seeds) 
+{
+  if (!cloud_seg.empty()) 
+  {
 
     //Sort points in current segment by height
     std::sort(cloud_seg.begin(), cloud_seg.end(), CompareZ);
@@ -142,16 +134,15 @@ void PointCloudSegmenter::ExtractInitialSeeds(std::vector<Vec3>& cloud_seg, std:
     std::vector<Vec3>::iterator it;
     int i = 0;
 
-    for (it = cloud_seg.begin(); it != cloud_seg.end(); it++) {
-      //if (it->z > -4) {
-        if (i == n_lpr) break;
+    for (it = cloud_seg.begin(); it != cloud_seg.end(); it++) 
+    {
+      if (i == n_lpr) break;
 
-        lpr.x += it->x;
-        lpr.y += it->y;
-        lpr.z += it->z;
+      lpr.x += it->x;
+      lpr.y += it->y;
+      lpr.z += it->z;
 
-        i++;
-      //}
+      i++;
     }
 
     lpr.x /= n_lpr;
@@ -159,8 +150,10 @@ void PointCloudSegmenter::ExtractInitialSeeds(std::vector<Vec3>& cloud_seg, std:
     lpr.z /= n_lpr;
 
     //Add point as initial seed if its dist to lpr is < th_seeds
-    for (it =  cloud_seg.begin(); it != cloud_seg.end(); it++) {
-      if (it->z - lpr.z < this->th_seeds) {
+    for (it =  cloud_seg.begin(); it != cloud_seg.end(); it++) 
+    {
+      if (abs(it->z - lpr.z) < this->th_seeds) 
+      {
         seeds.push_back(*it);
       }
     }
@@ -319,7 +312,7 @@ std::vector<Vec3> PointCloudSegmenter::ScanLineRun(std::vector<Vec3>& cloud) {
   //std::cout << "Num Scanlines: " << scanlines.size() << std::endl;
 
   //Assign inital labels
-  Scanline* scan_above = &(scanlines.back());
+  Scanline* scan_above = &(scanlines[0]);
   Scanline* scan_current = nullptr;
   FindRuns(*scan_above);
   int start_index;
@@ -338,7 +331,7 @@ std::vector<Vec3> PointCloudSegmenter::ScanLineRun(std::vector<Vec3>& cloud) {
 
   //Find runs for all subsequent scanlines and propogate labels
   //std::vector<Scanline>::reverse_iterator rs_it;
-  for (int i = scanlines.size() - 2; i >= 0; i--) {
+  for (int i = 1; i < scanlines.size(); i++) {
     scan_current = &(scanlines[i]);
     FindRuns(*scan_current);
     UpdateLabels(*scan_current, *scan_above);
@@ -493,12 +486,12 @@ void PointCloudSegmenter::UpdateLabels(Scanline &scan_current, Scanline &scan_ab
       {
         if (scan_current.points[k].label != -3) 
         {
-          int nearest_label = FindNearestNeighbor(scan_current, scan_above, start_index, end_index, k);
+          int nearest_label = FindNearestNeighbor(scan_current, scan_above, k);
 
           if (nearest_label != -1 && std::find(labels_to_merge.begin(), labels_to_merge.end(), nearest_label) == labels_to_merge.end()) 
           {
             labels_to_merge.push_back( nearest_label );
-          }
+          } 
         }
       }
 
@@ -506,12 +499,12 @@ void PointCloudSegmenter::UpdateLabels(Scanline &scan_current, Scanline &scan_ab
       {
         if (scan_current.points[k].label != -3) 
         {
-          int nearest_label = FindNearestNeighbor(scan_current, scan_above, start_index, end_index, k);
+          int nearest_label = FindNearestNeighbor(scan_current, scan_above, k);
 
           if (nearest_label != -1 && std::find(labels_to_merge.begin(), labels_to_merge.end(), nearest_label) == labels_to_merge.end()) 
           {
             labels_to_merge.push_back( nearest_label );
-          }
+          } 
         }
       }
     } else
@@ -520,12 +513,12 @@ void PointCloudSegmenter::UpdateLabels(Scanline &scan_current, Scanline &scan_ab
       {
         if (scan_current.points[k].label != -3) 
         {
-          int nearest_label = FindNearestNeighbor(scan_current, scan_above, start_index, end_index, k);
+          int nearest_label = FindNearestNeighbor(scan_current, scan_above, k);
 
           if (nearest_label != -1 && std::find(labels_to_merge.begin(), labels_to_merge.end(), nearest_label) == labels_to_merge.end()) 
           {
             labels_to_merge.push_back( nearest_label );
-          }
+          } 
         }
       }
     }
@@ -629,7 +622,7 @@ void PointCloudSegmenter::SetRunLabel(Scanline &scan_current, int start_index, i
 
   TODO: Implement smart indexing and kdtree
 */
-int PointCloudSegmenter::FindNearestNeighbor(Scanline& scan_current, Scanline& scan_above, int start_index, int end_index, int point_index) {
+int PointCloudSegmenter::FindNearestNeighbor(Scanline& scan_current, Scanline& scan_above, int point_index) {
   //double conversion_factor = scan_above.points.size() / scan_current.points.size();
   //int above_start = floor(start_index * conversion_factor);
   //int above_end = floor(end_index * conversion_factor);
@@ -647,11 +640,12 @@ int PointCloudSegmenter::FindNearestNeighbor(Scanline& scan_current, Scanline& s
   // Perform search
   scan_above.tree->findNeighbors(results, &query[0], nanoflann::SearchParams(10));
 
-  if (result_dist_squared < this->th_merge * this->th_merge) {
+  if (result_dist_squared < this->th_merge * this->th_merge) 
+  {
     return scan_above.tree_point_cloud->get_label(result_index);
   }
 
-  return  -1;
+  return -1;
 }
 
 

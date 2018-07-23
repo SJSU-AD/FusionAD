@@ -30,7 +30,6 @@
   <build_export_depend>sensor_msgs</build_export_depend>
   <build_export_depend>pcl_ros</build_export_depend>
   <build_export_depend>pcl_conversions</build_export_depend>
-  <build_export_depend>velodyne_puck_msgs</build_export_depend>
   <exec_depend>roscpp</exec_depend>
   <exec_depend>rospy</exec_depend>
   <exec_depend>std_msgs</exec_depend>
