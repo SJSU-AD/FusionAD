@@ -107,8 +107,8 @@ class PointCloudSegmenter {
       n_iter = 0;
       n_lpr = 0;
       n_segs = 0;
-      th_seeds = 0;
-      th_dist = 0;
+      th_seeds = 0.4;
+      th_dist = 0.2;
       max_x = 40;
       max_y = 20;
       n_scanlines = 16;

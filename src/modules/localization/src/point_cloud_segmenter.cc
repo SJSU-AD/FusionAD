@@ -23,6 +23,10 @@ bool CompareZ(Vec3 const& a, Vec3 const& b) {
   return a.z < b.z;
 }
 
+bool CompareX(Vec3 const& a, Vec3 const& b) {
+  return a.x < b.x;
+}
+
 // bool CompareTheta(Vec3 const& a, Vec3 const& b) {
 //   return a.theta < b.theta;
 // }
@@ -48,28 +52,40 @@ void  PointCloudSegmenter::GroundPlaneFitting(std::vector<Vec3>& cloud) {
   int i = 0, cur_seg = 0;
 
   //Sort points in current segment by x value for segmentation
-  int group;
+  // int group;
+  // for (it = cloud.begin(); it != cloud.end(); it++, i++) {
+  //   group = int((it->x+max_x) / segment_size);
+  //   if (group < n_segs) {
+  //     cloud_segs[group].push_back(*it);
+  //   } 
+  // }
   for (it = cloud.begin(); it != cloud.end(); it++, i++) {
-    group = int((it->x+max_x) / segment_size);
-    if (group < n_segs) {
-      cloud_segs[group].push_back(*it);
-    } 
+    if (i == seg_size) {
+      if ((cur_seg + 1) != n_segs) {
+        cur_seg++;
+        i = 0;
+      }
+    }
+
+    cloud_segs[cur_seg].push_back(*it);
   }
 
   std::vector<Vec3> cur_p_gnd;  //Pts belonging to ground surface in current segment iteration
   std::vector<Vec3> cur_p_ngnd; //Pts not belonging to ground surface in current segment iteration
   std::vector<Vec3> cur_p_list;
-  std::vector<Vec3> cur_cloud_seg;
+  std::vector<Vec3>& cur_cloud_seg  = cloud_segs[0];
 
   //Loop through each segment and apply GPF
   for (i = 0; i < n_segs; i++) {
 
     cur_cloud_seg = cloud_segs[i];
 
+    std::sort(cur_cloud_seg.begin(), cur_cloud_seg.end(), CompareX);
+
     //Get initial ground points
     ExtractInitialSeeds(cur_cloud_seg, cur_p_gnd);
 
-    for(int i = 0; i < n_iter; i++) {
+    for(int j = 0; j < n_iter; j++) {
 
       Vec3 normal = CalculatePlaneNormal(cur_p_gnd);
 
@@ -91,7 +107,7 @@ void  PointCloudSegmenter::GroundPlaneFitting(std::vector<Vec3>& cloud) {
 
           dist = abs(normal.x * seg_it->x + normal.y * seg_it->y + normal.z * seg_it->z + d) / normal_mag;
 
-          if (dist < th_dist) {
+          if (dist < this->th_dist) {
             seg_it->label = -3;
             cur_p_gnd.push_back(*seg_it);
             cur_p_list.push_back(*seg_it);
@@ -150,9 +166,9 @@ void PointCloudSegmenter::ExtractInitialSeeds(std::vector<Vec3>& cloud_seg, std:
     lpr.z /= n_lpr;
 
     //Add point as initial seed if its dist to lpr is < th_seeds
-    for (it =  cloud_seg.begin(); it != cloud_seg.end(); it++) 
+    for (it = cloud_seg.begin(); it != cloud_seg.end(); it++) 
     {
-      if (abs(it->z - lpr.z) < this->th_seeds) 
+      if (it->z - lpr.z < this->th_seeds) 
       {
         seeds.push_back(*it);
       }

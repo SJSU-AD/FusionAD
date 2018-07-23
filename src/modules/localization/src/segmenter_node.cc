@@ -106,7 +106,7 @@ void segmenter::ParseInput(std::vector<Vec3>& in, PointCloudSegmenter& seg,
         point.y = vlp_point.y;
         point.z = vlp_point.z; //(vlp_point.x * std::sin(theta)) + (vlp_point.z * std::cos(theta));
         point.intensity = vlp_point.intensity;
-        point.label = -1; //TODO!!
+        //point.label = -1; //TODO!!
         point.scanline = i;
 
         if(point.distance_squared(origin) > 4) 
