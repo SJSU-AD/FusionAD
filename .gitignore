@@ -1,4 +1,4 @@
 build/
 devel/
 
-.vscode
+.vscode*
