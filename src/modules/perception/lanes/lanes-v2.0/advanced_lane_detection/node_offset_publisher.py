@@ -43,7 +43,7 @@ def interpretImage(msg):
             rospy.loginfo("Lane offset: %f",lane_offset)
     except TypeError as e:
         rospy.loginfo("No lane detected")
-        offset_publisher.publish(-9999)
+        offset_publisher.publish(float('nan'))
 
 if __name__ == '__main__':
     try:
