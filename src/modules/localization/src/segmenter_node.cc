@@ -58,29 +58,33 @@ void segmenter::MessageCallback(const velodyne_puck_msgs::VelodynePuckSweep::Con
   int y_max = 10;
   int n_scanlines = 16;
 
-  pcl::PointCloud<pcl::PointXYZI>::Ptr final_point_cloud(new pcl::PointCloud<pcl::PointXYZI>());
+  pcl::PointCloud<pcl::PointXYZI>::Ptr final_point_cloud;
   std::vector<pcl::PointIndices> clusters;
 
   std::vector<Vec3> input_cloud;
   std::vector<Vec3> predicted_ground;
-  std::vector<Vec3> predicted_not_ground;
   std::vector<Vec3> predicted_clusters;
- 
 
   PointCloudSegmenter segmenter(x_max, y_max, n_iters, n_lpr, n_segs, seed_thresh, dist_thresh, n_scanlines, th_run, th_merge);
-
-  //int time1 = clock();
   ParseInput(input_cloud, segmenter, msg);
-  //std::cout << "Input size: " << input_cloud.size() << std::endl;
-
   segmenter.GroundPlaneFitting(input_cloud);
-
   predicted_ground = segmenter.GetGroundPoints();
- // predicted_not_ground = segmenter.GetNonGroundPoints();
 
   predicted_clusters = segmenter.ScanLineRun(segmenter.p_all);
 
-  clusters = GenerateOutput(predicted_clusters);
+  //clusters = GenerateOutput(predicted_clusters);
+  SegmentProcessor seg_processor();
+
+  seg_processor.ExtractIndices(predicted_clusters);
+  seg_processor.FilterPoints(20);
+
+  bool is_obstacle = seg_processor.FindObstacles();
+  std::cout << "Obstacle detected: " << is_obstacle << std::endl;
+
+  final_point_cloud = seg_processor.GenerateColoredPointCloud();
+
+  segmenter_pub.publish(final_point_cloud);
+
   //int time2 = clock();
   //std::cout << "Segmentation runtime: " << (time2 - time1) / double(CLOCKS_PER_SEC) * 1000 << " ms\n" << std::endl;
 }
@@ -89,7 +93,6 @@ void segmenter::MessageCallback(const velodyne_puck_msgs::VelodynePuckSweep::Con
 void segmenter::ParseInput(std::vector<Vec3>& in, PointCloudSegmenter& seg,  
      			   const velodyne_puck_msgs::VelodynePuckSweep::ConstPtr& cloud)
 {
-  float origin[] = {0,0,0};
   for (int i = 15; i >= 0; i--)
   {
     Vec3 point;
@@ -97,7 +100,6 @@ void segmenter::ParseInput(std::vector<Vec3>& in, PointCloudSegmenter& seg,
 
     for (int j = 0; j < cloud->scans[i].points.size(); j++) 
     {
-
       vlp_point = cloud->scans[i].points[j];
 
       if (vlp_point.x < seg.max_x && vlp_point.x > -seg.max_x && vlp_point.y < seg.max_y && vlp_point.y > -seg.max_y) 
@@ -109,59 +111,58 @@ void segmenter::ParseInput(std::vector<Vec3>& in, PointCloudSegmenter& seg,
         //point.label = -1; //TODO!!
         point.scanline = i;
 
-        in.push_back(point);
-         
+        in.push_back(point); 
       }
     } 
   }
 }
 
 
-std::vector<pcl::PointIndices> segmenter::GenerateOutput(std::vector<Vec3>& pts)
-{
-  std::vector<pcl::PointIndices> cluster_indices;
-  std::map<int, size_t> label_index_map;
-  int cur_point_index = 0;
-  size_t cluster_count = 0;
+// std::vector<pcl::PointIndices> segmenter::GenerateOutput(std::vector<Vec3>& pts)
+// {
+//   std::vector<pcl::PointIndices> cluster_indices;
+//   std::map<int, size_t> label_index_map;
+//   int cur_point_index = 0;
+//   size_t cluster_count = 0;
 
-  pcl::PointCloud<pcl::PointXYZI>::Ptr final_point_cloud(new pcl::PointCloud<pcl::PointXYZI>());
-  final_point_cloud->header.frame_id = "/velodyne";
-  final_point_cloud->height = 1;
+//   pcl::PointCloud<pcl::PointXYZI>::Ptr final_point_cloud(new pcl::PointCloud<pcl::PointXYZI>());
+//   final_point_cloud->header.frame_id = "/velodyne";
+//   final_point_cloud->height = 1;
 
-  std::vector<Vec3>::iterator v_it;
+//   std::vector<Vec3>::iterator v_it;
 
-  for (v_it = pts.begin(); v_it != pts.end(); v_it++) {
-    pcl::PointXYZI point;
-    point.x = v_it->x;
-    point.y = v_it->y;
-    point.z = v_it->z;
-    point.intensity = v_it->label;
+//   for (v_it = pts.begin(); v_it != pts.end(); v_it++) {
+//     pcl::PointXYZI point;
+//     point.x = v_it->x;
+//     point.y = v_it->y;
+//     point.z = v_it->z;
+//     point.intensity = v_it->label;
 
-    final_point_cloud->points.push_back(point);
-    ++final_point_cloud->width;
+//     final_point_cloud->points.push_back(point);
+//     ++final_point_cloud->width;
 
-    std::map<int, size_t>::iterator m_it = label_index_map.find(v_it->label);
-    if (m_it != label_index_map.end())
-    {
-      cluster_indices[(*m_it).second].indices.push_back(cur_point_index);
-    } else 
-    {
-      cluster_indices.resize(cluster_count + 1);
-      cluster_indices[cluster_count].indices.push_back(cur_point_index);
+//     std::map<int, size_t>::iterator m_it = label_index_map.find(v_it->label);
+//     if (m_it != label_index_map.end())
+//     {
+//       cluster_indices[(*m_it).second].indices.push_back(cur_point_index);
+//     } else 
+//     {
+//       cluster_indices.resize(cluster_count + 1);
+//       cluster_indices[cluster_count].indices.push_back(cur_point_index);
 
-      std::pair<int, size_t> label_index_pair;
-      label_index_pair.first = v_it->label;
-      label_index_pair.second = cluster_count;
+//       std::pair<int, size_t> label_index_pair;
+//       label_index_pair.first = v_it->label;
+//       label_index_pair.second = cluster_count;
 
-      label_index_map.insert(label_index_pair);
-      ++cluster_count;
-    }
+//       label_index_map.insert(label_index_pair);
+//       ++cluster_count;
+//     }
 
-    ++cur_point_index;
-  }
+//     ++cur_point_index;
+//   }
 
-  std::cout << "Cluster Count: " << cluster_indices.size() << std::endl;
-  segmenter_pub.publish(final_point_cloud);
+//   std::cout << "Cluster Count: " << cluster_indices.size() << std::endl;
+//   segmenter_pub.publish(final_point_cloud);
 
-  return cluster_indices;
-}
+//   return cluster_indices;
+// }

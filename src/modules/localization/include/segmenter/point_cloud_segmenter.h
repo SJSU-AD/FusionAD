@@ -1,9 +1,6 @@
 #include <vector>
 #include "vec3.h"
 #include "nanoflann.h"
-#include <velodyne_puck_msgs/VelodynePuckPoint.h>
-#include <velodyne_puck_msgs/VelodynePuckScan.h>
-#include <velodyne_puck_msgs/VelodynePuckSweep.h>
 
 struct ScanlinePointCloud {
 
