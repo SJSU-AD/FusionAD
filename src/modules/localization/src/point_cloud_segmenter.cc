@@ -70,11 +70,13 @@ void  PointCloudSegmenter::GroundPlaneFitting(std::vector<Vec3>& cloud) {
 
     cur_cloud_seg = cloud_segs[i];
 
-    std::sort(cur_cloud_seg.begin(), cur_cloud_seg.end(), CompareX);
+    //std::sort(cur_cloud_seg.begin(), cur_cloud_seg.end(), CompareX);
 
     //Get initial ground points
     ExtractInitialSeeds(cur_cloud_seg, cur_p_gnd);
-
+    this->p_gnd.insert(p_gnd.end(), cur_p_gnd.begin(), cur_p_gnd.end());
+    break;
+     /*
     for(int j = 0; j < n_iter; j++) {
 
       Vec3 normal = CalculatePlaneNormal(cur_p_gnd);
@@ -97,11 +99,11 @@ void  PointCloudSegmenter::GroundPlaneFitting(std::vector<Vec3>& cloud) {
 
           dist = abs(normal.x * seg_it->x + normal.y * seg_it->y + normal.z * seg_it->z + d) / normal_mag;
 
-          if (dist < this->th_dist) {
-            if (j == n_iter - 1) 
-            {
-              seg_it->label = -3;
-            }
+          if (dist < th_dist) {
+	    if (j == n_iter) 
+	    {
+  	      seg_it->label = -3;
+	    }
             cur_p_gnd.push_back(*seg_it);
             cur_p_list.push_back(*seg_it);
           } else {
@@ -121,7 +123,7 @@ void  PointCloudSegmenter::GroundPlaneFitting(std::vector<Vec3>& cloud) {
     cur_p_gnd.clear();
     cur_p_ngnd.clear();
     cur_p_list.clear();
-
+*/
   }
 }
 
@@ -163,8 +165,10 @@ void PointCloudSegmenter::ExtractInitialSeeds(std::vector<Vec3>& cloud_seg, std:
     {
       if (it->z - lpr.z < this->th_seeds) 
       {
+        it->label = -3;
         seeds.push_back(*it);
       }
+      this->p_all.push_back(*it);
     }
   }
 }

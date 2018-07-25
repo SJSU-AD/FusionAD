@@ -48,14 +48,14 @@ void segmenter::MessageCallback(const velodyne_puck_msgs::VelodynePuckSweep::Con
   ROS_INFO("Message Recieved");
   int n_iters = 3;
   int n_lpr = 20;
-  int n_segs = 3;
+  int n_segs = 1;
   float seed_thresh = 0.2; //meters
   float dist_thresh = 0.1; //meters
 
-  float th_run = 0.7;
-  float th_merge = 1.3;
-  int x_max = 30;
-  int y_max = 30;
+  float th_run = 0.5;
+  float th_merge = 1.0;
+  int x_max = 10;
+  int y_max = 10;
   int n_scanlines = 16;
 
   pcl::PointCloud<pcl::PointXYZI>::Ptr final_point_cloud(new pcl::PointCloud<pcl::PointXYZI>());
@@ -76,7 +76,7 @@ void segmenter::MessageCallback(const velodyne_puck_msgs::VelodynePuckSweep::Con
   segmenter.GroundPlaneFitting(input_cloud);
 
   predicted_ground = segmenter.GetGroundPoints();
-  predicted_not_ground = segmenter.GetNonGroundPoints();
+ // predicted_not_ground = segmenter.GetNonGroundPoints();
 
   predicted_clusters = segmenter.ScanLineRun(segmenter.p_all);
 
@@ -109,10 +109,8 @@ void segmenter::ParseInput(std::vector<Vec3>& in, PointCloudSegmenter& seg,
         //point.label = -1; //TODO!!
         point.scanline = i;
 
-        if(point.distance_squared(origin) > 4) 
-        {
-          in.push_back(point);
-        } 
+        in.push_back(point);
+         
       }
     } 
   }
