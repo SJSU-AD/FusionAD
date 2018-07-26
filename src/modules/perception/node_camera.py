@@ -22,15 +22,14 @@ def main():
     rospy.init_node('camera')
     
     #Create bridge object
-    bridge= CvBridge()
+    bridge = CvBridge()
     
     #Create publisher  and to publish raw image data
-    pub= rospy.Publisher("/raw_USBcamera_images", Image, queue_size=1000)
-    rate= rospy.Rate(30)
+    pub  = rospy.Publisher("/raw_USBcamera_images", Image, queue_size=1000)
+    rate = rospy.Rate(30)
     
     #initialize camera
-    # cap= cv2.VideoCapture("project_video.mp4")
-    cap= cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(0)
     print "Camera Initialized"
     
     while not rospy.is_shutdown():

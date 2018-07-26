@@ -26,22 +26,22 @@ def main():
 
 def interpretImage(msg):
     # Initialize publisher
-    offset_publisher= rospy.Publisher('/lane_offset', Float32, queue_size=1)
+    offset_publisher = rospy.Publisher('/lane_offset', Float32, queue_size=1)
     
     # Open bridge to convert image message to a matrix (Mat)
-    cvBridge= CvBridge()
+    cvBridge = CvBridge()
     
     # Get frame recieved
-    frameRecieved= cvBridge.imgmsg_to_cv2(msg)  
+    frameRecieved = cvBridge.imgmsg_to_cv2(msg)  
     
     # With given frame publish information about the offset
     # Only publish if image is not empty
     try:
         if frameRecieved is not None:
-            lane_offset= get_offset(frameRecieved)  
+            lane_offset = get_offset(frameRecieved)  
             offset_publisher.publish(lane_offset)
             rospy.loginfo("Lane offset: %f",lane_offset)
-    except TypeError as e:
+    except TypeError:
         rospy.loginfo("No lane detected")
         offset_publisher.publish(float('nan'))
 
