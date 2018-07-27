@@ -37,6 +37,9 @@ namespace node
     //Control State Subscriber
     localization_sub = control_nh.subscribe("/localization/state", 100, &control_node::stateCallback, this);
     ROS_INFO("Control Node Path Subscriber Set!");
+
+    imu_sub = control_nh.subscribe("/imu", 100, &control_node::imuCallback, this);
+    ROS_INFO("Control Node IMU Subscriber Set!");
   }
 
   bool control_node::getParameter()
@@ -82,13 +85,17 @@ namespace node
   {
     position(0) = veh_state_msg.Position.pose.position.x;
     position(1) = veh_state_msg.Position.pose.position.x;
-    tf::Quaternion chassis_quaternion(veh_state_msg.Position.pose.orientation.x,
-                                  veh_state_msg.Position.pose.orientation.y,
-                                  veh_state_msg.Position.pose.orientation.z,
-                                  veh_state_msg.Position.pose.orientation.w);
+    linear_velocity = veh_state_msg.Speed.twist.linear.x;
+  }
+
+  void control_node::imuCallback(const sensor_msgs::Imu& inertial_msg)
+  {
+    tf::Quaternion chassis_quaternion(inertial_msg.orientation.x,
+                              inertial_msg.orientation.y,
+                              inertial_msg.orientation.z,
+                              inertial_msg.orientation.w);
     tf::Matrix3x3 temp_rotation_matrix(chassis_quaternion);
     temp_rotation_matrix.getRPY(roll, pitch, yaw);
-    linear_velocity = veh_state_msg.Speed.twist.linear.x;
   }
 
   void control_node::masterTimerCallback(const ros::TimerEvent& controlTimeEvent)
@@ -134,9 +141,9 @@ namespace node
                                             yaw,
                                             controlGain
                                             );
-                                            
+
       //TODO: Implement longitudinal Control --> blocker: Planning
-      //TODO: Replace throttle function with a lamda function lamda(throttle, brake)
+      //TODO: Replace throttle function with a lamda function --> lamda(throttle, brake)
       cmd_linear_vel = 50; //In percentage
     }
     else
