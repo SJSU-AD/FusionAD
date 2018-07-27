@@ -5,6 +5,7 @@
 #include "nav_msgs/Path.h"
 #include "geometry_msgs/PoseStamped.h"
 #include "geometry_msgs/TwistStamped.h"
+#include "sensor_msgs/Imu.h"
 #include <control/lat_controller.h>
 #include <vector>
 #include <interface/Controlcmd.h>
@@ -13,6 +14,7 @@
 #include <string>
 #include "tf/tf.h"
 #include <algorithm>
+
 
 namespace fusionad
 {
@@ -36,6 +38,7 @@ class control_node
     ros::Publisher control_main_pub;
     ros::Subscriber path_sub;
     ros::Subscriber localization_sub;
+    ros::Subscriber imu_sub;
     typedef Eigen::Matrix<double, 4, 2> pathMatrix42d; 
     Eigen::Vector2d position;
     double roll, pitch, yaw, controlGain, linear_velocity;
@@ -51,7 +54,9 @@ class control_node
 
     void pathCallback(const nav_msgs::Path& trajectory_msg);
     void stateCallback(const interface::Chassis_state& veh_state_msg);
+    void imuCallback(const sensor_msgs::Imu& inertial_msg);
     void masterTimerCallback(const ros::TimerEvent& controlTimeEvent);
+    
 
 
 };
