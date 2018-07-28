@@ -1,13 +1,12 @@
-/*
-Subscribes to raw video images and calculates distance of a face from the center of a screen with the given image.
-Publishes the distance that was calculated
+// /*
+//     Subscribes to raw video images and calculates distance of a face from the center of a screen with the given image.
+//     Publishes the distance that was calculated
 
-Subscribes to:
-    /raw_USBcamera_images
-Publishes to:
-    /faceCenter
-
-*/
+//     Subscribes to:
+//         /raw_USBcamera_images
+//     Publishes to:
+//         /faceCenter
+// */
 
 #include <iostream>
 #include <ros/ros.h>
@@ -23,7 +22,7 @@ using namespace std;
 
 //Setup for cascade classifier
 CascadeClassifier face_cascade;
-String frontalFace_cascade = "/opt/ros/kinetic/share/OpenCV-3.3.1-dev/haarcascades/haarcascade_frontalface_alt.xml"; 
+String frontalFace_cascade = "haarcascade_frontalface_alt.xml"; 
 
 class Subscribe_And_Publish
 {
