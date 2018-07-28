@@ -1,5 +1,6 @@
+#ifndef VEC3_H
+#define VEC3_H
 #include <math.h>
-
 
 class Vec3 {
   public:
@@ -8,7 +9,7 @@ class Vec3 {
     float z;
     //float r;
     float intensity;
-    //float theta;
+    float theta;
     int label;
     int scanline;
 
@@ -17,6 +18,7 @@ class Vec3 {
     Vec3(float a, float b, float c) : x(a), y(b), z(c) {
       //r = sqrt(x*x + y*y);
       label = -1;
+      theta = 0;
       //theta = atan2(y, x) - 3.14159265/2;
       //azimuth = atan2(y, x) - 3.14159265/2;
     }
@@ -36,5 +38,6 @@ class Vec3 {
     }
 };
 
+#endif
 //std::ostream& operator<<(std::ostream&, const Vec3& vec);
 

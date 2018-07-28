@@ -18,6 +18,7 @@
 //************************************************************************************************
 
 Vec3 cloud_centroid;
+#define PI 3.14155926
 
 bool CompareZ(Vec3 const& a, Vec3 const& b) {
   return a.z < b.z;
@@ -27,9 +28,9 @@ bool CompareX(Vec3 const& a, Vec3 const& b) {
   return a.x < b.x;
 }
 
-// bool CompareTheta(Vec3 const& a, Vec3 const& b) {
-//   return a.theta < b.theta;
-// }
+bool CompareTheta(Vec3 const& a, Vec3 const& b) {
+   return a.theta < b.theta;
+}
 
 // Allows Vec3 to be printed directly to std::cout or std::cerr
 std::ostream& operator<<(std::ostream& os, const Vec3& vec) {
@@ -76,6 +77,7 @@ void  PointCloudSegmenter::GroundPlaneFitting(std::vector<Vec3>& cloud) {
     ExtractInitialSeeds(cur_cloud_seg, cur_p_gnd);
     this->p_gnd.insert(p_gnd.end(), cur_p_gnd.begin(), cur_p_gnd.end());
     break;
+
      /*
     for(int j = 0; j < n_iter; j++) {
 
@@ -309,7 +311,7 @@ std::vector<Vec3> PointCloudSegmenter::ScanLineRun(std::vector<Vec3>& cloud) {
       scanlines.erase(s_it);
       s_it--;
     } else {
-      //std::sort(s_it->points.begin(), s_it->points.end(), CompareTheta);
+      std::sort(s_it->points.begin(), s_it->points.end(), CompareTheta);
 
       if (s_it->points.size() > 0) {
         ScanlinePointCloud * tree_point_cloud = new ScanlinePointCloud(s_it->points);

@@ -3,6 +3,7 @@
 #include <math.h>
 #include <ctime>
 #include "segmenter/point_cloud_segmenter.h"
+#include "segmenter/segment_processor.h"
 #include "segmenter/segmenter_node.h"
 
 segmenter::segmenter()
@@ -49,13 +50,13 @@ void segmenter::MessageCallback(const velodyne_puck_msgs::VelodynePuckSweep::Con
   int n_iters = 3;
   int n_lpr = 20;
   int n_segs = 1;
-  float seed_thresh = 0.2; //meters
+  float seed_thresh = 0.3; //meters
   float dist_thresh = 0.1; //meters
 
   float th_run = 0.5;
   float th_merge = 1.0;
-  int x_max = 10;
-  int y_max = 10;
+  int x_max = 30;
+  int y_max = 30;
   int n_scanlines = 16;
 
   pcl::PointCloud<pcl::PointXYZI>::Ptr final_point_cloud;
@@ -73,7 +74,7 @@ void segmenter::MessageCallback(const velodyne_puck_msgs::VelodynePuckSweep::Con
   predicted_clusters = segmenter.ScanLineRun(segmenter.p_all);
 
   //clusters = GenerateOutput(predicted_clusters);
-  SegmentProcessor seg_processor();
+  SegmentProcessor seg_processor;
 
   seg_processor.ExtractIndices(predicted_clusters);
   seg_processor.FilterPoints(20);
@@ -108,6 +109,7 @@ void segmenter::ParseInput(std::vector<Vec3>& in, PointCloudSegmenter& seg,
         point.y = vlp_point.y;
         point.z = vlp_point.z; //(vlp_point.x * std::sin(theta)) + (vlp_point.z * std::cos(theta));
         point.intensity = vlp_point.intensity;
+	point.theta = vlp_point.azimuth;
         //point.label = -1; //TODO!!
         point.scanline = i;
 

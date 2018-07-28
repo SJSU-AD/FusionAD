@@ -10,21 +10,21 @@ class SegmentProcessor
 
         void CalculateBoundingBox(); //TODO
 
-        pcl::PointXYZI CalculateCentroid(size_t cluster_index);
+        pcl::PointXYZI CalculateCentroid(int cluster_index);
 
         double CalculateTheta(const pcl::PointXYZI &p1, const pcl::PointXYZI &p2);
 
     public:
-        struct SegmentedClusters {
-            pcl::PointCloud<pcl::PointXYZI>
-        };
-
-        SegmentProcessor() {
+        SegmentProcessor() 
+	{
             point_cloud.header.frame_id = "/velodyne";
             point_cloud.height = 1;
         }
 
-        ~SegmentProcessor();
+        ~SegmentProcessor()
+	{
+
+	}
 
         std::vector<pcl::PointIndices> GetClusterIndices() 
         {

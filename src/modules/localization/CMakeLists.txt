@@ -135,6 +135,10 @@ add_library(point_cloud_segmenter
   src/point_cloud_segmenter.cc
 )
 
+add_library(segment_processor
+  src/segment_processor.cc
+)
+
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
@@ -157,6 +161,7 @@ add_executable(segmenter_node src/segmenter_node.cc)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(segmenter_node
+  segment_processor
   point_cloud_segmenter
   ${catkin_LIBRARIES}
 )

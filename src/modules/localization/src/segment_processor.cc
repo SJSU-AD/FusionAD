@@ -49,7 +49,7 @@ void SegmentProcessor::ExtractIndices(std::vector<Vec3>& pts)
 
 void SegmentProcessor::FilterPoints(int min_pts)
 {
-    int init_clusters = cluster_indices.indices.size();
+    int init_clusters = cluster_indices.size();
     std::vector<pcl::PointIndices>::iterator c_it;
     for (c_it = cluster_indices.begin(); c_it != cluster_indices.end(); c_it++)
     {
@@ -59,27 +59,28 @@ void SegmentProcessor::FilterPoints(int min_pts)
             --c_it;
         }
     }
-    int final_clusters = cluster_indices.indices.size();
-    std::cout << "Removed " << init_clusters - final_clusters << " clusters, " << final_clusters << " remaining." << std::endl;
+    int final_clusters = cluster_indices.size();
 }
 
 
 bool SegmentProcessor::FindObstacles()
 {
     pcl::PointXYZI origin;
-    origin.x, origin.y, origin.z = 0;
+    origin.x = 0;
+    origin.y = 0;
+
     bool obstacle_detected = false;
 
-    double theta_range = 10; // +/- {theta_range} degrees
-    double distance_threshold = 2; // meters
+    double theta_range = 40; // +/- {theta_range} degrees
+    double distance_threshold = 3; // meters
     
-    for (size_t i = 0; i < cluster_indices.size(); i++)
+    for (int i = 0; i < cluster_indices.size(); i++)
     {
         pcl::PointXYZI centroid = CalculateCentroid(i);
         double theta = CalculateTheta(centroid, origin);
-        double dist = sqrt(centroid.x * centroid.x + centroid.y * centroid.y + centroid.z * centroid.z);
+        double dist = sqrt(centroid.x * centroid.x + centroid.y * centroid.y);
 
-        if(theta > 360 - theta_range || theta < theta_range)
+        if(theta > -theta_range && theta < theta_range)
         {
             if (dist < distance_threshold)
             {
@@ -93,21 +94,20 @@ bool SegmentProcessor::FindObstacles()
 pcl::PointCloud<pcl::PointXYZI>::Ptr SegmentProcessor::GenerateColoredPointCloud()
 {
     pcl::PointCloud<pcl::PointXYZI>::Ptr colored_point_cloud(new pcl::PointCloud<pcl::PointXYZI>());
-    colored_point_cloud.header.frame_id = "/velodyne";
-    colored_point_cloud.height = 1;
-
-    srand (time(NULL));
+    colored_point_cloud->header.frame_id = "/velodyne";
+    colored_point_cloud->height = 1;
 
     std::vector<pcl::PointIndices>::iterator c_it;
     std::vector<int>::iterator i_it;
+    int i = 0;
 
-    for (c_it = cluster_indices.begin(); c_it != cluster_indices.end(); c_it++)
+    for (c_it = cluster_indices.begin(); c_it != cluster_indices.end(); c_it++, i++)
     {
-        int new_label = rand() % 256;
+        //int new_label = rand() % 256;
         for (i_it = c_it->indices.begin(); i_it != c_it->indices.end(); i_it++)
         {
             pcl::PointXYZI pt = point_cloud.points[*i_it];
-            pt.intensity = new_label;
+            pt.intensity = i;
             colored_point_cloud->points.push_back(pt);
             ++colored_point_cloud->width;
         }
@@ -117,12 +117,15 @@ pcl::PointCloud<pcl::PointXYZI>::Ptr SegmentProcessor::GenerateColoredPointCloud
 }
 
 
-pcl::PointXYZI SegmentProcessor::CalculateCentroid(size_t cluster_index)
+pcl::PointXYZI SegmentProcessor::CalculateCentroid(int cluster_index)
 {
     std::vector<int>::iterator it;
-    std::vector<int> & cur_cluster = cluster_indices[cluter_index].indices;
+    std::vector<int> & cur_cluster = cluster_indices[cluster_index].indices;
 
-    pcl::PointXYZI centroid();
+    pcl::PointXYZI centroid;
+    centroid.x = 0;
+    centroid.y = 0;
+    centroid.x = 0;
 
     for(it = cur_cluster.begin(); it != cur_cluster.end(); it++) 
     {
@@ -130,14 +133,14 @@ pcl::PointXYZI SegmentProcessor::CalculateCentroid(size_t cluster_index)
         centroid.x += cur_pt.x;
         centroid.y += cur_pt.y;
         centroid.x += cur_pt.z;
-        centroid.intensity += cur_pt.intensity;
+        //centroid.intensity += cur_pt.intensity;
     }
 
     int n_points = cur_cluster.size();
     centroid.x /= n_points;
-    centroid.y /= n_pointw;
+    centroid.y /= n_points;
     centroid.x /= n_points;
-    centroid.intensity /= n_points;
+   // centroid.intensity /= n_points;
 
     return centroid;
 }
@@ -145,7 +148,7 @@ pcl::PointXYZI SegmentProcessor::CalculateCentroid(size_t cluster_index)
 
 double SegmentProcessor::CalculateTheta(const pcl::PointXYZI &p1, const pcl::PointXYZI &p2)
 {
-    return atan2(p2.y - p1.y, p2.x - p1.x) * (180 / PI);
+    return (atan2(p1.y - p2.y, p1.x - p2.x) * (180 / PI));
 }
 
 void SegmentProcessor::CalculateBoundingBox()
