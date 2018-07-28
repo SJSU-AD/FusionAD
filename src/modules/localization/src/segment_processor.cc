@@ -70,22 +70,24 @@ bool SegmentProcessor::FindObstacles()
     origin.y = 0;
 
     bool obstacle_detected = false;
+    int x_max = 3;
+    int y_max = 1;
 
     double theta_range = 40; // +/- {theta_range} degrees
     double distance_threshold = 3; // meters
     
-    for (int i = 0; i < cluster_indices.size(); i++)
+    for (size_t i = 0; i < cluster_indices.size(); i++)
     {
-        pcl::PointXYZI centroid = CalculateCentroid(i);
-        double theta = CalculateTheta(centroid, origin);
-        double dist = sqrt(centroid.x * centroid.x + centroid.y * centroid.y);
+        //pcl::PointXYZI centroid = CalculateCentroi(i);
+        //double theta = CalculateTheta(centroid, origin);
+        int points_in_range = PointsInRange(i, x_max, y_max);
+       // double dist = sqrt(centroid.x * centroid.x + centroid.y * centroid.y)
 
-        if(theta > -theta_range && theta < theta_range)
+        if(points_in_range > 100)
         {
-            if (dist < distance_threshold)
-            {
-                obstacle_detected = true;
-            }
+            obstacle_detected = true;
+            std::cout << "Obstacle detected with " << points_in_range << " points" << std::endl;
+            return obstacle_detected;
         }
     }
     return obstacle_detected;
@@ -116,6 +118,26 @@ pcl::PointCloud<pcl::PointXYZI>::Ptr SegmentProcessor::GenerateColoredPointCloud
     return colored_point_cloud;
 }
 
+int SegmentProcessor::PointsInRange(size_t cluster_index, int x, int y) 
+{
+    std::vector<int>::iterator it;
+    std::vector<int> & cur_cluster = cluster_indices[cluster_index].indices;
+
+    int n_pts = 0;
+
+    for(it = cur_cluster.begin(); it != cur_cluster.end(); it++) 
+    {
+        pcl::PointXYZI cur_pt = point_cloud.points[*it];
+        if (cur_pt.x < x && cur_pt.x > 0 && cur_pt.y < y && cur_pt.y > -y && cur_pt.z < 3 && cur_pt.x > -1.5 )
+        {
+            n_pts++;
+        }
+        //centroid.intensity += cur_pt.intensity;
+    }
+
+    return n_pts;
+}
+
 
 pcl::PointXYZI SegmentProcessor::CalculateCentroid(int cluster_index)
 {
@@ -140,7 +162,7 @@ pcl::PointXYZI SegmentProcessor::CalculateCentroid(int cluster_index)
     centroid.x /= n_points;
     centroid.y /= n_points;
     centroid.x /= n_points;
-   // centroid.intensity /= n_points;
+    // centroid.intensity /= n_points;
 
     return centroid;
 }

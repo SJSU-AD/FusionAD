@@ -80,7 +80,7 @@ void segmenter::MessageCallback(const velodyne_puck_msgs::VelodynePuckSweep::Con
   seg_processor.FilterPoints(20);
 
   bool is_obstacle = seg_processor.FindObstacles();
-  std::cout << "Obstacle detected: " << is_obstacle << std::endl;
+  //std::cout << "Obstacle detected: " << is_obstacle << std::endl;
 
   final_point_cloud = seg_processor.GenerateColoredPointCloud();
 
