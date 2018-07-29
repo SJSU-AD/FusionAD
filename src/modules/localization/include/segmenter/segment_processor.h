@@ -10,7 +10,7 @@ class SegmentProcessor
 
         void CalculateBoundingBox(); //TODO
 
-        int PointsInRange(size_t cluster_index, int x, int y);
+        int PointsInRange(size_t cluster_index, float x, float y);
 
         pcl::PointXYZI CalculateCentroid(int cluster_index);
 

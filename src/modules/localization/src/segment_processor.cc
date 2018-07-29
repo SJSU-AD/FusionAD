@@ -70,8 +70,8 @@ bool SegmentProcessor::FindObstacles()
     origin.y = 0;
 
     bool obstacle_detected = false;
-    int x_max = 2.5;
-    int y_max = 0.5;
+    float x_max = 2.5;
+    float y_max = 0.7;
 
     for (size_t i = 0; i < cluster_indices.size(); i++)
     {
@@ -115,7 +115,7 @@ pcl::PointCloud<pcl::PointXYZI>::Ptr SegmentProcessor::GenerateColoredPointCloud
     return colored_point_cloud;
 }
 
-int SegmentProcessor::PointsInRange(size_t cluster_index, int x, int y) 
+int SegmentProcessor::PointsInRange(size_t cluster_index, float x, float y) 
 {
     std::vector<int>::iterator it;
     std::vector<int> & cur_cluster = cluster_indices[cluster_index].indices;
@@ -125,7 +125,7 @@ int SegmentProcessor::PointsInRange(size_t cluster_index, int x, int y)
     for(it = cur_cluster.begin(); it != cur_cluster.end(); it++) 
     {
         pcl::PointXYZI cur_pt = point_cloud.points[*it];
-        if (cur_pt.x < x && cur_pt.x > 0 && cur_pt.y < y && cur_pt.y > -y && cur_pt.z < 1.5 && cur_pt.x > -0.6 )
+        if (cur_pt.x < x && cur_pt.x > 0 && cur_pt.y < y && cur_pt.y > -y && cur_pt.z < 2.0 && cur_pt.z > -0.5 )
         {
             n_pts++;
         }
