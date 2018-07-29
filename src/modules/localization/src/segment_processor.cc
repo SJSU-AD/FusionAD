@@ -70,12 +70,9 @@ bool SegmentProcessor::FindObstacles()
     origin.y = 0;
 
     bool obstacle_detected = false;
-    int x_max = 3;
-    int y_max = 1;
+    int x_max = 2.5;
+    int y_max = 0.5;
 
-    double theta_range = 40; // +/- {theta_range} degrees
-    double distance_threshold = 3; // meters
-    
     for (size_t i = 0; i < cluster_indices.size(); i++)
     {
         //pcl::PointXYZI centroid = CalculateCentroi(i);
@@ -128,7 +125,7 @@ int SegmentProcessor::PointsInRange(size_t cluster_index, int x, int y)
     for(it = cur_cluster.begin(); it != cur_cluster.end(); it++) 
     {
         pcl::PointXYZI cur_pt = point_cloud.points[*it];
-        if (cur_pt.x < x && cur_pt.x > 0 && cur_pt.y < y && cur_pt.y > -y && cur_pt.z < 3 && cur_pt.x > -1.5 )
+        if (cur_pt.x < x && cur_pt.x > 0 && cur_pt.y < y && cur_pt.y > -y && cur_pt.z < 1.5 && cur_pt.x > -0.6 )
         {
             n_pts++;
         }
