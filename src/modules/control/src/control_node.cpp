@@ -84,7 +84,7 @@ namespace node
   void control_node::stateCallback(const interface::Chassis_state& veh_state_msg)
   {
     position(0) = veh_state_msg.Position.pose.position.x;
-    position(1) = veh_state_msg.Position.pose.position.x;
+    position(1) = veh_state_msg.Position.pose.position.y;
     linear_velocity = veh_state_msg.Speed.twist.linear.x;
   }
 
