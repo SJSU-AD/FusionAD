@@ -34,7 +34,7 @@ int main(int argc, char** argv)
 
 void segmenter::InitRosComm()
 {
-  segmenter_pub = segmenter_nh.advertise<sensor_msgs::PointCloud2>("clusters", 10);
+  segmenter_pub = segmenter_nh.advertise<sensor_msgs::PointCloud2>("/localization/object_detected", 10);
   segmenter_sub = segmenter_nh.subscribe("velodyne_sweep", 100, &segmenter::MessageCallback, this);
   ROS_INFO("Subscriber has been set");
 }
@@ -55,8 +55,8 @@ void segmenter::MessageCallback(const velodyne_puck_msgs::VelodynePuckSweep::Con
 
   float th_run = 0.5;
   float th_merge = 1.0;
-  int x_max = 30;
-  int y_max = 30;
+  int x_max = 20;
+  int y_max = 20;
   int n_scanlines = 16;
 
   pcl::PointCloud<pcl::PointXYZI>::Ptr final_point_cloud;
@@ -79,12 +79,11 @@ void segmenter::MessageCallback(const velodyne_puck_msgs::VelodynePuckSweep::Con
   seg_processor.ExtractIndices(predicted_clusters);
   seg_processor.FilterPoints(20);
 
-  bool is_obstacle = seg_processor.FindObstacles();
-  //std::cout << "Obstacle detected: " << is_obstacle << std::endl;
+  bool obstacle_detected = seg_processor.FindObstacles();
 
-  final_point_cloud = seg_processor.GenerateColoredPointCloud();
+  //final_point_cloud = seg_processor.GenerateColoredPointCloud();
 
-  segmenter_pub.publish(final_point_cloud);
+  segmenter_pub.publish(obstacle_detected);
 
   //int time2 = clock();
   //std::cout << "Segmentation runtime: " << (time2 - time1) / double(CLOCKS_PER_SEC) * 1000 << " ms\n" << std::endl;

@@ -125,7 +125,7 @@ int SegmentProcessor::PointsInRange(size_t cluster_index, float x, float y)
     for(it = cur_cluster.begin(); it != cur_cluster.end(); it++) 
     {
         pcl::PointXYZI cur_pt = point_cloud.points[*it];
-        if (cur_pt.x < x && cur_pt.x > 0 && cur_pt.y < y && cur_pt.y > -y && cur_pt.z < 2.0 && cur_pt.z > -0.5 )
+        if (cur_pt.x < x && cur_pt.x > 0 && cur_pt.y < y && cur_pt.y > -y && cur_pt.z < 1.5 && cur_pt.z > -0.5 )
         {
             n_pts++;
         }
