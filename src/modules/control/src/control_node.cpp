@@ -24,7 +24,7 @@ namespace node
   void control_node::initRosComm()
   {
     //Create Timer Function for running the control stack, currently set to 100 hz
-    ros::Timer core_control_timer = control_nh.createTimer(ros::Duration(0.01), &control_node::masterTimerCallback, this);  
+    //control_cmd_timer = control_nh.createTimer(ros::Duration(0.01), &control_node::masterTimerCallback, this);  
     
     //Control Main publisher
     control_main_pub = control_nh.advertise<interface::Controlcmd>("/control/controlcmd", 100);
@@ -91,9 +91,9 @@ namespace node
   void control_node::imuCallback(const sensor_msgs::Imu& inertial_msg)
   {
     tf::Quaternion chassis_quaternion(inertial_msg.orientation.x,
-                              inertial_msg.orientation.y,
-                              inertial_msg.orientation.z,
-                              inertial_msg.orientation.w);
+                                      inertial_msg.orientation.y,
+                                      inertial_msg.orientation.z,
+                                      inertial_msg.orientation.w);
     tf::Matrix3x3 temp_rotation_matrix(chassis_quaternion);
     temp_rotation_matrix.getRPY(roll, pitch, yaw);
   }
@@ -135,7 +135,7 @@ namespace node
     {
       steering_angle = lat_control.computeSteeringAngle(position,
                                             pathPointListX,
-                                            pathPointListX,
+                                            pathPointListY,
                                             linear_velocity,
                                             targetPointIndex,
                                             yaw,

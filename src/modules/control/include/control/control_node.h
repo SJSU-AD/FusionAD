@@ -44,6 +44,7 @@ class control_node
     double roll, pitch, yaw, controlGain, linear_velocity;
     int targetPointIndex;
     double least_distance;
+    ros::Timer control_cmd_timer;
     //TODO: Safety Mechanism bool
     //bool isWorking;
 

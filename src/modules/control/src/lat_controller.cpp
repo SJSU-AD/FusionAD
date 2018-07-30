@@ -74,8 +74,9 @@ namespace lat_controller{
 
     double pathHeadingTheta = atan2(heading_dy, heading_dx);
 
+    //**** HOT FIX ISSUE 39*****//!!
     //The derived path heading should match the two possible heading theta from slope
-    if(pathHeadingTheta != atan(pathSlope))
+    /*if(pathHeadingTheta != atan(pathSlope))
     {
       if(pathHeadingTheta != (atan(pathSlope) + 3.14159265))
       {
@@ -87,7 +88,8 @@ namespace lat_controller{
     {
       //Path heading is correct, return the value
       return pathHeadingTheta;
-    }
+    }*/
+    return pathHeadingTheta;
   }
 
   double stanley::computeCrossTrackError(const double &routeTheta, const double &dx, const double &dy)
