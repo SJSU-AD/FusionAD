@@ -20,15 +20,15 @@ class stanley
   public:
     stanley();
     ~stanley();
-    double computeSteeringAngle(const Eigen::Vector2d &vehPos,const std::vector<double> &routeX,
-                                const std::vector<double> &routeY,const double &vehSpeed,
-                                const int &wpIndex, const double &vehTheta,const double &gain);
+    float computeSteeringAngle(const Eigen::Vector2f &vehPos,const std::vector<float> &routeX,
+                                const std::vector<float> &routeY,const float &vehSpeed,
+                                const int &wpIndex, const float &vehTheta,const float &gain);
 
   private:
-    typedef Eigen::Matrix<double, 4, 2> pathMatrix42d; 
-    double computeHeadingError(const double &vehHeading, const double &pathHeading);
-    double computePathHeading(const pathMatrix42d &trajectory, const int &targetIndex);
-    double computeCrossTrackError(const double &routeTheta, const double &dx, const double &delta_y);
+    typedef Eigen::Matrix<float, 4, 2> pathMatrix42f; 
+    float computeHeadingError(const float &vehHeading, const float &pathHeading);
+    float computePathHeading(const pathMatrix42f &trajectory, const int &targetIndex);
+    float computeCrossTrackError(const float &routeTheta, const float &dx, const float &delta_y);
 };
 }
 }
