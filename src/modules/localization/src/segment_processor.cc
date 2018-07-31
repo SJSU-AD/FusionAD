@@ -71,7 +71,7 @@ bool SegmentProcessor::FindObstacles()
 
     bool obstacle_detected = false;
     float x_max = 2.5;
-    float y_max = 0.7;
+    float y_max = 0.4;
 
     for (size_t i = 0; i < cluster_indices.size(); i++)
     {
