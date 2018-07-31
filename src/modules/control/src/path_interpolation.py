@@ -52,9 +52,11 @@ def interpolation_function():
             y_interpolated_position.append(y_break) # append to each of the interpolated lists
             x_interpolated_position.append(x_break)
 
-        y_publisher.publish(y_interpolated_position) # publish each of the interpolated lists
-        x_publisher.publish(x_interpolated_position)
-        rate.sleep()
+        for c in range (0,len(y_interpolated_position)):
+            y_publisher.publish(y_interpolated_position[c]) # publish each of the interpolated lists
+            x_publisher.publish(x_interpolated_position[c])
+            print(x_interpolated_position[c])
+            rate.sleep()
 
 
 if __name__ == '__main__':
