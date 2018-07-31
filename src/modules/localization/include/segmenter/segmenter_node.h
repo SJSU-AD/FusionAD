@@ -24,6 +24,7 @@ class segmenter
   private:
     ros::NodeHandle segmenter_nh;
     ros::Publisher segmenter_pub;
+    ros::Publisher point_cloud_pub;
     ros::Subscriber segmenter_sub;
     void MessageCallback(const velodyne_puck_msgs::VelodynePuckSweep::ConstPtr& msg);
     void ParseInput(std::vector<Vec3>& in, PointCloudSegmenter& seg, 
