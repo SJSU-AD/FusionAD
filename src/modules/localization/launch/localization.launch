@@ -1,0 +1,7 @@
+<launch>
+
+    <include file="$(find velodyne_puck_decoder)/launch/velodyne_puck_decoder_nodelet.launch"/>
+
+    <node name="segmenter_node" pkg="localization" type="segmenter_node"> </node>
+
+</launch>
