@@ -104,7 +104,7 @@ void loop() {
 void operation(double incoming_input)
 {
   input = analogRead(0);
-  //setpoint = (wheel_angle + 36.15)/.1721; // need to input a desired wheel_angle
+  //setpoint = (wheel_angle*180/3.141592654 + 36.15)/.1721; // need to input a desired wheel_angle
   setpoint = incoming_input;
   error = setpoint - input;
 
