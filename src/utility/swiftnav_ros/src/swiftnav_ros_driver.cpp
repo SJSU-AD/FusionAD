@@ -157,8 +157,8 @@ namespace swiftnav_ros
         driver->sbp_protocol_version =(hb.flags & 0xFF0000)>>16;
     if  (driver->sbp_protocol_version < 2) {
 		    std::cerr << "SBP Major protocol version mismatch. "
-                     "Driver compatible with 2.0 and later. Version " 
-                      << driver->sbp_protocol_version << driver->heartbeat_flags << " detected." << std::endl;
+                        <<"Driver compatible with 2.0 and later. Version " 
+                        << driver->sbp_protocol_version << driver->heartbeat_flags << " detected." << std::endl;
 		return;
 	}
 }
@@ -292,7 +292,7 @@ namespace swiftnav_ros
         // Populate linear part of Twist with last velocity reported: by vel_ned_callback
         rtk_odom_msg->twist.twist.linear.x = driver->rtk_vel_east;
         rtk_odom_msg->twist.twist.linear.y = driver->rtk_vel_north;
-        rtk_odom_msg->twist.twist.linear.z = driver->rtk_vel_up;
+        rtk_odom_msg->twist.twist.linear.z = driver->rtk_vel_down;
 
         // Set angular velocity to 0 - GPS doesn't provide angular velocity
         rtk_odom_msg->twist.twist.angular.x = 0;
@@ -339,7 +339,7 @@ void vel_ned_callback(u16 sender_id, u8 len, u8 msg[], void *context)
         // msg_baseline_ned_t message is received
         driver->rtk_vel_north = sbp_vel.n/1000.0;
         driver->rtk_vel_east = sbp_vel.e/1000.0;
-        driver->rtk_vel_up = -sbp_vel.d/1000.0;
+        driver->rtk_vel_down = sbp_vel.d/1000.0;
         driver->rtk_vel_h_covariance = (sbp_vel.h_accuracy * sbp_vel.h_accuracy) * 10e-6;
         driver->rtk_vel_v_covariance = (sbp_vel.v_accuracy * sbp_vel.h_accuracy) * 10e-6;
 
@@ -415,7 +415,7 @@ void vel_ned_callback(u16 sender_id, u8 len, u8 msg[], void *context)
         stat.add( "GPS RTK horizontal accuracy (m)", rtk_h_accuracy );
         stat.add( "GPS RTK velocity north", rtk_vel_north );
         stat.add( "GPS RTK velocity east", rtk_vel_east );
-        stat.add( "GPS RTK velocity up", rtk_vel_up );
+        stat.add( "GPS RTK velocity up", rtk_vel_down );
         stat.add( "Number of satellites used for lat/lon", num_llh_satellites);
         stat.add( "GPS lat/lon solution status", llh_status );
         stat.add( "GPS latitude", llh_lat );

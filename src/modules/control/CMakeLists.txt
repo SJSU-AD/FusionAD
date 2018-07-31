@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   nav_msgs
   geometry_msgs
+  interface
 )
 find_package(Eigen3 REQUIRED)
 include_directories(${EIGEN3_INCLUDE_DIR})
@@ -109,9 +110,9 @@ include_directories(${EIGEN3_INCLUDE_DIR})
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES control
+#  LIBRARIES control
   CATKIN_DEPENDS roscpp rospy std_msgs
-  DEPENDS system_lib
+#  DEPENDS system_lib
 )
 
 ###########
@@ -130,14 +131,20 @@ include_directories(
 #   src/${PROJECT_NAME}/control.cpp
 # )
 
-add_library(${PROJECT_NAME}
+add_library(lateral_control
   src/lat_controller.cpp
+)
+
+add_dependencies(lateral_control ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(lateral_control
+  ${catkin_LIBRARIES}
 )
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
 # add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
 
 #add_dependencies(lat_control ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 #target_link_libraries(lat_control
@@ -149,7 +156,7 @@ add_library(${PROJECT_NAME}
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME} src/control_node.cpp)
 
-#add_executable(control_core src/lat_controller.cpp)
+add_executable(core_control src/control_node.cpp src/lat_controller.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -161,10 +168,16 @@ add_library(${PROJECT_NAME}
 ## same as for the library above
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-#add_dependencies(control_core ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+#add_dependencies(core_control ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 #target_link_libraries(control_core
 #  ${catkin_LIBRARIES}
 #)
+
+add_dependencies(core_control ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+target_link_libraries(core_control
+  ${catkin_LIBRARIES}
+)
 
 ## Specify libraries to link a library or executable target against
 # target_link_libraries(${PROJECT_NAME}_node
@@ -193,11 +206,11 @@ add_library(${PROJECT_NAME}
 # )
 
 ## Mark cpp header files for installation
- install(DIRECTORY include/${PROJECT_NAME}/
-   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-   FILES_MATCHING PATTERN "*.h"
-   PATTERN ".svn" EXCLUDE
- )
+ #install(DIRECTORY include/${PROJECT_NAME}/
+  # DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+   #FILES_MATCHING PATTERN "*.h"
+   #PATTERN ".svn" EXCLUDE
+ #)
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
 # install(FILES

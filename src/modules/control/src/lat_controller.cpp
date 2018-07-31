@@ -74,8 +74,9 @@ namespace lat_controller{
 
     double pathHeadingTheta = atan2(heading_dy, heading_dx);
 
+    //**** HOT FIX ISSUE 39*****//!!
     //The derived path heading should match the two possible heading theta from slope
-    if(pathHeadingTheta != atan(pathSlope))
+    /*if(pathHeadingTheta != atan(pathSlope))
     {
       if(pathHeadingTheta != (atan(pathSlope) + 3.14159265))
       {
@@ -87,7 +88,8 @@ namespace lat_controller{
     {
       //Path heading is correct, return the value
       return pathHeadingTheta;
-    }
+    }*/
+    return pathHeadingTheta;
   }
 
   double stanley::computeCrossTrackError(const double &routeTheta, const double &dx, const double &dy)
@@ -107,8 +109,7 @@ namespace lat_controller{
   }
 
   //A positive steering angle denotes the vehicle to turn its steering wheel CCW (left)
-  double stanley::computeSteeringAngle(const Eigen::Vector2d &vehPos, const Eigen::Vector2d &targetPos, 
-                                      const std::vector<double> &routeX, const std::vector<double> &routeY,
+  double stanley::computeSteeringAngle(const Eigen::Vector2d &vehPos, const std::vector<double> &routeX, const std::vector<double> &routeY,
                                       const double &vehSpeed, const int &wpIndex, const double& vehTheta, const double &gain)
   {
     int trimmedIndex;
