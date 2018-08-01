@@ -73,23 +73,15 @@ namespace lat_controller{
     float heading_dy = nextYslope - targetYpos;
 
     float pathHeadingTheta = atan2(heading_dy, heading_dx);
-
-    //**** HOT FIX ISSUE 39*****//!!
-    //The derived path heading should match the two possible heading theta from slope
-    /*if(pathHeadingTheta != atan(pathSlope))
+    if(std::isfinite(pathHeadingTheta))
     {
-      if(pathHeadingTheta != (atan(pathSlope) + 3.14159265))
-      {
-        std::cout << "Path Heading don't match predicted slope value!" << std::endl;
-        return std::numeric_limits<float>::quiet_NaN();
-      }
+      return pathHeadingTheta;
     }
     else
     {
-      //Path heading is correct, return the value
-      return pathHeadingTheta;
-    }*/
-    return pathHeadingTheta;
+      std::cout << "Path Heading Calculation Is Not Finite!" << std::endl;
+      return std::numeric_limits<float>::quiet_NaN();
+    }  
   }
 
   float stanley::computeCrossTrackError(const float &routeTheta, const float &dx, const float &dy)
