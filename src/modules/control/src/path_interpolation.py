@@ -22,7 +22,7 @@ from __future__ import division
 
 import math
 import rospy
-from std_msgs.msg import Float64
+from std_msgs.msg import Float64, UInt32, Header
 from geometry_msgs.msg import Point, Pose, PoseStamped
 from nav_msgs.msg import Path
 
@@ -65,6 +65,45 @@ y_interpolated_position = []
 y_break = []
 x_break = []
 
+def interpolate_positive(i):
+    """Interpolate between two points given index of initial point, if slope is positive"""
+
+    x_0 = X_Position[i]     # declaring the first x-position for interpolation
+    x_1 = X_Position[i+1]   # declaring the second x-position for interpolation
+    y_0 = Y_Position[i]     # declaring the first y-position for interpolation
+    y_1 = Y_Position[i+1]   # declaring the second y-position for interpolation
+
+    # Positive Slope
+    for a in range(point_density): 
+        if a == 0:
+            y_break.append(y_0) # initial y_position
+            x_break.append(x_0) # initial x_position
+        elif a > 0:
+            y_break.append(y_0-(y_0-y_1)*a/point_density) # interpolate with the given point density
+            x_break.append(x_0-(x_0-x_1)*a/point_density)
+
+def interpolate_negative(i):
+    """Interpolate between two points given index of initial point, if slope is negative"""
+
+    x_0 = X_Position[i]     # declaring the first x-position for interpolation
+    x_1 = X_Position[i+1]   # declaring the second x-position for interpolation
+    y_0 = Y_Position[i]     # declaring the first y-position for interpolation
+    y_1 = Y_Position[i+1]   # declaring the second y-position for interpolation
+
+    # Negative Slope
+    for a in range(point_density): 
+        if a == 0:
+            y_break.append(y_0) # initial y_position
+            x_break.append(x_0) # initial x_position
+        elif a > 0:
+            y_break.append(y_0-(y_1-y_0)*a/point_density) # interpolate with the given point density
+            x_break.append(x_0-(x_1-x_0)*a/point_density)
+
+def interpolate(i, y_1, x_1, y_0, x_0):
+    for n in range(point_density):
+        y_break = ((y_1 - y_0) / (x_1-x_0) ) * (x_0 + (n / point_density)) + y_1*((x_1-x_0) / (y_1-y_0))
+        x_break = ((y_1 - y_0) / (x_1-x_0) ) * (x_0 + (n / point_density)) + y_1*((x_1-x_0) / (y_1-y_0))
+
 def interpolation_function():
     """Converts all input points from Geodetic to ECEF coordinates and publishes them.
 
@@ -95,7 +134,6 @@ def interpolation_function():
         path = Path()
 
         while i < vector_size-2:
-            
             print("Entered while")
             x_0 = X_Position[i]     # declaring the first x-position for interpolation
             x_1 = X_Position[i+1]   # declaring the second x-position for interpolation
@@ -103,27 +141,20 @@ def interpolation_function():
             y_1 = Y_Position[i+1]   # declaring the second y-position for interpolation
                 
             if y_1 < y_0: # when the slope is negative
-                for a in range (0,point_density):
-                    if a == 0:
-                        y_break.append(y_0) # initial y_position
-                        x_break.append(x_0) # initial x_position
-                    elif a > 0:
-                        y_break.append(y_0-(y_0-y_1)*a/point_density) # interpolate with the given point density
-                        x_break.append(x_0-(x_0-x_1)*a/point_density)
-            else: # when the slope is positive
-                for a in range (0,point_density):
-                    if a == 0:
-                        y_break.append(y_0) # initial y_position
-                        x_break.append(x_0) # initial x_position
-                    elif a > 0:
-                        y_break.append(y_0-(y_0-y_1)*a/point_density) # interpolate with the given point density
-                        x_break.append(x_0-(x_0-x_1)*a/point_density)
-
+                interpolate_negative(i)
+            if y_1 > y_0: 
+                interpolate_positive(i)
+            if x_1 < x_0:
+                interpolate_negative(i)
+            if x_0 > x_1:
+                interpolate_positive(i)
+        
             y_interpolated_position.append(y_break)
             x_interpolated_position.append(x_break)
 	    i+=1
             
-        for c in range (len(y_interpolated_position)):
+        print("length of y_interpolated_position:", len(y_interpolated_position))
+        for c in range (len(y_interpolated_position)+1):
             print("Entered outer for")
             
             # rospy.loginfo("Interpolated Y Position: %f", y_interpolated_position[c])
@@ -131,11 +162,24 @@ def interpolation_function():
             # x_publisher.publish(x_interpolated_position[c])
             # print(x_interpolated_position[c])
 
+            print("length of y_break:", len(y_break))
+            seq = 0
             for i in range(len(y_break)):
+
+                # path.poses.append(path.poses[i].pose.position.x = 0.0) # x_break[i]
+                # path.poses[i].pose.position.y = 0.0 # y_break[i]
+                # path.poses[i].pose.position.z = 0.0
+
                 currentPoseStampMsg = PoseStamped()
 
-                currentPoseStampMsg.pose.position.x =  x_break[c] 
-                currentPoseStampMsg.pose.position.y =  y_break[c] 
+                h = Header()
+                h.stamp = rospy.Time.now()
+                currentPoseStampMsg.header.seq = seq
+                currentPoseStampMsg.header.stamp = h.stamp
+                seq += 1
+
+                currentPoseStampMsg.pose.position.x =  x_break[i] 
+                currentPoseStampMsg.pose.position.y =  y_break[i] 
                 currentPoseStampMsg.pose.position.z = 0.0
 
                 path.poses.append(currentPoseStampMsg)
