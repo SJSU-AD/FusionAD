@@ -50,10 +50,15 @@ heightsCN2002    = [63.685, 64.218, 63.774, 64.308]
 
 point_density = 100 # how many points between each interpolated point
 
-# Placeholders for output ECEF conversion
+# Placeholders for output global ECEF conversion
 X_Position = []
 Y_Position = []
 Z_Position = []
+
+# Placeholders for output relative ECEF conversion
+relativeX = []
+relativeY = []
+relativeZ = []
 
 vector_size = 0
 
@@ -68,15 +73,15 @@ x_break = []
 def interpolate_positive(i):
     """Interpolate between two points given index of initial point, if slope is positive"""
 
-    x_0 = X_Position[i]     # declaring the first x-position for interpolation
-    x_1 = X_Position[i+1]   # declaring the second x-position for interpolation
-    y_0 = Y_Position[i]     # declaring the first y-position for interpolation
-    y_1 = Y_Position[i+1]   # declaring the second y-position for interpolation
+    x_0 = relativeX[i]     # declaring the first x-position for interpolation
+    x_1 = relativeX[i+1]   # declaring the second x-position for interpolation
+    y_0 = relativeY[i]     # declaring the first y-position for interpolation
+    y_1 = relativeY[i+1]   # declaring the second y-position for interpolation
 
     # Positive Slope
     for a in range(point_density): 
         if a == 0:
-            y_break.append(y_0) # initial y_position
+            y_break.append(y_0) # initial relativeY
             x_break.append(x_0) # initial x_position
         elif a > 0:
             y_break.append(y_0-(y_0-y_1)*a/point_density) # interpolate with the given point density
@@ -85,20 +90,21 @@ def interpolate_positive(i):
 def interpolate_negative(i):
     """Interpolate between two points given index of initial point, if slope is negative"""
 
-    x_0 = X_Position[i]     # declaring the first x-position for interpolation
-    x_1 = X_Position[i+1]   # declaring the second x-position for interpolation
-    y_0 = Y_Position[i]     # declaring the first y-position for interpolation
-    y_1 = Y_Position[i+1]   # declaring the second y-position for interpolation
+    x_0 = relativeX[i]     # declaring the first x-position for interpolation
+    x_1 = relativeX[i+1]   # declaring the second x-position for interpolation
+    y_0 = relativeY[i]     # declaring the first y-position for interpolation
+    y_1 = relativeY[i+1]   # declaring the second y-position for interpolation
 
     # Negative Slope
     for a in range(point_density): 
         if a == 0:
-            y_break.append(y_0) # initial y_position
+            y_break.append(y_0) # initial relativeY
             x_break.append(x_0) # initial x_position
         elif a > 0:
             y_break.append(y_0-(y_1-y_0)*a/point_density) # interpolate with the given point density
             x_break.append(x_0-(x_1-x_0)*a/point_density)
 
+# Instead of different functions for positive and negative
 def interpolate(i, y_1, x_1, y_0, x_0):
     for n in range(point_density):
         y_break = ((y_1 - y_0) / (x_1-x_0) ) * (x_0 + (n / point_density)) + y_1*((x_1-x_0) / (y_1-y_0))
@@ -135,10 +141,10 @@ def interpolation_function():
 
         while i < vector_size-2:
             print("Entered while")
-            x_0 = X_Position[i]     # declaring the first x-position for interpolation
-            x_1 = X_Position[i+1]   # declaring the second x-position for interpolation
-            y_0 = Y_Position[i]     # declaring the first y-position for interpolation
-            y_1 = Y_Position[i+1]   # declaring the second y-position for interpolation
+            x_0 = relativeX[i]     # declaring the first x-position for interpolation
+            x_1 = relativeX[i+1]   # declaring the second x-position for interpolation
+            y_0 = relativeY[i]     # declaring the first y-position for interpolation
+            y_1 = relativeY[i+1]   # declaring the second y-position for interpolation
                 
             if y_1 < y_0: # when the slope is negative
                 interpolate_negative(i)
@@ -153,7 +159,6 @@ def interpolation_function():
             x_interpolated_position.append(x_break)
 	    i+=1
             
-        print("length of y_interpolated_position:", len(y_interpolated_position))
         for c in range (len(y_interpolated_position)+1):
             print("Entered outer for")
             
@@ -227,23 +232,36 @@ def geodetic_to_ECEF_coordinates(lat, lng, h):
     return x, y, z
 
 def geodetic_data_to_ECEF_data(latitudesData, longitudesData, heightsData):
-    
+    """Convert list of geodetic data to list of ECEF data"""
     for i in range(min(len(latitudesData), len(longitudesData), len(heightsData))):
         x, y, z = geodetic_to_ECEF_coordinates(latitudesCN2002[i], longitudesCN2002[i], heightsCN2002[i])
         X_Position.append(x)
         Y_Position.append(y)
         Z_Position.append(z)
 
+def global_to_relative():
+    """Convert global coordinates to relative coordinates at a given index"""
+    globalXInitial = X_Position[0]
+    globalYInitial = Y_Position[0]
+    globalZInitial = Z_Position[0]
+    
+    
+    for i in range(len(X_Position)):
+        relativeX.append(X_Position[i] - globalXInitial)
+        relativeY.append(Y_Position[i] - globalYInitial)
+        relativeZ.append(Z_Position[i] - globalZInitial)
+
 def main():
 
     geodetic_data_to_ECEF_data(latitudesCN2002, longitudesCN2002, heightsCN2002)
+    global_to_relative()
 
-    print("X_Position =", X_Position, "\nY_Position =", Y_Position, "\nZ_Position =", Z_Position)
+    print("relativeX =", relativeX, "\nrelativeY =", relativeY, "\nrelativeZ =", relativeZ)
     print("\n")
 
-    # Find the length of the x_position list
+    # Find the length of the relativeX list
     global vector_size 
-    vector_size= len(X_Position) 
+    vector_size= len(relativeX) 
 
     try:
         interpolation_function()
