@@ -68,6 +68,17 @@ y_interpolated_position = []
 y_break = []
 x_break = []
 
+def read_file(fileName):
+    latitudesCN2002 = longitudesCN2002 = heightsCN2002 = []
+
+    file = open(fileName, "r")
+    for line in file:
+        splitLine = line.split(', ')
+        latitudesCN2002.append(splitLine[0])
+        longitudesCN2002.append(splitLine[1])
+        heightsCN2002.append(splitLine[2])
+
+
 def interpolate_positive(i):
     """Interpolate between two points given index of initial point, if slope is positive"""
 
@@ -264,7 +275,7 @@ def global_to_relative():
         relativeZ.append(Z_Position[i] - globalZInitial)
 
 def main():
-
+    read_file(locations.txt)
     geodetic_data_to_ECEF_data(latitudesCN2002, longitudesCN2002, heightsCN2002)
     global_to_relative()
 
