@@ -135,7 +135,7 @@ def interpolation_function():
                 currentPoseStampMsg = PoseStamped()
 
                 currentPoseStampMsg.pose.position.x =  x_break[c] 
-                currentPoseStampMsg.pose.position.y =  x_break[c] 
+                currentPoseStampMsg.pose.position.y =  y_break[c] 
                 currentPoseStampMsg.pose.position.z = 0.0
 
                 path.poses.append(currentPoseStampMsg)
