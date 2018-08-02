@@ -6,8 +6,6 @@ Subscribes to:
     None
 
 Publishes to:
-    OLD -- /interpolation_x
-    OLD -- /interpolation_y
     /planning/trajectory
 
 Sends nav_msg/Path to "core_control" node (control_node.cpp)
@@ -79,13 +77,13 @@ def interpolate_positive(i):
     y_1 = relativeY[i+1]   # declaring the second y-position for interpolation
 
     # Positive Slope
-    for a in range(point_density): 
-        if a == 0:
+    for n in range(point_density): 
+        if n == 0:
             y_break.append(y_0) # initial relativeY
             x_break.append(x_0) # initial x_position
-        elif a > 0:
-            y_break.append(y_0-(y_0-y_1)*a/point_density) # interpolate with the given point density
-            x_break.append(x_0-(x_0-x_1)*a/point_density)
+        elif n > 0:
+            y_break.append(y_0-(y_0-y_1)*n/point_density) # interpolate with the given point density
+            x_break.append(x_0-(x_0-x_1)*n/point_density)
 
 def interpolate_negative(i):
     """Interpolate between two points given index of initial point, if slope is negative"""
@@ -96,19 +94,24 @@ def interpolate_negative(i):
     y_1 = relativeY[i+1]   # declaring the second y-position for interpolation
 
     # Negative Slope
-    for a in range(point_density): 
-        if a == 0:
+    for n in range(point_density): 
+        if n == 0:
             y_break.append(y_0) # initial relativeY
             x_break.append(x_0) # initial x_position
-        elif a > 0:
-            y_break.append(y_0-(y_1-y_0)*a/point_density) # interpolate with the given point density
-            x_break.append(x_0-(x_1-x_0)*a/point_density)
+        elif n > 0:
+            y_break.append(y_0-(y_1-y_0)*n/point_density) # interpolate with the given point density
+            x_break.append(x_0-(x_1-x_0)*n/point_density)
 
 # Instead of different functions for positive and negative
-def interpolate(i, y_1, x_1, y_0, x_0):
+def interpolate(i):
+    x_0 = relativeX[i]     # declaring the first x-position for interpolation
+    x_1 = relativeX[i+1]   # declaring the second x-position for interpolation
+    y_0 = relativeY[i]     # declaring the first y-position for interpolation
+    y_1 = relativeY[i+1]   # declaring the second y-position for interpolation
+
     for n in range(point_density):
-        y_break = ((y_1 - y_0) / (x_1-x_0) ) * (x_0 + (n / point_density)) + y_1*((x_1-x_0) / (y_1-y_0))
-        x_break = ((y_1 - y_0) / (x_1-x_0) ) * (x_0 + (n / point_density)) + y_1*((x_1-x_0) / (y_1-y_0))
+        x_break.append( x_0 + (x_1-x_0)*(n/point_density) )
+        y_break.append( ((y_1-y_0) / (x_1-x_0)) * (x_break[i]) + y_1*((x_1-x_0) / (y_1-y_0)) )
 
 def interpolation_function():
     """Converts all input points from Geodetic to ECEF coordinates and publishes them.
@@ -146,15 +149,24 @@ def interpolation_function():
             y_0 = relativeY[i]     # declaring the first y-position for interpolation
             y_1 = relativeY[i+1]   # declaring the second y-position for interpolation
                 
-            if y_1 < y_0: # when the slope is negative
-                interpolate_negative(i)
-            if y_1 > y_0: 
-                interpolate_positive(i)
-            if x_1 < x_0:
-                interpolate_negative(i)
-            if x_0 > x_1:
-                interpolate_positive(i)
+            # if y_1 < y_0: # when the slope is negative
+            #     interpolate_negative(i)
+            # if y_1 > y_0: 
+            #     interpolate_positive(i)
+            # if x_1 < x_0:
+            #     interpolate_negative(i)
+            # if x_0 > x_1:
+            #     interpolate_positive(i)
         
+            if y_1 < y_0: # when the slope is negative
+                interpolate(i)
+            if y_1 > y_0: 
+                interpolate(i)
+            if x_1 < x_0:
+                interpolate(i)
+            if x_0 > x_1:
+                interpolate(i)
+                    
             y_interpolated_position.append(y_break)
             x_interpolated_position.append(x_break)
 	    i+=1
