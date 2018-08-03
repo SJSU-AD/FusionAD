@@ -81,7 +81,8 @@ void segmenter::MessageCallback(const velodyne_puck_msgs::VelodynePuckSweep::Con
   seg_processor.ExtractIndices(predicted_clusters);
   seg_processor.FilterPoints(20);
 
-  bool obstacle_detected = seg_processor.FindObstacles();
+  std_msgs::Bool obstacle_detected;
+  obstacle_detected.data = seg_processor.FindObstacles();
   segmenter_pub.publish(obstacle_detected);  
 
   final_point_cloud = seg_processor.GenerateColoredPointCloud();
