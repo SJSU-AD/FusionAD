@@ -27,7 +27,7 @@ def steering_high_lvl_callback(high_steering_msg):
     high_lvl_steering_callback = high_steering_msg.data
 
 def Control_Adapter_Arduino_node():
-    rospy.init_node('Control_Adapter_Arduino_node', anonymous = True)
+    rospy.init_node('Control_Adapter', anonymous = True)
 
     steering_low_lvl_node_publisher = rospy.Publisher('/control/steering_channel', Float64, queue_size=10)
     steering_publisher_to_high_lvl = rospy.Publisher('/control/steering_feedback', Float64, queue_size=10)
