@@ -42,11 +42,22 @@ latitudesCN2002  = [37.41651668611111, 37.416513997222225, 37.41651668888889, 37
 longitudesCN2002 = [-122.20426206944444, -122.20424886666666, -122.20426205833333, -122.20424885555556]
 heightsCN2002    = [63.685, 64.218, 63.774, 64.308]
 
+# Custom hardcoded test data
+latitudesCustom  = [0.0, 1.0, 2.0, 3.0, 4.0]
+longitudesCustom = [0.0, 1.0, 2.0, 3.0, 4.0]
+heightsCustom    = [4.0, 4.0, 4.0, 4.0, 4.0]
+
 ######################################
 ######################################
 ######################################
 
-point_density = 100 # how many points between each interpolated point
+# Set variables for storing input coarse GNSS geodetic coordinates
+latitudes = []
+longitudes = []
+heights = []
+
+# how many points between each interpolated point
+point_density = 10 
 
 # Placeholders for output global ECEF conversion
 X_Position = []
@@ -58,74 +69,46 @@ relativeX = []
 relativeY = []
 relativeZ = []
 
-vector_size = 0
+numberOfCoarsePoints = 0
 
-# Initially converted from MATLAB rough equivalent: [None]*vector_size*point_density 
-x_interpolated_position = []
-y_interpolated_position = []
+# Contains lists of points between input coarse points, including coarse points
+# Initially converted from MATLAB rough equivalent: [None]*numberOfCoarsePoints*point_density
+x_interpolated_positions = []
+y_interpolated_positions = []
 
 # Converted from MATLAB rough equivalent: #[None]*point_density
-y_break = []
-x_break = []
-
-def read_file(fileName):
-    latitudesCN2002 = longitudesCN2002 = heightsCN2002 = []
-
-    file = open(fileName, "r")
-    for line in file:
-        splitLine = line.split(', ')
-        latitudesCN2002.append(splitLine[0])
-        longitudesCN2002.append(splitLine[1])
-        heightsCN2002.append(splitLine[2])
-
-
-def interpolate_positive(i):
-    """Interpolate between two points given index of initial point, if slope is positive"""
-
-    x_0 = relativeX[i]     # declaring the first x-position for interpolation
-    x_1 = relativeX[i+1]   # declaring the second x-position for interpolation
-    y_0 = relativeY[i]     # declaring the first y-position for interpolation
-    y_1 = relativeY[i+1]   # declaring the second y-position for interpolation
-
-    # Positive Slope
-    for n in range(point_density): 
-        if n == 0:
-            y_break.append(y_0) # initial relativeY
-            x_break.append(x_0) # initial x_position
-        elif n > 0:
-            y_break.append(y_0-(y_0-y_1)*n/point_density) # interpolate with the given point density
-            x_break.append(x_0-(x_0-x_1)*n/point_density)
-
-def interpolate_negative(i):
-    """Interpolate between two points given index of initial point, if slope is negative"""
-
-    x_0 = relativeX[i]     # declaring the first x-position for interpolation
-    x_1 = relativeX[i+1]   # declaring the second x-position for interpolation
-    y_0 = relativeY[i]     # declaring the first y-position for interpolation
-    y_1 = relativeY[i+1]   # declaring the second y-position for interpolation
-
-    # Negative Slope
-    for n in range(point_density): 
-        if n == 0:
-            y_break.append(y_0) # initial relativeY
-            x_break.append(x_0) # initial x_position
-        elif n > 0:
-            y_break.append(y_0-(y_1-y_0)*n/point_density) # interpolate with the given point density
-            x_break.append(x_0-(x_1-x_0)*n/point_density)
+y_n = []
+x_n = []
 
 # Instead of different functions for positive and negative
 def interpolate(i):
-    x_0 = relativeX[i]     # declaring the first x-position for interpolation
-    x_1 = relativeX[i+1]   # declaring the second x-position for interpolation
-    y_0 = relativeY[i]     # declaring the first y-position for interpolation
-    y_1 = relativeY[i+1]   # declaring the second y-position for interpolation
+    """Interpolate between two points, given index of one of the points."""
+    print("i is currently:", i)
 
-    for n in range(point_density):
-        x_break.append( x_0 + (x_1-x_0)*(n/point_density) )
-        y_break.append( ((y_1-y_0) / (x_1-x_0)) * (x_break[i]) + y_1*((x_1-x_0) / (y_1-y_0)) )
+    # Vanilla case: for all points except final point
+    if i < numberOfCoarsePoints-1:
+        x_0 = relativeX[i]     # declare the first x-position for interpolation
+        x_1 = relativeX[i+1]   # declare the second x-position for interpolation
+        y_0 = relativeY[i]     # declare the first y-position for interpolation
+        y_1 = relativeY[i+1]   # declare the second y-position for interpolation        
 
-def interpolation_function():
-    """Converts all input points from Geodetic to ECEF coordinates and publishes them.
+        for n in range(point_density):
+            x_n.append( x_0 + (x_1-x_0)*(n/point_density) )
+            y_n.append( ((y_1-y_0) / (x_1-x_0)) * (x_n[i]) + y_1*((x_1-x_0) / (y_1-y_0)) )
+
+    # Corner case: for final point    
+    if i == numberOfCoarsePoints-1:
+        x_0 = relativeX[i-1]     
+        x_1 = relativeX[i]
+        y_0 = relativeY[i-1]
+        y_1 = relativeY[i]
+    
+        for n in range(point_density):
+            x_n.append( x_0 + (x_1-x_0)*(n/point_density) )
+            y_n.append( ((y_1-y_0) / (x_1-x_0)) * (x_n[i]) + y_1*((x_1-x_0) / (y_1-y_0)) )    
+
+def interpolation_publish():
+    """Interpolates between all ECEF coordinates and publishes them as a Path.
 
     Subscribes
     ----------
@@ -140,8 +123,6 @@ def interpolation_function():
         /interpolation_x -- List of interpolated points in the x direction in ECEF coordinates
     """
 
-    # x_publisher = rospy.Publisher('interpolation_x', Float64, queue_size = 10)
-    # y_publisher = rospy.Publisher('interpolation_y', Float64, queue_size=10)
     path_publisher = rospy.Publisher('path_node', Path, queue_size=1000)
     rospy.init_node('interpolation_node', anonymous = True)
     rate = rospy.Rate(1)
@@ -149,53 +130,29 @@ def interpolation_function():
     i = 0 # initialize global index for initial positions
 
     while not rospy.is_shutdown():
-        print("Entered rospy")
-
         path = Path()
 
-        while i < vector_size-2:
-            print("Entered while")
-            x_0 = relativeX[i]     # declaring the first x-position for interpolation
-            x_1 = relativeX[i+1]   # declaring the second x-position for interpolation
-            y_0 = relativeY[i]     # declaring the first y-position for interpolation
-            y_1 = relativeY[i+1]   # declaring the second y-position for interpolation
-                
-            # if y_1 < y_0: # when the slope is negative
-            #     interpolate_negative(i)
-            # if y_1 > y_0: 
-            #     interpolate_positive(i)
-            # if x_1 < x_0:
-            #     interpolate_negative(i)
-            # if x_0 > x_1:
-            #     interpolate_positive(i)
-        
-            if y_1 < y_0: # when the slope is negative
-                interpolate(i)
-            if y_1 > y_0: 
-                interpolate(i)
-            if x_1 < x_0:
-                interpolate(i)
-            if x_0 > x_1:
-                interpolate(i)
-                    
-            y_interpolated_position.append(y_break)
-            x_interpolated_position.append(x_break)
-	    i+=1
-            
-        for c in range (len(y_interpolated_position)+1):
-            print("Entered outer for")
-            
-            # rospy.loginfo("Interpolated Y Position: %f", y_interpolated_position[c])
-            # y_publisher.publish(y_interpolated_position[c])
-            # x_publisher.publish(x_interpolated_position[c])
-            # print(x_interpolated_position[c])
+        print("numberOfCoarsePoints is:", numberOfCoarsePoints)
+        while i < numberOfCoarsePoints:
+            interpolate(i)
 
-            print("length of y_break:", len(y_break))
+            y_interpolated_positions.append(y_n)
+            x_interpolated_positions.append(x_n)
+            
+            i += 1
+            
+        ################################
+        ##### Publish Path message #####
+        ################################
+        for _ in range(len(y_interpolated_positions)+1):
+
+            print("length of y_n:", len(y_n))
             seq = 0
-            for i in range(len(y_break)):
+            for i in range(len(y_n)):
 
-                # path.poses.append(path.poses[i].pose.position.x = 0.0) # x_break[i]
-                # path.poses[i].pose.position.y = 0.0 # y_break[i]
+                # # Attempting to add points directly in one line without creating point object first
+                # path.poses.append(path.poses[i].pose.position.x = 0.0) # x_n[i]
+                # path.poses[i].pose.position.y = 0.0 # y_n[i]
                 # path.poses[i].pose.position.z = 0.0
 
                 currentPoseStampMsg = PoseStamped()
@@ -206,8 +163,8 @@ def interpolation_function():
                 currentPoseStampMsg.header.stamp = h.stamp
                 seq += 1
 
-                currentPoseStampMsg.pose.position.x =  x_break[i] 
-                currentPoseStampMsg.pose.position.y =  y_break[i] 
+                currentPoseStampMsg.pose.position.x =  x_n[i] 
+                currentPoseStampMsg.pose.position.y =  y_n[i] 
                 currentPoseStampMsg.pose.position.z = 0.0
 
                 path.poses.append(currentPoseStampMsg)
@@ -257,7 +214,7 @@ def geodetic_to_ECEF_coordinates(lat, lng, h):
 def geodetic_data_to_ECEF_data(latitudesData, longitudesData, heightsData):
     """Convert list of geodetic data to list of ECEF data"""
     for i in range(min(len(latitudesData), len(longitudesData), len(heightsData))):
-        x, y, z = geodetic_to_ECEF_coordinates(latitudesCN2002[i], longitudesCN2002[i], heightsCN2002[i])
+        x, y, z = geodetic_to_ECEF_coordinates(latitudesData[i], longitudesData[i], heightsData[i])
         X_Position.append(x)
         Y_Position.append(y)
         Z_Position.append(z)
@@ -274,20 +231,40 @@ def global_to_relative():
         relativeY.append(Y_Position[i] - globalYInitial)
         relativeZ.append(Z_Position[i] - globalZInitial)
 
+def read_file_coarse_points(fileName):
+    """Reads GPS coordinates from text file and saves to latitude and longitude variables"""
+    latitudes = longitudes = heights = []
+
+    # TODO: Check for file format and catch appropriate exception
+    with open(fileName, "r") as file:
+
+        for line in file:
+            if file.index(line) != 1:
+                splitLine = line.split()
+                latitudes.append(splitLine[1])
+                longitudes.append(splitLine[2])
+                heights.append(60.0) # Hardcoded
+
 def main():
-    read_file(locations.txt)
-    geodetic_data_to_ECEF_data(latitudesCN2002, longitudesCN2002, heightsCN2002)
+
+    # Set chosen dataset
+    latitudes  = latitudesCN2002
+    longitudes = longitudesCN2002
+    heights    = heightsCN2002
+
+    # read_file_coarse_points("testCoordinates1.txt")
+    geodetic_data_to_ECEF_data(latitudes, longitudes, heights)
     global_to_relative()
 
     print("relativeX =", relativeX, "\nrelativeY =", relativeY, "\nrelativeZ =", relativeZ)
     print("\n")
 
     # Find the length of the relativeX list
-    global vector_size 
-    vector_size= len(relativeX) 
+    global numberOfCoarsePoints 
+    numberOfCoarsePoints= len(relativeX) 
 
     try:
-        interpolation_function()
+        interpolation_publish()
     except rospy.ROSInterruptException:
         pass
 
