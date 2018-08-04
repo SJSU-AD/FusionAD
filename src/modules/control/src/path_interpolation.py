@@ -233,26 +233,30 @@ def global_to_relative():
 
 def read_file_coarse_points(fileName):
     """Reads GPS coordinates from text file and saves to latitude and longitude variables"""
-    latitudes = longitudes = heights = []
+    global latitudes 
+    global longitudes
+    global heights
 
     # TODO: Check for file format and catch appropriate exception
     with open(fileName, "r") as file:
 
         for line in file:
             if line[0] == "W":
-                splitLine = line.split()
-                latitudes.append(splitLine[1])
-                longitudes.append(splitLine[2])
+                currentLine = line.split()
+                print("current line is:", currentLine)
+                latitudes.append(float(currentLine[1]))
+                longitudes.append(float(currentLine[2]))
                 heights.append(60.0) # Hardcoded
 
 def main():
 
     # Set chosen dataset
-    latitudes  = latitudesCN2002
-    longitudes = longitudesCN2002
-    heights    = heightsCN2002
+    # latitudes  = latitudesCN2002
+    # longitudes = longitudesCN2002
+    # heights    = heightsCN2002
 
-    # read_file_coarse_points("testCoordinates1.txt")
+    read_file_coarse_points("testCoordinates1.txt")
+    print("latitudes: {}\nlongitudes: {}\nheights: {}".format(latitudes, longitudes, heights))
     geodetic_data_to_ECEF_data(latitudes, longitudes, heights)
     global_to_relative()
 
