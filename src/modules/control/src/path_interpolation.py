@@ -80,9 +80,9 @@ y_interpolated_positions = []
 y_n = []
 x_n = []
 
-# # Instead of different functions for positive and negative
+# Instead of different functions for positive and negative
 def interpolate(i):
-    # """Interpolate between two points, given index of one of the points."""
+    """Interpolate between two points, given index of one of the points."""
     print("i is currently:", i)
 
     # Vanilla case: for all points except final point
