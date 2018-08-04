@@ -80,9 +80,9 @@ y_interpolated_positions = []
 y_n = []
 x_n = []
 
-# Instead of different functions for positive and negative
+# # Instead of different functions for positive and negative
 def interpolate(i):
-    """Interpolate between two points, given index of one of the points."""
+    # """Interpolate between two points, given index of one of the points."""
     print("i is currently:", i)
 
     # Vanilla case: for all points except final point
@@ -239,7 +239,7 @@ def read_file_coarse_points(fileName):
     with open(fileName, "r") as file:
 
         for line in file:
-            if file.index(line) != 1:
+            if line[0] == "W":
                 splitLine = line.split()
                 latitudes.append(splitLine[1])
                 longitudes.append(splitLine[2])
