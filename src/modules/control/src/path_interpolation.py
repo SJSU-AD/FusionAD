@@ -24,32 +24,8 @@ from std_msgs.msg import Header
 from geometry_msgs.msg import Point, Pose, PoseStamped
 from nav_msgs.msg import Path
 
-######################################
-##### Input geodetic coordinates #####
-######################################
-
-# Data from sfpublicworks
-# https://sfpublicworks.org/ccsf-geodetic-network
-# "HPN Densification (HPND) Published Coordinates (doc)  UPDATED 07.06.18"
-latitudesSF   = [37.73342686666667, 37.74874958888889, 37.78162528055555, 37.78120765833334, 37.782006519444444]
-longitudesSF  = [122.49695338611112, 122.39902696666667, 122.424035375, 122.42713217777778, 122.427296125]
-heightsFtSF   = [-29.73, 90.68, 0.1, -1.5, 16.6]
-heigthsMSF    = [height * 0.3048 for height in heightsFtSF]
-
-# Data from Antenna Reference Point(ARP): SLAC_BARD_CN2002 CORS ARP
-# ftp://www.ngs.noaa.gov/cors/coord/coord_08/slac_08.coord.txt
-latitudesCN2002  = [37.41651668611111, 37.416513997222225, 37.41651668888889, 37.416514]
-longitudesCN2002 = [-122.20426206944444, -122.20424886666666, -122.20426205833333, -122.20424885555556]
-heightsCN2002    = [63.685, 64.218, 63.774, 64.308]
-
-# Custom hardcoded test data
-latitudesCustom  = [0.0, 1.0, 2.0, 3.0, 4.0]
-longitudesCustom = [0.0, 1.0, 2.0, 3.0, 4.0]
-heightsCustom    = [4.0, 4.0, 4.0, 4.0, 4.0]
-
-######################################
-######################################
-######################################
+import gps_parser
+import geodesy
 
 # Instead of different functions for positive and negative
 def interpolate(i, relativeX, relativeY, relativeZ, finePointsX, finePointsY, numberOfCoarsePoints):
@@ -63,7 +39,7 @@ def interpolate(i, relativeX, relativeY, relativeZ, finePointsX, finePointsY, nu
         x0 = relativeX[i]     # declare the first x-position for interpolation
         x1 = relativeX[i+1]   # declare the second x-position for interpolation
         y0 = relativeY[i]     # declare the first y-position for interpolation
-        y1 = relativeY[i+1]   # declare the second y-position for interpolation  
+        y1 = relativeY[i+1]   # declare the second y-position for interpolation
 
         for n in range(pointDensity):
             finePointsX.append( x0 + (x1-x0)*(n/pointDensity) )
@@ -71,7 +47,7 @@ def interpolate(i, relativeX, relativeY, relativeZ, finePointsX, finePointsY, nu
 
     # Corner case: for final point    
     if i == numberOfCoarsePoints-1:
-        x0 = relativeX[i-1]     
+        x0 = relativeX[i-1]
         x1 = relativeX[i]
         y0 = relativeY[i-1]
         y1 = relativeY[i]
@@ -143,32 +119,12 @@ def interpolation_publish(relativeX, relativeY, relativeZ):
 
                 currentPoseStampMsg.pose.position.x =  finePointsX[i] 
                 currentPoseStampMsg.pose.position.y =  finePointsY[i] 
-                currentPoseStampMsg.pose.position.z = 0.0
+                currentPoseStampMsg.pose.position.z = 60.0
 
                 path.poses.append(currentPoseStampMsg)
         
         path_publisher.publish(path)
         rate.sleep()
-
-def read_file_coarse_points(fileName):
-    """Reads GPS coordinates from text file and returns latitude and longitude values in decimal
-    
-    Data taken from: http://www.gpsvisualizer.com/draw/
-    """
-    inputLatitudes = []
-    inputLongitudes = []
-    inputHeights = []
-
-    # TODO: Check for file format and catch appropriate exception
-    with open(fileName, "r") as file:
-        for line in file:
-            if line[0] == "W":
-                currentLine = line.split()
-                inputLatitudes.append(float(currentLine[1]))
-                inputLongitudes.append(float(currentLine[2]))
-                inputHeights.append(60.0) # Hardcoded estimated height of SJSU
-    
-    return inputLatitudes, inputLongitudes, inputHeights
 
 def geodetic_to_ECEF_coordinates(lat, lng, h):
     """Converts a list of geodetic coordinates to a list of ECEF coordinates.
@@ -241,20 +197,16 @@ def global_to_relative(xPosition, yPosition, zPosition):
     return relativeX, relativeY, relativeZ
 
 def main():
-
-    # Set chosen dataset
-    # latitudes  = latitudesCN2002
-    # longitudes = longitudesCN2002
-    # heights    = heightsCN2002
-
-    inputLatitudes, inputLongitudes, inputHeights = read_file_coarse_points("testCoordinates1.txt")
+    inputLatitudes, inputLongitudes, inputHeights = gps_parser.read_file_coarse_points("gps_coarse_points/testCoordinates1.txt")
     print("inputLatitudes: {}\ninputLongitudes: {}\ninputHeights: {}".format(inputLatitudes, inputLongitudes, inputHeights))
-    xPosition, yPosition, zPosition = geodetic_data_to_ECEF_data(inputLatitudes, inputLongitudes, inputHeights)
-    relativeX, relativeY, relativeZ = global_to_relative(xPosition, yPosition, zPosition)
+    
+    xPosition, yPosition, zPosition = geodesy.geodetic_data_to_ECEF_data(inputLatitudes, inputLongitudes, inputHeights)
+    print("xPosition =", xPosition, "\nyPosition =", yPosition, "\nzPosition =", zPosition)
 
+    relativeX, relativeY, relativeZ = geodesy.global_to_relative(xPosition, yPosition, zPosition)
     print("relativeX =", relativeX, "\nrelativeY =", relativeY, "\nrelativeZ =", relativeZ)
+    
     print("\n")
-
 
     try:
         interpolation_publish(relativeX, relativeY, relativeZ)
