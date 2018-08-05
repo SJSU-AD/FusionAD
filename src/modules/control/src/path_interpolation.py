@@ -38,12 +38,10 @@ def interpolate(i, relativeX, relativeY, relativeZ, numberOfCoarsePoints):
     finePointsY = []
     finePointsZ = []
 
-    pointDensity = 10
-
     # Vanilla case: for all points except final point
     if i < numberOfCoarsePoints-1:
         # Number of points between each interpolated point
-        # pointDensity = get_point_density(relativeX[i], relativeX[i], relativeZ[i], relativeX[i+1], relativeY[i+1], relativeZ[i+1], 25)
+        pointDensity = get_point_density(relativeX[i], relativeX[i], relativeZ[i], relativeX[i+1], relativeY[i+1], relativeZ[i+1], 25)
 
         # Declare the first and second positions for interpolation
         x0 = relativeX[i]     
@@ -53,23 +51,15 @@ def interpolate(i, relativeX, relativeY, relativeZ, numberOfCoarsePoints):
         z0 = relativeZ[i]     
         z1 = relativeZ[i+1]
 
-        # print("============")
-        # print("relativeX[i] is:", relativeX[i])
-        # print("relativeY[i] is:", relativeY[i])
         for n in range(pointDensity):
-            # print("finePointsX is:",finePointsX)
             finePointsX.append( x0 + (x1-x0)*(n/pointDensity) )
             finePointsY.append( y0 + (y1-y0)*(n/pointDensity) ) # was previously: finePointsY.append( ((y1-y0) / (x1-x0)) * (finePointsX[n]) + y0*((x1-x0) / (y1-y0)) )
             finePointsZ.append( z0 + (z1-z0)*(n/pointDensity) )
-            # print("\nfinePointsX is:", finePointsX)
-            # print("\nfinePointsY is:", finePointsY)
-        # print("relativeX[i+1] is:", relativeX[i+1])
 
     # Corner case: for final point    
     if i == numberOfCoarsePoints-1:
-        # pointDensity = get_point_density(relativeX[i-1], relativeX[i-1], relativeZ[i-1], relativeX[i], relativeY[i], relativeZ[i], 25)
+        pointDensity = get_point_density(relativeX[i-1], relativeX[i-1], relativeZ[i-1], relativeX[i], relativeY[i], relativeZ[i], 25)
 
-        print("corner case point density is:", pointDensity)
         x0 = relativeX[i-1]
         x1 = relativeX[i]
         y0 = relativeY[i-1]
@@ -82,6 +72,7 @@ def interpolate(i, relativeX, relativeY, relativeZ, numberOfCoarsePoints):
             finePointsY.append( y0 + (y1-y0)*(n/pointDensity) )
             finePointsZ.append( z0 + (z1-z0)*(n/pointDensity) )
 
+    # print("pointDensity used on iteration {} was {}".format(i, pointDensity))
     return finePointsX, finePointsY, finePointsZ
 
 def interpolation_publish(relativeX, relativeY, relativeZ, chosenHeight):
@@ -100,7 +91,7 @@ def interpolation_publish(relativeX, relativeY, relativeZ, chosenHeight):
         /interpolation_x -- List of interpolated points in the x direction in ECEF coordinates
     """
 
-    path_publisher = rospy.Publisher('path_node', Path, queue_size=1000)
+    path_publisher = rospy.Publisher('/planning/trajectory', Path, queue_size=1000)
     rospy.init_node('interpolation_node', anonymous = True)
     rate = rospy.Rate(.1)
 
@@ -114,7 +105,6 @@ def interpolation_publish(relativeX, relativeY, relativeZ, chosenHeight):
 
         numberOfCoarsePoints = len(relativeX)
 
-        print("numberOfCoarsePoints is:", len(relativeX))
         for i in range(numberOfCoarsePoints):
             finePointsX, finePointsY, finePointsZ = interpolate(i, relativeX, relativeY, relativeZ, numberOfCoarsePoints)
 
@@ -125,7 +115,6 @@ def interpolation_publish(relativeX, relativeY, relativeZ, chosenHeight):
         ################################
         ##### Publish Path message #####
         ################################
-        print("length of yInterpolatedPositions:", len(yInterpolatedPositions))
 
         for i in range(len(yInterpolatedPositions)):
             # # Attempting to add points directly in one line without creating point object first
@@ -148,7 +137,7 @@ def interpolation_publish(relativeX, relativeY, relativeZ, chosenHeight):
             path.poses.append(currentPoseStampMsg)
         
         path_publisher.publish(path)
-        print("Published Path!")
+        print("Published Path with {} steps".format(i))
         rate.sleep()
 
 def main():
