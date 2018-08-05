@@ -7,12 +7,20 @@ from __future__ import division
 
 import math
 
+a = 6378137         # equatorial radius of earth
+b = 6356753         # polar radius of earth
+e = 0.08181788116   # eccentricity of the earth
+
+def euclidian_distance_3d(x1, y1, z1, x2, y2, z2):
+    """3-D euclidian distance between two points. Intended use in meters"""
+    return math.sqrt( ((x1-x2)**2) + ((y1-y2)**2) + ((z1-z2)**2) )
+
+#################################
+"""Geodetic to ECEF conversion"""
+#################################
+
 def geodetic_to_ECEF_point(lat, lng, h):
     """Convert a point in geodetic latitude/longitude/height format to ECEF X/Y/Z format"""
-
-    a = 6378137         # equatorial radius of earth
-    b = 6356753         # polar radius of earth
-    e = 0.08181788116   # eccentricity of the earth
 
     N = a / math.sqrt(1-(e**2) * (math.sin(lat*math.pi/180)**2))        # prime vertical radius of curvature
     x = (N+h) * math.cos(lat*math.pi/180) * math.cos(lng*math.pi/180) 
@@ -78,9 +86,12 @@ def global_to_relative(xPosition, yPosition, zPosition):
     
     return relativeX, relativeY, relativeZ
 
+#################################
+"""Geodetic to UTM conversion"""
+#################################
+"""Reference: https://en.wikipedia.org/wiki/Universal_Transverse_Mercator_coordinate_system#From_latitude,_longitude_(%CF%86,_%CE%BB)_to_UTM_coordinates_(E,_N)"""
 
-def euclidian_distance_3d(x1, y1, z1, x2, y2, z2):
-    """3-D euclidian distance between two points. Intended use in meters"""
-    return math.sqrt( ((x1-x2)**2) + ((y1-y2)**2) + ((z1-z2)**2) )
+# Flattening coefficient
+f = 1 / 298.257223563
 
-# TODO: Make pointDensity a function of distance between two points
+
