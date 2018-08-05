@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-"""Publishes ECEF Coordinates from given geodetic coordinates
+"""Publishes relative path ECEF poordinates from given geodetic coordinates
 
 Subscribes to:
     None
@@ -20,7 +20,7 @@ from __future__ import division
 
 import math
 import rospy
-from std_msgs.msg import Float64, UInt32, Header
+from std_msgs.msg import Header
 from geometry_msgs.msg import Point, Pose, PoseStamped
 from nav_msgs.msg import Path
 
@@ -51,63 +51,36 @@ heightsCustom    = [4.0, 4.0, 4.0, 4.0, 4.0]
 ######################################
 ######################################
 
-# Set variables for storing input coarse GNSS geodetic coordinates
-latitudes = []
-longitudes = []
-heights = []
-
-# how many points between each interpolated point
-point_density = 10 
-
-# Placeholders for output global ECEF conversion
-X_Position = []
-Y_Position = []
-Z_Position = []
-
-# Placeholders for output relative ECEF conversion
-relativeX = []
-relativeY = []
-relativeZ = []
-
-numberOfCoarsePoints = 0
-
-# Contains lists of points between input coarse points, including coarse points
-# Initially converted from MATLAB rough equivalent: [None]*numberOfCoarsePoints*point_density
-x_interpolated_positions = []
-y_interpolated_positions = []
-
-# Converted from MATLAB rough equivalent: #[None]*point_density
-y_n = []
-x_n = []
-
 # Instead of different functions for positive and negative
-def interpolate(i):
+def interpolate(i, relativeX, relativeY, relativeZ, finePointsX, finePointsY, numberOfCoarsePoints):
     """Interpolate between two points, given index of one of the points."""
-    print("i is currently:", i)
+
+    # Number of points between each interpolated point
+    pointDensity = 10
 
     # Vanilla case: for all points except final point
     if i < numberOfCoarsePoints-1:
-        x_0 = relativeX[i]     # declare the first x-position for interpolation
-        x_1 = relativeX[i+1]   # declare the second x-position for interpolation
-        y_0 = relativeY[i]     # declare the first y-position for interpolation
-        y_1 = relativeY[i+1]   # declare the second y-position for interpolation        
+        x0 = relativeX[i]     # declare the first x-position for interpolation
+        x1 = relativeX[i+1]   # declare the second x-position for interpolation
+        y0 = relativeY[i]     # declare the first y-position for interpolation
+        y1 = relativeY[i+1]   # declare the second y-position for interpolation  
 
-        for n in range(point_density):
-            x_n.append( x_0 + (x_1-x_0)*(n/point_density) )
-            y_n.append( ((y_1-y_0) / (x_1-x_0)) * (x_n[i]) + y_1*((x_1-x_0) / (y_1-y_0)) )
+        for n in range(pointDensity):
+            finePointsX.append( x0 + (x1-x0)*(n/pointDensity) )
+            finePointsY.append( ((y1-y0) / (x1-x0)) )# * (finePointsX[i]) + y1*((x1-x0) / (y1-y0)) )
 
     # Corner case: for final point    
     if i == numberOfCoarsePoints-1:
-        x_0 = relativeX[i-1]     
-        x_1 = relativeX[i]
-        y_0 = relativeY[i-1]
-        y_1 = relativeY[i]
+        x0 = relativeX[i-1]     
+        x1 = relativeX[i]
+        y0 = relativeY[i-1]
+        y1 = relativeY[i]
     
-        for n in range(point_density):
-            x_n.append( x_0 + (x_1-x_0)*(n/point_density) )
-            y_n.append( ((y_1-y_0) / (x_1-x_0)) * (x_n[i]) + y_1*((x_1-x_0) / (y_1-y_0)) )    
+        for n in range(pointDensity):
+            finePointsX.append( x0 + (x1-x0)*(n/pointDensity) )
+            finePointsY.append( ((y1-y0) / (x1-x0)) * (finePointsX[i]) + y1*((x1-x0) / (y1-y0)) )    
 
-def interpolation_publish():
+def interpolation_publish(relativeX, relativeY, relativeZ):
     """Interpolates between all ECEF coordinates and publishes them as a Path.
 
     Subscribes
@@ -126,33 +99,38 @@ def interpolation_publish():
     path_publisher = rospy.Publisher('path_node', Path, queue_size=1000)
     rospy.init_node('interpolation_node', anonymous = True)
     rate = rospy.Rate(1)
-    
-    i = 0 # initialize global index for initial positions
 
     while not rospy.is_shutdown():
         path = Path()
 
-        print("numberOfCoarsePoints is:", numberOfCoarsePoints)
-        while i < numberOfCoarsePoints:
-            interpolate(i)
+        # Placeholder for all points after interpolation between two given points
+        finePointsY = []
+        finePointsX = []
 
-            y_interpolated_positions.append(y_n)
-            x_interpolated_positions.append(x_n)
-            
-            i += 1
+        # Contains lists of fine points, including coarse points
+        x_interpolated_positions = []
+        y_interpolated_positions = []
+
+        numberOfCoarsePoints = len(relativeX)
+
+        print("numberOfCoarsePoints is:", len(relativeX))
+        for i in range(numberOfCoarsePoints):
+            interpolate(i, relativeX, relativeY, relativeZ, finePointsX, finePointsY,numberOfCoarsePoints)
+
+            y_interpolated_positions.append(finePointsY)
+            x_interpolated_positions.append(finePointsX)
             
         ################################
         ##### Publish Path message #####
         ################################
+        print("number of total points:", len(finePointsY))
         for _ in range(len(y_interpolated_positions)+1):
-
-            print("length of y_n:", len(y_n))
             seq = 0
-            for i in range(len(y_n)):
+            for i in range(len(finePointsY)):
 
                 # # Attempting to add points directly in one line without creating point object first
-                # path.poses.append(path.poses[i].pose.position.x = 0.0) # x_n[i]
-                # path.poses[i].pose.position.y = 0.0 # y_n[i]
+                # path.poses.append(path.poses[i].pose.position.x = 0.0) # finePointsX[i]
+                # path.poses[i].pose.position.y = 0.0 # finePointsY[i]
                 # path.poses[i].pose.position.z = 0.0
 
                 currentPoseStampMsg = PoseStamped()
@@ -163,8 +141,8 @@ def interpolation_publish():
                 currentPoseStampMsg.header.stamp = h.stamp
                 seq += 1
 
-                currentPoseStampMsg.pose.position.x =  x_n[i] 
-                currentPoseStampMsg.pose.position.y =  y_n[i] 
+                currentPoseStampMsg.pose.position.x =  finePointsX[i] 
+                currentPoseStampMsg.pose.position.y =  finePointsY[i] 
                 currentPoseStampMsg.pose.position.z = 0.0
 
                 path.poses.append(currentPoseStampMsg)
@@ -172,6 +150,25 @@ def interpolation_publish():
         path_publisher.publish(path)
         rate.sleep()
 
+def read_file_coarse_points(fileName):
+    """Reads GPS coordinates from text file and returns latitude and longitude values in decimal
+    
+    Data taken from: http://www.gpsvisualizer.com/draw/
+    """
+    inputLatitudes = []
+    inputLongitudes = []
+    inputHeights = []
+
+    # TODO: Check for file format and catch appropriate exception
+    with open(fileName, "r") as file:
+        for line in file:
+            if line[0] == "W":
+                currentLine = line.split()
+                inputLatitudes.append(float(currentLine[1]))
+                inputLongitudes.append(float(currentLine[2]))
+                inputHeights.append(60.0) # Hardcoded estimated height of SJSU
+    
+    return inputLatitudes, inputLongitudes, inputHeights
 
 def geodetic_to_ECEF_coordinates(lat, lng, h):
     """Converts a list of geodetic coordinates to a list of ECEF coordinates.
@@ -212,41 +209,36 @@ def geodetic_to_ECEF_coordinates(lat, lng, h):
     return x, y, z
 
 def geodetic_data_to_ECEF_data(latitudesData, longitudesData, heightsData):
-    """Convert list of geodetic data to list of ECEF data"""
+    """Convert lists of geodetic latitude/longitude/height data to list of ECEF X/Y/Z data"""
+
+    xPosition = []
+    yPosition = []
+    zPosition = []
+
     for i in range(min(len(latitudesData), len(longitudesData), len(heightsData))):
         x, y, z = geodetic_to_ECEF_coordinates(latitudesData[i], longitudesData[i], heightsData[i])
-        X_Position.append(x)
-        Y_Position.append(y)
-        Z_Position.append(z)
+        xPosition.append(x)
+        yPosition.append(y)
+        zPosition.append(z)
+    
+    return xPosition, yPosition, zPosition
 
-def global_to_relative():
+def global_to_relative(xPosition, yPosition, zPosition):
     """Convert global coordinates to relative coordinates at a given index"""
-    globalXInitial = X_Position[0]
-    globalYInitial = Y_Position[0]
-    globalZInitial = Z_Position[0]
+    globalXInitial = xPosition[0]
+    globalYInitial = yPosition[0]
+    globalZInitial = zPosition[0]
     
+    relativeX = []
+    relativeY = []
+    relativeZ = []
+
+    for i in range(len(zPosition)):
+        relativeX.append(xPosition[i] - globalXInitial)
+        relativeY.append(yPosition[i] - globalYInitial)
+        relativeZ.append(zPosition[i] - globalZInitial)
     
-    for i in range(len(X_Position)):
-        relativeX.append(X_Position[i] - globalXInitial)
-        relativeY.append(Y_Position[i] - globalYInitial)
-        relativeZ.append(Z_Position[i] - globalZInitial)
-
-def read_file_coarse_points(fileName):
-    """Reads GPS coordinates from text file and saves to latitude and longitude variables"""
-    global latitudes 
-    global longitudes
-    global heights
-
-    # TODO: Check for file format and catch appropriate exception
-    with open(fileName, "r") as file:
-
-        for line in file:
-            if line[0] == "W":
-                currentLine = line.split()
-                print("current line is:", currentLine)
-                latitudes.append(float(currentLine[1]))
-                longitudes.append(float(currentLine[2]))
-                heights.append(60.0) # Hardcoded
+    return relativeX, relativeY, relativeZ
 
 def main():
 
@@ -255,20 +247,17 @@ def main():
     # longitudes = longitudesCN2002
     # heights    = heightsCN2002
 
-    read_file_coarse_points("testCoordinates1.txt")
-    print("latitudes: {}\nlongitudes: {}\nheights: {}".format(latitudes, longitudes, heights))
-    geodetic_data_to_ECEF_data(latitudes, longitudes, heights)
-    global_to_relative()
+    inputLatitudes, inputLongitudes, inputHeights = read_file_coarse_points("testCoordinates1.txt")
+    print("inputLatitudes: {}\ninputLongitudes: {}\ninputHeights: {}".format(inputLatitudes, inputLongitudes, inputHeights))
+    xPosition, yPosition, zPosition = geodetic_data_to_ECEF_data(inputLatitudes, inputLongitudes, inputHeights)
+    relativeX, relativeY, relativeZ = global_to_relative(xPosition, yPosition, zPosition)
 
     print("relativeX =", relativeX, "\nrelativeY =", relativeY, "\nrelativeZ =", relativeZ)
     print("\n")
 
-    # Find the length of the relativeX list
-    global numberOfCoarsePoints 
-    numberOfCoarsePoints= len(relativeX) 
 
     try:
-        interpolation_publish()
+        interpolation_publish(relativeX, relativeY, relativeZ)
     except rospy.ROSInterruptException:
         pass
 
