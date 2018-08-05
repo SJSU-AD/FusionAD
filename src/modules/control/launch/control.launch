@@ -3,6 +3,11 @@
 	  <param name="control_gain" value="1"/>
     <param name="debug" value="false"/>
   </node>
-  <node type="ardu_adapter.py" pkg="control" name="Control_Adapter" output="screen">
+
+  <!-- <node type="ardu_adapter.py" pkg="control" name="Control_Adapter" output="screen">
+  </node> -->
+
+  <node type="path_interpolation.py" pkg="control" name="path_interpolator" output="screen">
+    <param name="~file_path" value="$(find control)/src/gps_coarse_points/testCoordinates1.txt" />
   </node>
 </launch>
