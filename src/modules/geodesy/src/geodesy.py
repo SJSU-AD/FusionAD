@@ -92,6 +92,8 @@ def global_to_relative(xPosition, yPosition, zPosition):
 """Reference: https://en.wikipedia.org/wiki/Universal_Transverse_Mercator_coordinate_system#From_latitude,_longitude_(%CF%86,_%CE%BB)_to_UTM_coordinates_(E,_N)"""
 
 # Flattening coefficient
-f = 1 / 298.257223563
+flatteningCoeff = 1 / 298.257223563
 
+def geodetic_to_UTM(lat, lng):
+    pass
 
