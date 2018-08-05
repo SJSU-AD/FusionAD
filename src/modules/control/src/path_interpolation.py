@@ -36,6 +36,7 @@ def interpolate(i, relativeX, relativeY, relativeZ, numberOfCoarsePoints):
     
     finePointsX = []
     finePointsY = []
+    finePointsZ = []
 
     pointDensity = 10
 
@@ -44,21 +45,25 @@ def interpolate(i, relativeX, relativeY, relativeZ, numberOfCoarsePoints):
         # Number of points between each interpolated point
         # pointDensity = get_point_density(relativeX[i], relativeX[i], relativeZ[i], relativeX[i+1], relativeY[i+1], relativeZ[i+1], 25)
 
-        x0 = relativeX[i]     # declare the first x-position for interpolation
-        x1 = relativeX[i+1]   # declare the second x-position for interpolation
-        y0 = relativeY[i]     # declare the first y-position for interpolation
-        y1 = relativeY[i+1]   # declare the second y-position for interpolation
+        # Declare the first and second positions for interpolation
+        x0 = relativeX[i]     
+        x1 = relativeX[i+1]
+        y0 = relativeY[i]     
+        y1 = relativeY[i+1]   
+        z0 = relativeZ[i]     
+        z1 = relativeZ[i+1]
 
-        print("============")
-        print("relativeX[i] is:", relativeX[i])
-        print("relativeY[i] is:", relativeY[i])
+        # print("============")
+        # print("relativeX[i] is:", relativeX[i])
+        # print("relativeY[i] is:", relativeY[i])
         for n in range(pointDensity):
             # print("finePointsX is:",finePointsX)
             finePointsX.append( x0 + (x1-x0)*(n/pointDensity) )
-            finePointsY.append( ((y1-y0) / (x1-x0)) * (finePointsX[n]) + y0*((x1-x0) / (y1-y0)) ) # TODO: check if correct 
-            print("\nfinePointsX is:", finePointsX)
-            print("\nfinePointsY is:", finePointsY)
-        print("relativeX[i+1] is:", relativeX[i+1])
+            finePointsY.append( y0 + (y1-y0)*(n/pointDensity) ) # was previously: finePointsY.append( ((y1-y0) / (x1-x0)) * (finePointsX[n]) + y0*((x1-x0) / (y1-y0)) )
+            finePointsZ.append( z0 + (z1-z0)*(n/pointDensity) )
+            # print("\nfinePointsX is:", finePointsX)
+            # print("\nfinePointsY is:", finePointsY)
+        # print("relativeX[i+1] is:", relativeX[i+1])
 
     # Corner case: for final point    
     if i == numberOfCoarsePoints-1:
@@ -69,12 +74,15 @@ def interpolate(i, relativeX, relativeY, relativeZ, numberOfCoarsePoints):
         x1 = relativeX[i]
         y0 = relativeY[i-1]
         y1 = relativeY[i]
-    
+        z0 = relativeZ[i-1]     
+        z1 = relativeZ[i]
+
         for n in range(pointDensity):
             finePointsX.append( x0 + (x1-x0)*(n/pointDensity) )
-            finePointsY.append( ((y1-y0) / (x1-x0)) * (finePointsX[n]) + y1*((x1-x0) / (y1-y0)) )   
+            finePointsY.append( y0 + (y1-y0)*(n/pointDensity) )
+            finePointsZ.append( z0 + (z1-z0)*(n/pointDensity) )
 
-    return finePointsX, finePointsY
+    return finePointsX, finePointsY, finePointsZ
 
 def interpolation_publish(relativeX, relativeY, relativeZ, chosenHeight):
     """Interpolates between all ECEF coordinates and publishes them as a Path.
@@ -94,7 +102,7 @@ def interpolation_publish(relativeX, relativeY, relativeZ, chosenHeight):
 
     path_publisher = rospy.Publisher('path_node', Path, queue_size=1000)
     rospy.init_node('interpolation_node', anonymous = True)
-    rate = rospy.Rate(.5)
+    rate = rospy.Rate(.1)
 
     while not rospy.is_shutdown():
         path = Path()
@@ -102,15 +110,17 @@ def interpolation_publish(relativeX, relativeY, relativeZ, chosenHeight):
         # Contains lists of fine points, including coarse points
         xInterpolatedPositions = []
         yInterpolatedPositions = []
+        zInterpolatedPositions = []
 
         numberOfCoarsePoints = len(relativeX)
 
         print("numberOfCoarsePoints is:", len(relativeX))
         for i in range(numberOfCoarsePoints):
-            finePointsX, finePointsY = interpolate(i, relativeX, relativeY, relativeZ, numberOfCoarsePoints)
+            finePointsX, finePointsY, finePointsZ = interpolate(i, relativeX, relativeY, relativeZ, numberOfCoarsePoints)
 
             xInterpolatedPositions.extend(finePointsX)
             yInterpolatedPositions.extend(finePointsY)
+            zInterpolatedPositions.extend(finePointsZ)
         
         ################################
         ##### Publish Path message #####
@@ -131,9 +141,9 @@ def interpolation_publish(relativeX, relativeY, relativeZ, chosenHeight):
             currentPoseStampMsg.header.seq = h.seq
             currentPoseStampMsg.header.stamp = h.stamp
 
-            currentPoseStampMsg.pose.position.x =  xInterpolatedPositions[i] 
-            currentPoseStampMsg.pose.position.y =  yInterpolatedPositions[i] 
-            currentPoseStampMsg.pose.position.z = chosenHeight
+            currentPoseStampMsg.pose.position.x = xInterpolatedPositions[i] 
+            currentPoseStampMsg.pose.position.y = yInterpolatedPositions[i] 
+            currentPoseStampMsg.pose.position.z = zInterpolatedPositions[i]
 
             path.poses.append(currentPoseStampMsg)
         
@@ -147,13 +157,13 @@ def main():
     chosenHeight = 60.0
 
     inputLatitudes, inputLongitudes, inputHeights = gps_parser.read_file_coarse_points("gps_coarse_points/testCoordinates1.txt", chosenHeight)
-    print("\ninputLatitudes: {}\ninputLongitudes: {}\ninputHeights: {}".format(inputLatitudes, inputLongitudes, inputHeights))
+    # print("\ninputLatitudes: {}\ninputLongitudes: {}\ninputHeights: {}".format(inputLatitudes, inputLongitudes, inputHeights))
     
     xPosition, yPosition, zPosition = geodesy.geodetic_data_to_ECEF_data(inputLatitudes, inputLongitudes, inputHeights)
-    print("\nxPosition =", xPosition, "\nyPosition =", yPosition, "\nzPosition =", zPosition)
+    # print("\nxPosition =", xPosition, "\nyPosition =", yPosition, "\nzPosition =", zPosition)
 
     relativeX, relativeY, relativeZ = geodesy.global_to_relative(xPosition, yPosition, zPosition)
-    print("\nrelativeX =", relativeX, "\nrelativeY =", relativeY, "\nrelativeZ =", relativeZ, "\n")
+    # print("\nrelativeX =", relativeX, "\nrelativeY =", relativeY, "\nrelativeZ =", relativeZ, "\n")
     
     try:
         interpolation_publish(relativeX, relativeY, relativeZ, chosenHeight)
