@@ -17,7 +17,7 @@ class GPSFileFormatError(Error):
     """Raised when file does not end in '.txt' extension"""
     pass 
 
-def read_file_coarse_points(fileName):
+def read_file_coarse_points(fileName, chosenHeight):
     """Reads GPS coordinates from text file and returns latitude and longitude values in decimal
     
     Data taken from: http://www.gpsvisualizer.com/draw/
@@ -25,7 +25,7 @@ def read_file_coarse_points(fileName):
     try:
         if not fileName.endswith(".txt"):
             raise GPSFileFormatError
-    except GPSFileFormatError as e:
+    except GPSFileFormatError:
         print("Wrong file extension. Expected '.txt' format")
 
     inputLatitudes = []
@@ -43,7 +43,7 @@ def read_file_coarse_points(fileName):
                     currentLine = line.split()
                     inputLatitudes.append(float(currentLine[1]))
                     inputLongitudes.append(float(currentLine[2]))
-                    inputHeights.append(60.0) # Hardcoded estimated height of SJSU
+                    inputHeights.append(chosenHeight)
     except GPSFormatError:
         print("Problem with file format. Make sure to use '.txt' version of file from http://www.gpsvisualizer.com/draw/")
     
