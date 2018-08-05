@@ -38,10 +38,12 @@ def interpolate(i, relativeX, relativeY, relativeZ, numberOfCoarsePoints):
     finePointsY = []
     finePointsZ = []
 
+    pointDensity = 100
+
     # Vanilla case: for all points except final point
     if i < numberOfCoarsePoints-1:
         # Number of points between each interpolated point
-        pointDensity = get_point_density(relativeX[i], relativeX[i], relativeZ[i], relativeX[i+1], relativeY[i+1], relativeZ[i+1], 25)
+        # pointDensity = get_point_density(relativeX[i], relativeX[i], relativeZ[i], relativeX[i+1], relativeY[i+1], relativeZ[i+1], 25)
 
         # Declare the first and second positions for interpolation
         x0 = relativeX[i]     
@@ -58,7 +60,7 @@ def interpolate(i, relativeX, relativeY, relativeZ, numberOfCoarsePoints):
 
     # Corner case: for final point    
     if i == numberOfCoarsePoints-1:
-        pointDensity = get_point_density(relativeX[i-1], relativeX[i-1], relativeZ[i-1], relativeX[i], relativeY[i], relativeZ[i], 25)
+        # pointDensity = get_point_density(relativeX[i-1], relativeX[i-1], relativeZ[i-1], relativeX[i], relativeY[i], relativeZ[i], 25)
 
         x0 = relativeX[i-1]
         x1 = relativeX[i]
@@ -92,7 +94,7 @@ def interpolation_publish(relativeX, relativeY, relativeZ, chosenHeight):
     """
 
     path_publisher = rospy.Publisher('/planning/trajectory', Path, queue_size=1000)
-    rate = rospy.Rate(.1)
+    rate = rospy.Rate(.2)
 
     while not rospy.is_shutdown():
         path = Path()
@@ -154,7 +156,7 @@ def main():
     # print("\nxPosition =", xPosition, "\nyPosition =", yPosition, "\nzPosition =", zPosition)
 
     relativeX, relativeY, relativeZ = geodesy.global_to_relative(xPosition, yPosition, zPosition)
-    # print("\nrelativeX =", relativeX, "\nrelativeY =", relativeY, "\nrelativeZ =", relativeZ, "\n")
+    print("\nrelativeX =", relativeX, "\nrelativeY =", relativeY, "\nrelativeZ =", relativeZ, "\n")
     
     try:
         interpolation_publish(relativeX, relativeY, relativeZ, chosenHeight)
