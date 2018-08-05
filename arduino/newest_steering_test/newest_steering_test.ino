@@ -137,11 +137,8 @@ void right_operation(double right_side_setpoint)
     right.SetMode(MANUAL);
     analogWrite(LPWM, 0);
     analogWrite(RPWM, 0);
-    //Serial.println(input);
-    //Serial.println("right stopped");
   }
 
-  //while (input < right_side_setpoint)
   else if (input < right_side_setpoint)
   {
     input = analogRead(0);
@@ -151,9 +148,6 @@ void right_operation(double right_side_setpoint)
     right.Compute();
     analogWrite(LPWM, 0);
     analogWrite(RPWM, right_output);
-    //Serial.println(input);
-    //Serial.println("right");
-    //Serial.println("Stuck");
 
     if (input >= right_side_setpoint)
     {
@@ -163,8 +157,6 @@ void right_operation(double right_side_setpoint)
       right.SetMode(MANUAL);
       analogWrite(LPWM, 0);
       analogWrite(RPWM, 0);
-      //Serial.println(input);
-      //Serial.println("right stopped");
     }
   }
 }
@@ -179,11 +171,8 @@ void left_operation(double left_side_setpoint)
     left.SetMode(MANUAL);
     analogWrite(RPWM, 0);
     analogWrite(LPWM, 0);
-    //Serial.println(input);
-    //Serial.println("left");
   }
 
-  //while (input > left_side_setpoint)
   else if (input > left_side_setpoint)
   {
     input = analogRead(0);
@@ -193,8 +182,6 @@ void left_operation(double left_side_setpoint)
     left.Compute();
     analogWrite(RPWM, 0);
     analogWrite(LPWM, left_output);
-    //Serial.println(input);
-    //Serial.println("left");
 
     if (input <= left_side_setpoint)
     {
@@ -204,8 +191,6 @@ void left_operation(double left_side_setpoint)
       left.SetMode(MANUAL);
       analogWrite(RPWM, 0);
       analogWrite(LPWM, 0);
-      // Serial.println(input);
-      //Serial.println("left");
     }
   }
 }
@@ -217,8 +202,6 @@ void no_operation()
   left.SetMode(MANUAL);
   analogWrite(RPWM, 0);
   analogWrite(LPWM, 0);
-  //Serial.println(input);
-  //Serial.println("Straight");
 }
 
 void driving_operation(double incoming_driving_input)
@@ -261,4 +244,3 @@ void braking()
   analogWrite(Motor_RPWM, 0);
   analogWrite(Motor_LPWM, 0);
 }
-
