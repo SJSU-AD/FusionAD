@@ -54,31 +54,39 @@ class GeodesyConverterECEF(Geodesy):
             Z position of coordinates in ECEF coordinates
         """
 
-        xPosition = []
-        yPosition = []
-        zPosition = []
+        xPositions = []
+        yPositions = []
+        zPositions = []
 
         for i in range(min(len(self.latitudesData), len(self.longitudesData), len(self.heightsData))):
             x, y, z = self.geodetic_to_ECEF_point(self.latitudesData[i], self.longitudesData[i], self.heightsData[i])
-            xPosition.append(x)
-            yPosition.append(y)
-            zPosition.append(z)
+            xPositions.append(x)
+            yPositions.append(y)
+            zPositions.append(z)
         
-        return xPosition, yPosition, zPosition
+        return xPositions, yPositions, zPositions
 
-    def global_to_relative_ECEF(self, xPosition, yPosition, zPosition):
+    def global_to_relative_ECEF(self, xPositions, yPositions, zPositions):
         """Convert global ECEF coordinates to relative coordinates at a given index"""
-        globalXInitial = xPosition[0]
-        globalYInitial = yPosition[0]
-        globalZInitial = zPosition[0]
+        globalXInitial = xPositions[0]
+        globalYInitial = yPositions[0]
+        globalZInitial = zPositions[0]
         
-        relativeX = []
-        relativeY = []
-        relativeZ = []
+        relativeXData = []
+        relativeYData = []
+        relativeZData = []
 
-        for i in range(len(zPosition)):
-            relativeX.append(xPosition[i] - globalXInitial)
-            relativeY.append(yPosition[i] - globalYInitial)
-            relativeZ.append(zPosition[i] - globalZInitial)
+        for i in range(len(xPositions)):
+            relativeXData.append(xPositions[i] - globalXInitial)
+            relativeYData.append(yPositions[i] - globalYInitial)
+            relativeZData.append(zPositions[i] - globalZInitial)
         
-        return relativeX, relativeY, relativeZ
+        return relativeXData, relativeYData, relativeZData
+    
+    def relative_ECEF_to_ENU(self, relativeXData, relativeYData, relativeZData):
+        """Convert relative ECEF coordinates to (East, North, Up) coordinates"""
+        east  = []
+        north = []
+        up    = []
+
+        return
