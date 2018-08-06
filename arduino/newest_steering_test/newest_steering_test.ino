@@ -233,7 +233,7 @@ void forward_drive(double driving_pwm)
     analogWrite(Motor_RPWM, 0);
   }
 
-  else ()
+  else if (driving_pwm>100)
   {
     digitalWrite(Motor_R_EN, HIGH);
     digitalWrite(Motor_L_EN, HIGH);
