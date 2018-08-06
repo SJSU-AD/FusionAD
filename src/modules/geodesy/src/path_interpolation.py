@@ -240,9 +240,9 @@ def main():
     # From https://www.maps.ie/coordinates.html at SJSU
     chosenHeight = 60.0
 
-    # filePath = rospy.get_param("~file_path")
+    filePath = rospy.get_param("~file_path")
 
-    inputLatitudes, inputLongitudes, inputHeights = gps_parser.read_file_coarse_points("gps_coarse_points/testCoordinates1.txt", chosenHeight)
+    inputLatitudes, inputLongitudes, inputHeights = gps_parser.read_file_coarse_points(filePath, chosenHeight)
     print("\ninputLatitudes: {}\ninputLongitudes: {}\ninputHeights: {}".format(inputLatitudes, inputLongitudes, inputHeights))
     
     # xPosition, yPosition, zPosition = geodesy.geodetic_data_to_ECEF_data(inputLatitudes, inputLongitudes, inputHeights)
