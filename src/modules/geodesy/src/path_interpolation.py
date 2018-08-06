@@ -26,7 +26,7 @@ from nav_msgs.msg import Path
 import gps_parser
 import geodesy
 
-def get_point_density(x1, y1, z1, x2, y2, z2, centimetersPerPoint):
+def get_point_density_ECEF(x1, y1, z1, x2, y2, z2, centimetersPerPoint):
     pointDensity = geodesy.euclidian_distance_3d(x1, y1, z1, x2, y2, z2) / (centimetersPerPoint / 100.0)
 
     return int(pointDensity)
@@ -138,18 +138,23 @@ def interpolate_ECEF(i, relativeX, relativeY, relativeZ, numberOfCoarsePoints):
 #         print("Published Path with {} steps".format(i))
 #         rate.sleep()
 
+def get_point_density_UTM(relativeEasting1, relativeNorthing1, relativeEasting2, relativeNorthing2, centimetersPerPoint):
+    pointDensity = geodesy.euclidian_distance_2d(relativeEasting1, relativeEasting1, relativeEasting2, relativeNorthing2) / (centimetersPerPoint / 100.0)
+
+    return int(pointDensity)
+
 def interpolate_UTM(i, relativeEasting, relativeNorthing, numberOfCoarsePoints):
     """Interpolate between two UTM points, given index of one of the points."""
     
     finePointsEasting = []
     finePointsNorthing = []
 
-    pointDensity = 100
+    # pointDensity = 100
 
     # Vanilla case: for all points except final point
     if i < numberOfCoarsePoints-1:
         # Number of points between each interpolated point
-        # pointDensity = get_point_density(relativeEasting[i], relativeEasting[i], relativeEasting[i+1], relativeNorthing[i+1], 25)
+        pointDensity = get_point_density_UTM(relativeEasting[i], relativeEasting[i], relativeEasting[i+1], relativeNorthing[i+1], 25)
 
         # Declare the first and second positions for interpolation
         x0 = relativeEasting[i]     
@@ -163,7 +168,7 @@ def interpolate_UTM(i, relativeEasting, relativeNorthing, numberOfCoarsePoints):
 
     # Corner case: for final point    
     if i == numberOfCoarsePoints-1:
-        # pointDensity = get_point_density(relativeEasting[i-1], relativeEasting[i-1], relativeZ[i-1], relativeEasting[i], relativeY[i], relativeZ[i], 25)
+        pointDensity = get_point_density_UTM(relativeEasting[i-1], relativeEasting[i-1], relativeEasting[i], relativeNorthing[i], 25)
 
         x0 = relativeEasting[i-1]
         x1 = relativeEasting[i]
