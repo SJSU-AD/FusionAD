@@ -195,7 +195,7 @@ def interpolation_publish_UTM(relativeEasting, relativeNorthing):
     """
 
     path_publisher = rospy.Publisher('/planning/trajectory', Path, queue_size=1000)
-    rate = rospy.Rate(.2)
+    rate = rospy.Rate(5)
 
     while not rospy.is_shutdown():
         path = Path()
@@ -248,19 +248,21 @@ def main():
     filePath = rospy.get_param("~file_path")
 
     inputLatitudes, inputLongitudes, inputHeights = gps_parser.read_file_coarse_points(filePath, chosenHeight)
-    print("\ninputLatitudes: {}\ninputLongitudes: {}\ninputHeights: {}".format(inputLatitudes, inputLongitudes, inputHeights))
+    # print("\ninputLatitudes: {}\ninputLongitudes: {}\ninputHeights: {}".format(inputLatitudes, inputLongitudes, inputHeights))
     
+    ##### ECEF #####
     # xPosition, yPosition, zPosition = geodesy.geodetic_data_to_ECEF_data(inputLatitudes, inputLongitudes, inputHeights)
     # print("\nxPosition =", xPosition, "\nyPosition =", yPosition, "\nzPosition =", zPosition)
 
     # relativeX, relativeY, relativeZ = geodesy.global_to_relative_ECEF(xPosition, yPosition, zPosition)
     # print("\nrelativeX =", relativeX, "\nrelativeY =", relativeY, "\nrelativeZ =", relativeZ, "\n")
 
+    ##### UTM #####
     eastings, northings, zoneNumbers, zoneLetters = geodesy.geodetic_data_to_UTM_data(inputLatitudes, inputLongitudes, inputHeights)
-    print("\neastings =", eastings, "\nnorthings =", northings)
+    # print("\neastings =", eastings, "\nnorthings =", northings)
 
     relativeEastings, relativeNorthings = geodesy.global_to_relative_UTM(eastings, northings)
-    print("\nrelativeEasting =", relativeEastings, "\nrelativeNorthings =", relativeNorthings)
+    # print("\nrelativeEasting =", relativeEastings, "\nrelativeNorthings =", relativeNorthings)
     
     try:
         # interpolation_publish_ECEF(relativeX, relativeY, relativeZ, chosenHeight)

@@ -127,7 +127,6 @@ def geodetic_data_to_UTM_data(latitudesData, longitudesData, heightsData):
     zoneLetters = []
 
     for i in range(len(latitudesData)):
-        print("latitudesData[i] is:", latitudesData[i])
         easting, northing, zoneNumber, zoneLetter = utm.from_latlon(latitudesData[i], longitudesData[i])
         # easting, northing, zoneNumber, zoneLetter = utm.from_latlon(37,123)
         eastings.append(easting)
