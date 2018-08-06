@@ -6,6 +6,7 @@ from __future__ import print_function
 from __future__ import division
 
 import math
+import utm
 
 a = 6378137         # equatorial radius of earth
 b = 6356753         # polar radius of earth
@@ -69,7 +70,7 @@ def geodetic_data_to_ECEF_data(latitudesData, longitudesData, heightsData):
     
     return xPosition, yPosition, zPosition
 
-def global_to_relative(xPosition, yPosition, zPosition):
+def global_to_relative_ECEF(xPosition, yPosition, zPosition):
     """Convert global coordinates to relative coordinates at a given index"""
     globalXInitial = xPosition[0]
     globalYInitial = yPosition[0]
@@ -89,11 +90,60 @@ def global_to_relative(xPosition, yPosition, zPosition):
 #################################
 """Geodetic to UTM conversion"""
 #################################
-"""Reference: https://en.wikipedia.org/wiki/Universal_Transverse_Mercator_coordinate_system#From_latitude,_longitude_(%CF%86,_%CE%BB)_to_UTM_coordinates_(E,_N)"""
+"""Reference: https://en.wikipedia.org/wiki/Universal_Transverse_Mercator_coordinate_system#From_latitude,_longitude_(%CF%86,_%CE%BB)_to_UTM_coordinates_(E,_N)
+
+NOTE: Lengths are in kilometers 
+"""
 
 # Flattening coefficient
 flatteningCoeff = 1 / 298.257223563
+N_0             = 0.0 # for Northern Hemisphere, in kilometers
+k_0             = 0.9996
+E_0             = 500 
 
 def geodetic_to_UTM(lat, lng):
-    pass
+    """Converts input geodetic latitude/longitude to UTM"""
+    # # Calculate preliminary values
+    # n = flatteningCoeff / (2-flatteningCoeff)
 
+    # A       = ( a / (1 + n) ) * (1 + ((n**2)/4) + ((n**4)/64)) )
+    # alpha1  = (1/2)*n - (2/3)*(n**2) + (5/16)*(n**3)
+    # alpha2  = (13/48)*(n**2) - (3/5)*(n**3)
+    # alpha3  = (61/240)*(n**3)
+    # alpha1  = (1/2)*n - (2/3)*(n**2) + (37/96)*(n**3)
+    # alpha2  = (1/48)*(n**2) + (1/15)*(n**3)
+    # alpha3  = (61/240)*(n**3)
+    return
+
+def geodetic_data_to_UTM_data(latitudesData, longitudesData, heightsData):
+
+    eastings    = []
+    northings   = []
+    zoneNumbers = []
+    zoneLetters = []
+
+    for i in range(len(latitudesData)):
+        print("latitudesData[i] is:", latitudesData[i])
+        easting, northing, zoneNumber, zoneLetter = utm.from_latlon(latitudesData[i], longitudesData[i])
+        # easting, northing, zoneNumber, zoneLetter = utm.from_latlon(37,123)
+        eastings.append(easting)
+        northings.append(northing)
+        zoneLetters.append(zoneNumber)
+        zoneLetters.append(zoneLetter)
+
+
+    return eastings, northings, zoneNumbers, zoneLetters
+
+def global_to_relative_UTM(eastings, northings):
+    """Convert global coordinates to relative coordinates at a given index"""
+    globalEastingInitial  = eastings[0]
+    globalNorthingInitial = northings[0]
+    
+    relativeEasting  = []
+    relativeNorthing = []
+
+    for i in range(len(eastings)):
+        relativeEasting.append(eastings[i] - globalEastingInitial)
+        relativeNorthing.append(northings[i] - globalNorthingInitial)
+    
+    return relativeEasting, relativeNorthing 
