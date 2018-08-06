@@ -9,6 +9,11 @@ import math
 import utm
 
 class Geodesy(object):
+    """All Geodesy related calculations
+    
+    TODO: Add class docstrings, __str__, and __repr__ methods
+    TODO: Consider moving set_dist_between_points() method and centimetersPerPoint variable to this class 
+    """
     a = 6378137         # equatorial radius of earth
     b = 6356753         # polar radius of earth
     e = 0.08181788116   # eccentricity of the earth

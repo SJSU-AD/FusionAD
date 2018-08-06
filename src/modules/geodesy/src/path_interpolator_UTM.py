@@ -37,7 +37,7 @@ class PathInterpolatorUTM(GeodesyConverterUTM):
 
         return int(pointDensity)
 
-    def interpolate_UTM(self, i, relativeEasting, relativeNorthing, numberOfCoarsePoints):
+    def interpolate_UTM(self, i, relativeEastings, relativeNorthings, numberOfCoarsePoints):
         """Interpolate between two UTM points, given index of one of the points."""
         
         finePointsEasting = []
@@ -46,13 +46,13 @@ class PathInterpolatorUTM(GeodesyConverterUTM):
         # Vanilla case: for all points except final point
         if i < numberOfCoarsePoints-1:
             # Number of points between each interpolated point
-            pointDensity = self.get_point_density_UTM(relativeEasting[i], relativeEasting[i], relativeEasting[i+1], relativeNorthing[i+1], 25)
+            pointDensity = self.get_point_density_UTM(relativeEastings[i], relativeEastings[i], relativeEastings[i+1], relativeNorthings[i+1], 25)
 
             # Declare the first and second positions for interpolation
-            x0 = relativeEasting[i]     
-            x1 = relativeEasting[i+1]
-            y0 = relativeNorthing[i]     
-            y1 = relativeNorthing[i+1]   
+            x0 = relativeEastings[i]
+            x1 = relativeEastings[i+1]
+            y0 = relativeNorthings[i]     
+            y1 = relativeNorthings[i+1]   
 
             for n in range(pointDensity):
                 finePointsEasting.append( x0 + (x1-x0)*(n/pointDensity) )
@@ -60,12 +60,12 @@ class PathInterpolatorUTM(GeodesyConverterUTM):
 
         # Corner case: for final point
         if i == numberOfCoarsePoints-1:
-            pointDensity = self.get_point_density_UTM(relativeEasting[i-1], relativeEasting[i-1], relativeEasting[i], relativeNorthing[i], 25)
+            pointDensity = self.get_point_density_UTM(relativeEastings[i-1], relativeEastings[i-1], relativeEastings[i], relativeNorthings[i], 25)
 
-            x0 = relativeEasting[i-1]
-            x1 = relativeEasting[i]
-            y0 = relativeNorthing[i-1]
-            y1 = relativeNorthing[i]
+            x0 = relativeEastings[i-1]
+            x1 = relativeEastings[i]
+            y0 = relativeNorthings[i-1]
+            y1 = relativeNorthings[i]
 
             for n in range(pointDensity):
                 finePointsEasting.append( x0 + (x1-x0)*(n/pointDensity) )
@@ -89,7 +89,7 @@ class PathInterpolatorUTM(GeodesyConverterUTM):
 
         path_publisher = rospy.Publisher('/planning/trajectory', Path, queue_size=1000)
         rate = rospy.Rate(1)
-        #############################################################################################################################
+        
         eastings, northings, zoneNumbers, zoneLetters = super(PathInterpolatorUTM, self).geodetic_data_to_UTM_data()
         # print("\neastings =", eastings, "\nnorthings =", northings)
         relativeEastings, relativeNorthings = super(PathInterpolatorUTM, self).global_to_relative_UTM(eastings, northings)
