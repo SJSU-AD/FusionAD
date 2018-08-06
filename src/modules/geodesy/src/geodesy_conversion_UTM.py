@@ -14,7 +14,6 @@ class GeodesyConverterUTM(Geodesy):
     def __init__(self, latitudesData, longitudesData):
         self.latitudesData  = latitudesData
         self.longitudesData = longitudesData
-        pass
     
     def geodetic_data_to_UTM_data(self):
 
@@ -30,7 +29,6 @@ class GeodesyConverterUTM(Geodesy):
             zoneLetters.append(zoneNumber)
             zoneLetters.append(zoneLetter)
 
-
         return eastings, northings, zoneNumbers, zoneLetters
 
     def global_to_relative_UTM(self, eastings, northings):
@@ -38,14 +36,14 @@ class GeodesyConverterUTM(Geodesy):
         globalEastingInitial  = eastings[0]
         globalNorthingInitial = northings[0]
         
-        relativeEasting  = []
-        relativeNorthing = []
+        relativeEastings  = []
+        relativeNorthings = []
 
         for i in range(len(eastings)):
-            relativeEasting.append(eastings[i] - globalEastingInitial)
-            relativeNorthing.append(northings[i] - globalNorthingInitial)
+            relativeEastings.append(eastings[i] - globalEastingInitial)
+            relativeNorthings.append(northings[i] - globalNorthingInitial)
         
-        return relativeEasting, relativeNorthing 
+        return relativeEastings, relativeNorthings 
 
 
     ###############################
