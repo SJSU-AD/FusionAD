@@ -220,7 +220,6 @@ def interpolation_publish_UTM(relativeEasting, relativeNorthing):
             # # Attempting to add points directly in one line without creating point object first
             # path.poses.append(path.poses[i].pose.position.x = 0.0) # finePointsX[i]
             # path.poses[i].pose.position.y = 0.0 # finePointsY[i]
-            # path.poses[i].pose.position.z = 0.0
 
             currentPoseStampMsg = PoseStamped()
             h = Header()
