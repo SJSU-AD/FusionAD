@@ -3,7 +3,7 @@
 ros::NodeHandle nh;
 
 float steering_value = 207;
-float driving_value = 1;
+float driving_value = 0;
 
 void drivingcallback(const std_msgs::Float64& driving_msg)
 {
@@ -206,15 +206,16 @@ void no_operation()
 
 void driving_operation(double incoming_driving_input)
 {
-  if (incoming_driving_input == 1)
+  if (incoming_driving_input > 0)
   {
-    forward_drive();
+    forward_drive(incoming_driving_input);
   }
-
-  else if (incoming_driving_input == 2)
+/*
+  else if (incoming_driving_input < 0)
   {
     reverse_drive();
   }
+*/
 
   else if (incoming_driving_input == 0)
   {
@@ -222,12 +223,23 @@ void driving_operation(double incoming_driving_input)
   }
 }
 
-void forward_drive()
+void forward_drive(double driving_pwm)
 {
-  digitalWrite(Motor_R_EN, HIGH);
-  digitalWrite(Motor_L_EN, HIGH);
-  analogWrite(Motor_LPWM, 100);
-  analogWrite(Motor_RPWM, 0);
+  if (driving_pwm <= 100)
+  {
+    digitalWrite(Motor_R_EN, HIGH);
+    digitalWrite(Motor_L_EN, HIGH);
+    analogWrite(Motor_LPWM, driving_pwm);
+    analogWrite(Motor_RPWM, 0);
+  }
+
+  else ()
+  {
+    digitalWrite(Motor_R_EN, HIGH);
+    digitalWrite(Motor_L_EN, HIGH);
+    analogWrite(Motor_LPWM, 100);
+    analogWrite(Motor_RPWM, 0);
+  }
 }
 
 void reverse_drive()
