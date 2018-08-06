@@ -66,8 +66,6 @@ class control_node
     void modeCallback(const std_msgs::Bool& autonomous_mode_msg);
     void masterTimerCallback(const ros::TimerEvent& controlTimeEvent);
     
-
-
 };
 }
 }
