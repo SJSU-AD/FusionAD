@@ -94,7 +94,7 @@ class GPSDataConverter(object):
         rospy.logdebug("Current E = %f, previous E = %f", e, self.prevE)
         rospy.logdebug("Current N = %f, previous N = %f", n, self.prevN)
         rospy.logdebug("Current U = %f, previous U = %f", u, self.prevU)
-        rospy.logdebug("Time delta = %f")
+        rospy.logdebug("Time delta = %f", timeDelta)
 
         currentChassisState.Speed.twist.linear.x = (e - self.prevE) / timeDelta
         currentChassisState.Speed.twist.linear.y = (n - self.prevN) / timeDelta
