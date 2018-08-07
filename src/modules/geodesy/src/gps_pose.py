@@ -50,7 +50,8 @@ class GPSDataConverter(object):
         self.prevU           = 0.0
         self.prevTime        = 0.0
 
-        self.lat0, self.lon0, self.h0 = map(float, gps_parser.read_file_coarse_points("../geodesy_data/gps_coarse_points/testCoordinates1.txt", -6.0, oneLineOnly=True))
+        filePath = rospy.get_param("~file_path")
+        self.lat0, self.lon0, self.h0 = map(float, gps_parser.read_file_coarse_points(filePath, -6.0, oneLineOnly=True))
         self.toENUConverter = GeodesyConverterENU(self.lat0, self.lon0, self.h0)
         rospy.loginfo("Found and initialized intial lat/lon/altitude values")
         rospy.loginfo("Initial latitude: %f", self.toENUConverter.latitudesData)
@@ -110,13 +111,7 @@ class GPSDataConverter(object):
         rospy.loginfo("Published Chassis state message")
         self.seq += 1
 
-        # TODO: Add flag for receival of first GPS coordinate
-        # THEN overwrite latitudesData[0], longitudesData[0], heightsData[0] with actual initial position?
-
-
-        # TODO: Add publisher to /localization/state
-        
-
+        # TODO: Overwrite latitudesData[0], longitudesData[0], heightsData[0] with actual initial position?
     
     def GPS_data_converter(self):
         """Take GPS data, convert to ENU, and republish"""
@@ -125,7 +120,7 @@ class GPSDataConverter(object):
         rospy.spin()
 
 def main():
-    rospy.init_node("gps_pose_converter", anonymous=False)
+    rospy.init_node("gps_pose_converter_node", anonymous=False)
     
     convertGPSData = GPSDataConverter()
 
