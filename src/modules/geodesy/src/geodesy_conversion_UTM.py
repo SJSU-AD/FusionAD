@@ -57,7 +57,7 @@ class GeodesyConverterUTM(Geodesy):
 
     # TODO: Self-implemented fast geodetic to UTM conversion
     # # Flattening coefficient
-    # flatteningCoeff = 1 / 298.257223563
+    # flatteningCoeff = Geodesy.f
     # N_0             = 0.0 # for Northern Hemisphere, in kilometers
     # k_0             = 0.9996
     # E_0             = 500 

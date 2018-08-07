@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 
 """Interpolates path from previously plotted points"""
- 
+
 import rospy
 
 import gps_parser
 from path_interpolator_ECEF import PathInterpolatorECEF
 from path_interpolator_UTM  import PathInterpolatorUTM
+from path_interpolator_ENU  import PathInterpolatorENU
 
 def main():
     rospy.init_node('interpolation_node', anonymous = True)
@@ -19,16 +20,17 @@ def main():
     # print("\ninputLatitudes: {}\ninputLongitudes: {}\ninputHeights: {}".format(inputLatitudes, inputLongitudes, inputHeights))
     
     ##### ECEF #####
-    interpolatorECEF = PathInterpolatorECEF(inputLatitudes, inputLatitudes, inputHeights, chosenHeight)
+    # interpolatorECEF = PathInterpolatorECEF(inputLatitudes, inputLatitudes, inputHeights, chosenHeight)
 
     ##### ENU #####
-
+    interpolatorENU = PathInterpolatorENU(inputLatitudes, inputLongitudes, inputHeights)
 
     ##### UTM #####
     # interpolatorUTM = PathInterpolatorUTM(inputLatitudes, inputLongitudes)
     
     try:
-        interpolatorECEF.interpolation_publish_ECEF()
+        # interpolatorECEF.interpolation_publish_ECEF()
+        interpolatorENU.interpolation_publish_ENU()
         # interpolatorUTM.interpolation_publish_UTM()
     except rospy.ROSInterruptException:
         pass

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-"""Converts geodetic coordinate system to and from ECEF"""
+"""Converts geodetic coordinate system to ECEF"""
 
 from __future__ import print_function
 from __future__ import division
@@ -82,11 +82,3 @@ class GeodesyConverterECEF(Geodesy):
             relativeZData.append(zPositions[i] - globalZInitial)
         
         return relativeXData, relativeYData, relativeZData
-    
-    def relative_ECEF_to_ENU(self, relativeXData, relativeYData, relativeZData):
-        """Convert relative ECEF coordinates to (East, North, Up) coordinates"""
-        east  = []
-        north = []
-        up    = []
-
-        return

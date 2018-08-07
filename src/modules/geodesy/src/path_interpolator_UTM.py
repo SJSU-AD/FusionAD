@@ -71,7 +71,6 @@ class PathInterpolatorUTM(GeodesyConverterUTM):
                 finePointsEasting.append( x0 + (x1-x0)*(n/pointDensity) )
                 finePointsNorthing.append( y0 + (y1-y0)*(n/pointDensity) )
 
-        # print("pointDensity used on iteration {} was {}".format(i, pointDensity))
         return finePointsEasting, finePointsNorthing
 
     def interpolation_publish_UTM(self):
@@ -91,9 +90,7 @@ class PathInterpolatorUTM(GeodesyConverterUTM):
         rate = rospy.Rate(1)
         
         eastings, northings, zoneNumbers, zoneLetters = super(PathInterpolatorUTM, self).geodetic_data_to_UTM_data()
-        # print("\neastings =", eastings, "\nnorthings =", northings)
         relativeEastings, relativeNorthings = super(PathInterpolatorUTM, self).global_to_relative_UTM(eastings, northings)
-        # print("\nrelativeEasting =", relativeEastings, "\nrelativeNorthings =", relativeNorthings)
 
         # Contains lists of fine points, including coarse points
         eastingInterpolatedPositions  = []

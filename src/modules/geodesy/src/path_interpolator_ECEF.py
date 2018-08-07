@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+
 """Publishes relative path ECEF poordinates from given geodetic coordinates
 
 Subscribes to:
@@ -63,13 +64,13 @@ class PathInterpolatorECEF(GeodesyConverterECEF):
 
             for n in range(pointDensity):
                 finePointsX.append( x0 + (x1-x0)*(n/pointDensity) )
-                finePointsY.append( y0 + (y1-y0)*(n/pointDensity) ) # was previously: finePointsY.append( ((y1-y0) / (x1-x0)) * (finePointsX[n]) + y0*((x1-x0) / (y1-y0)) )
+                finePointsY.append( y0 + (y1-y0)*(n/pointDensity) )
                 finePointsZ.append( z0 + (z1-z0)*(n/pointDensity) )
 
         # Corner case: for final point    
         if i == numberOfCoarsePoints-1:
             pointDensity = self.get_point_density_ECEF(relativeXData[i-1], relativeXData[i-1], relativeZData[i-1], 
-                                                       relativeXData[i], relativeYData[i], relativeZData[i], 25)
+                                                       relativeXData[i], relativeYData[i], relativeZData[i], self.centimetersPerPoint)
 
             x0 = relativeXData[i-1]
             x1 = relativeXData[i]
@@ -83,7 +84,6 @@ class PathInterpolatorECEF(GeodesyConverterECEF):
                 finePointsY.append( y0 + (y1-y0)*(n/pointDensity) )
                 finePointsZ.append( z0 + (z1-z0)*(n/pointDensity) )
 
-        # print("pointDensity used on iteration {} was {}".format(i, pointDensity))
         return finePointsX, finePointsY, finePointsZ
 
     def interpolation_publish_ECEF(self):
@@ -103,9 +103,7 @@ class PathInterpolatorECEF(GeodesyConverterECEF):
         rate = rospy.Rate(1)
 
         xPositions, yPositions, zPositions = super(PathInterpolatorECEF, self).geodetic_data_to_ECEF_data()
-        # print("\nxPosition =", xPosition, "\nyPosition =", yPosition, "\nzPosition =", zPosition)
         relativeXData, relativeYData, relativeZData = super(PathInterpolatorECEF, self).global_to_relative_ECEF(xPositions, yPositions, zPositions)
-        # print("\nrelativeX =", relativeX, "\nrelativeY =", relativeY, "\nrelativeZ =", relativeZ, "\n")
         
         # Contains lists of fine points, including coarse points
         xInterpolatedPositions = []
