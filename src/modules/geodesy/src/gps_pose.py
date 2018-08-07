@@ -8,6 +8,8 @@ NOTE: Uses interface/chassis_state.msg
 from __future__ import print_function
 from __future__ import division
 
+import math
+
 import rospy
 from sensor_msgs.msg import NavSatFix
 from geometry_msgs.msg import Point, Pose, PoseStamped
@@ -41,6 +43,13 @@ class GPSDataConverter(object):
         self.longitude = 0.0
         self.altitude  = 0.0
 
+        # For velocity caluclation
+        self.foundFirstCoord = False
+        self.prevE           = 0.0
+        self.prevN           = 0.0
+        self.prevU           = 0.0
+        self.prevTime        = 0.0
+
         self.lat0, self.lon0, self.h0 = map(float, gps_parser.read_file_coarse_points("../geodesy_data/gps_coarse_points/testCoordinates1.txt", -6.0, oneLineOnly=True))
         self.toENUConverter = GeodesyConverterENU(self.lat0, self.lon0, self.h0)
         rospy.loginfo("Found and initialized intial lat/lon/altitude values")
@@ -61,14 +70,40 @@ class GPSDataConverter(object):
         currentChassisState = Chassis_state()
 
         h = Header()
-        h.stamp = rospy.Time.now()
+        h.stamp     = rospy.Time.now()
+        currentTime = rospy.get_time()
 
         currentChassisState.Header.seq = self.seq
-        currentChassisState.Header.stamp = rospy.Time.now()
+        currentChassisState.Header.stamp = h.stamp
 
+        # Set position in publish message
         currentChassisState.Position.pose.position.x = e
         currentChassisState.Position.pose.position.y = n
         currentChassisState.Position.pose.position.z = u
+
+        # Set velocity in publish message
+        if not self.foundFirstCoord:
+            self.prevE = e
+            self.prevN = n
+            self.prevU = u
+            self.prevTime = float("nan")
+            self.foundFirstCoord = True
+        
+        timeDelta = currentTime - self.prevTime
+
+        rospy.logdebug("Current E = %f, previous E = %f", e, self.prevE)
+        rospy.logdebug("Current N = %f, previous N = %f", n, self.prevN)
+        rospy.logdebug("Current U = %f, previous U = %f", u, self.prevU)
+        rospy.logdebug("Time delta = %f")
+
+        currentChassisState.Speed.twist.linear.x = (e - self.prevE) / timeDelta
+        currentChassisState.Speed.twist.linear.y = (n - self.prevN) / timeDelta
+        currentChassisState.Speed.twist.linear.z = (u - self.prevU) / timeDelta
+
+        self.prevE = e
+        self.prevN = n
+        self.prevU = u
+        self.prevTime = currentTime
 
         self.statePublisher.publish(currentChassisState)
 
