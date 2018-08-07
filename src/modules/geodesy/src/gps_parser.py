@@ -17,7 +17,7 @@ class GPSFileFormatError(Error):
     """Raised when file does not end in '.txt' extension"""
     pass 
 
-def read_file_coarse_points(fileName, chosenHeight):
+def read_file_coarse_points(fileName, chosenHeight, oneLineOnly=False):
     """Reads GPS coordinates from text file and returns latitude and longitude values in decimal
     
     Data taken from: http://www.gpsvisualizer.com/draw/
@@ -41,9 +41,12 @@ def read_file_coarse_points(fileName, chosenHeight):
             for line in file:
                 if line[0] == "W":
                     currentLine = line.split()
-                    inputLatitudes.append(float(currentLine[1]))
-                    inputLongitudes.append(float(currentLine[2]))
-                    inputHeights.append(chosenHeight)
+                if oneLineOnly == True:
+                    return currentLine[1], currentLine[2], chosenHeight
+
+                inputLatitudes.append(float(currentLine[1]))
+                inputLongitudes.append(float(currentLine[2]))
+                inputHeights.append(chosenHeight)
     except GPSFormatError:
         print("Problem with file format. Make sure to use '.txt' version of file from http://www.gpsvisualizer.com/draw/")
     

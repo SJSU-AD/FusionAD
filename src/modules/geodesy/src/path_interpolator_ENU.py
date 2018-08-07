@@ -72,17 +72,17 @@ class PathInterpolatorENU(GeodesyConverterENU):
             # pointDensity = self.get_point_density_ENU(eData[i-1], eData[i-1], uData[i-1], 
             #                                            eData[i], nData[i], uData[i], self.centimetersPerPoint)
 
-            x0 = eData[i-1]
-            x1 = eData[i]
-            y0 = nData[i-1]
-            y1 = nData[i]
-            z0 = uData[i-1]     
-            z1 = uData[i]
+            e0 = eData[i-1]
+            e1 = eData[i]
+            n0 = nData[i-1]
+            n1 = nData[i]
+            u0 = uData[i-1]     
+            u1 = uData[i]
 
             for n in range(pointDensity):
-                finePointsE.append( x0 + (x1-x0)*(n/pointDensity) )
-                finePointsN.append( y0 + (y1-y0)*(n/pointDensity) )
-                finePointsU.append( z0 + (z1-z0)*(n/pointDensity) )
+                finePointsE.append( e0 + (e1-e0)*(n/pointDensity) )
+                finePointsN.append( n0 + (n1-n0)*(n/pointDensity) )
+                finePointsU.append( u0 + (u1-u0)*(n/pointDensity) )
 
         return finePointsE, finePointsN, finePointsU
 
@@ -102,7 +102,7 @@ class PathInterpolatorENU(GeodesyConverterENU):
         path_publisher = rospy.Publisher('/planning/trajectory', Path, queue_size=1000)
         rate = rospy.Rate(1)
 
-        eData, nData, uData = super(PathInterpolatorENU, self).ECEF_data_to_ENU_data()
+        eData, nData, uData = super(PathInterpolatorENU, self).geodetic_data_to_ENU_data()
         
         # Contains lists of fine points, including coarse points
         eInterpolatedPositions = []

@@ -11,24 +11,36 @@ from geodesy_conversion_ECEF import GeodesyConverterECEF
 
 class GeodesyConverterENU(GeodesyConverterECEF):
     def __init__(self, latitudesData, longitudesData, heightsData):
+        ## TODO: Make ECEF_to_ENU_point() a @staticmethod to reduce unnecessary object instantiation
+        ##       OR make setters to get initial GPS position
+        # if latitudesData  == None:
+        #     latitudesData  = []
+        # if longitudesData == None:
+        #     longitudesData = []
+        # if heightsData    == None:
+        #     heightsData    = []
+
         super(GeodesyConverterENU, self).__init__(latitudesData, longitudesData, heightsData)
     
-    def ECEF_to_ENU_point(self, i):
+    def geodetic_to_ENU_point(self, latitudeCoord, longitudeCoord, heightCoord, lat0=None, lon0=None, h0=None):
         """Convert relative ECEF coordinates to (East, North, Up) coordinates.
 
-        NOTE: Uses initial geodetic point as reference for initial position
+        NOTE: Uses initial geodetic point as reference for initial position if lat0, lon0, or h0 are not given
         
-        Reference material: https://gist.github.com/drofp/41adb25532e658e41d541469f832c44a
+        Reference material: https://gist.github.com/    /41adb25532e658e41d541469f832c44a
             Converts the Earth-Centered Earth-Fixed (ECEF) coordinates (x, y, z) to 
             East-North-Up coordinates in a Local Tangent Plane that is centered at the 
             (WGS-84) Geodetic point (lat0, lon0, h0).
         """
 
-        x, y, z = super(GeodesyConverterENU, self).geodetic_to_ECEF_point(self.latitudesData[i], self.longitudesData[i], self.heightsData[i])
+        x, y, z = super(GeodesyConverterENU, self).geodetic_to_ECEF_point(latitudeCoord, longitudeCoord, heightCoord)
         
-        lat0 = self.latitudesData[0]
-        lon0 = self.longitudesData[0]
-        h0   = self.heightsData[0]
+        if lat0 == None:
+            lat0 = self.latitudesData[0]
+        if lon0 == None:
+            lon0 = self.longitudesData[0]
+        if h0 == None:
+            h0   = self.heightsData[0]
 
         eSquared = self.f * (2 - self.f)      # square of eccentricity
 
@@ -57,13 +69,13 @@ class GeodesyConverterENU(GeodesyConverterECEF):
 
         return east, north, up
 
-    def ECEF_data_to_ENU_data(self):
+    def geodetic_data_to_ENU_data(self):
         eData = []
         nData = []
         uData = []
 
         for i in range(min(len(self.latitudesData), len(self.longitudesData), len(self.heightsData))):
-            e, n, u = self.ECEF_to_ENU_point(i)
+            e, n, u = self.geodetic_to_ENU_point(self.latitudesData[i], self.longitudesData[i], self.heightsData[i])
             eData.append(e)
             nData.append(n)
             uData.append(u)
