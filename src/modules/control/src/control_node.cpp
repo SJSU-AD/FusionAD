@@ -20,6 +20,7 @@ namespace node
     controlGain = 0;
     targetPointIndex = 0;
     dynamicArraySize = 0;
+    estimated_orientation = 0;
   }
 
   control_node::~control_node()
@@ -101,6 +102,22 @@ namespace node
     position(0) = veh_state_msg.Position.pose.position.x;
     position(1) = veh_state_msg.Position.pose.position.y;
     linear_velocity = veh_state_msg.Speed.twist.linear.x;
+
+    orientation_pos_vector(0) = position(0) - prev_pos.x;   //X delta
+    orientation_pos_vector(1) = position(1) - prev_pos.y;   //Y delta
+    float veh_theta = std::atan2f(orientation_pos_vector(1), orientation_pos_vector(0));
+    if((abs(veh_theta)/veh_theta) < 0)
+    {
+      //Because ATAN2 has a range of (-pi, +pi)
+      //If the atan2 return ngative, put in the phase shift
+      estimated_orientation = 180 + abs(veh_theta); 
+    }
+    else
+    {
+      //if the value is positive, leave it as is
+      estimated_orientation = veh_theta;
+    }
+
     if(!stateInitialized)
     {
       stateInitialized = true;
@@ -175,15 +192,23 @@ namespace node
 
       if(!goalReached)
       {
-        steering_angle = lat_control.computeSteeringAngle(position,
+        //Changed the controller to run on estimation 
+        /*steering_angle = lat_control.computeSteeringAngle(position,
                                               pathPointListX,
                                               pathPointListY,
                                               linear_velocity,
                                               targetPointIndex,
                                               yaw,
                                               controlGain
-                                              );
-
+                                              );*/
+        steering_angle = lat_control.computeSteeringAngle(position,
+                                                      pathPointListX,
+                                                      pathPointListY,
+                                                      linear_velocity,
+                                                      targetPointIndex,
+                                                      estimated_orientation,
+                                                      controlGain
+                                                      );
         //TODO: Implement longitudinal Control --> blocker: Planning
         //TODO: Replace throttle function with a lamda function --> lamda(throttle, brake)
         cmd_linear_vel = 50; //In percentage
