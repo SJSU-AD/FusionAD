@@ -1,3 +1,14 @@
+/* HOW TO USE 
+ *  
+ * The Arduino is subscribed to ardu_adapter and receives steering + driving values from ardu_adapter
+ * These values have already been translated to analog inputs that are applicable to steering and driving
+ * To run this code, use the following command
+ * $rosrun rosserial_python serial_node.py /dev/ttyACM0
+ * Check the USB port and correct for these        ^^^^ if needed
+ * 
+ */
+
+
 #include <ros.h>
 #include <std_msgs/Float64.h>
 ros::NodeHandle nh;
@@ -49,53 +60,53 @@ double wheel_angle = 0;
 double error = 0;
 
 /* POTENTIOMETER VALUES!!!
-   BOUNDS ARE 350 FULL LOCK LEFT
+   BOUNDS ARE 350 FULL LOCK RIGHT
               207 STRAIGHT
-              70  FULL LOCK RIGHT
+              70  FULL LOCK LEFT
 */
 
 unsigned int Kp = 6000; // proportional gain
 unsigned int Ki = 6;    // integral gain
 unsigned int Kd = 200;  // derivative gain
 
-PID left(&input, &left_output, &left_setpoint, Kp, Ki, Kd, REVERSE); // Turning left is more positive
-PID right(&input, &right_output, &right_setpoint, Kp, Ki, Kd, DIRECT); // Turning right is more negative (referencing the pot)
+PID left(&input, &left_output, &left_setpoint, Kp, Ki, Kd, REVERSE); // Turning left is more negative
+PID right(&input, &right_output, &right_setpoint, Kp, Ki, Kd, DIRECT); // Turning right is more positive (referencing the pot)
 
 void setup() {
   // put your setup code here, to run once:
-  nh.initNode();
-  nh.subscribe(steering_sub);
-  nh.subscribe(driving_sub);
-  nh.advertise(steering_response);
-  nh.advertise(driving_response);
+  nh.initNode(); // initialize ROS node
+  nh.subscribe(steering_sub); // subscriber to ardu_adapter for steering
+  nh.subscribe(driving_sub); // subscriber to ardu_adapter for driving
+  nh.advertise(steering_response); // publisher to ardu_adapter for steering
+  nh.advertise(driving_response); // publisher to ardu_adapter for driving
   
-  pinMode(R_EN, OUTPUT);
+  pinMode(R_EN, OUTPUT); // initializing enable pins on linear actuator
   pinMode(L_EN, OUTPUT);
 
-  pinMode(RPWM, OUTPUT);
+  pinMode(RPWM, OUTPUT); // initializing PWM pins on linear actuator
   pinMode(LPWM, OUTPUT);
 
-  pinMode(Motor_R_EN, OUTPUT);
+  pinMode(Motor_R_EN, OUTPUT); // initializing enable pins on motor
   pinMode(Motor_L_EN, OUTPUT);
 
-  pinMode(Motor_RPWM, OUTPUT);
-  pinMode(Motor_LPWM, OUTPUT);
+  pinMode(Motor_RPWM, OUTPUT); // initializing PWM pins on motor
+  pinMode(Motor_LPWM, OUTPUT); 
 
-  left.SetMode(AUTOMATIC);
+  left.SetMode(AUTOMATIC); // turning on the PID control
   right.SetMode(AUTOMATIC);
 
-  digitalWrite(R_EN, HIGH); // leave these as high to allow motor control operation
+  digitalWrite(R_EN, HIGH); // leave these as high to allow steering control operation
   digitalWrite(L_EN, HIGH);
 
-  digitalWrite(Motor_R_EN, HIGH);
+  digitalWrite(Motor_R_EN, HIGH); // leave these as high to allow the motor control operation
   digitalWrite(Motor_L_EN, HIGH);
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
-  feedback.data = input;
-  driving_feedback.data = driving_value;
-  driving_response.publish(&driving_feedback);
+  feedback.data = input; // feedback.data is equal to the input of the linear actuator
+  driving_feedback.data = driving_value; // driving feedback is equal to the driving value (until we have motor feedback)
+  driving_response.publish(&driving_feedback); 
   steering_response.publish(&feedback);
   nh.spinOnce();
   delay(20);
@@ -229,16 +240,16 @@ void forward_drive(double driving_pwm)
   {
     digitalWrite(Motor_R_EN, HIGH);
     digitalWrite(Motor_L_EN, HIGH);
-    analogWrite(Motor_LPWM, driving_pwm);
-    analogWrite(Motor_RPWM, 0);
+    analogWrite(Motor_LPWM, 0);
+    analogWrite(Motor_RPWM, driving_pwm);
   }
 
   else if (driving_pwm>100)
   {
     digitalWrite(Motor_R_EN, HIGH);
     digitalWrite(Motor_L_EN, HIGH);
-    analogWrite(Motor_LPWM, 100);
-    analogWrite(Motor_RPWM, 0);
+    analogWrite(Motor_LPWM, 0);
+    analogWrite(Motor_RPWM, driving_pwm);
   }
 }
 

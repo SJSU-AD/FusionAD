@@ -2,13 +2,25 @@
 import rospy
 from std_msgs.msg import Float64
 from interface.msg import Controlcmd
+'''
+NOTE: Please be in ~/FusionAD to run
+$rosrun control ardu_adapter.py
 
+This script is subscribed to both the high level control node and the Arduino
+The high level control node gives the throttle and steering values with a custom message definition
+    high_lvl_callback is the callback function for the high level control
+The Arduino node gives the throttle and steering values with individual functions
+    callback_steer and callback_drive
+The high_lvl_callback takes the message from the high level control and converts it to useable (analog) values
+The callbacks take the message from the low level control and convert them into radians and percentage for steering and driving respectively
+Eventually this script will be used for low level control when we move away from PID
+'''
 global steering_callback
 global driving_callback
 global high_lvl_driving_callback
 global high_lvl_steering_callback
 
-high_lvl_steering_callback = 207
+high_lvl_steering_callback = 80
 steering_callback = 0
 high_lvl_driving_callback = 0
 driving_callback = 0
@@ -23,18 +35,21 @@ max_driving_output = 255
 def callback_steer(low_steering_msg):
     ''' 
     Converts analog input from potentiometer to steering angle in radians
+    /control/steering_response is the topic name
     '''
     steering_callback = ((low_steering_msg.data*.1721)-36.15)*pi/180
 
 def callback_drive(low_driving_msg):
     '''
     PWM Value from the arduino
+    /control/driving_response is the topic name
     '''
     driving_callback = (low_driving_msg.data-min_driving_output)*(max_driving_input-max_driving_input)/(max_driving_output-min_driving_output)+min_driving_input
 
 def high_lvl_callback(high_lvl_control_msg):
     '''
     High lvl control message for both desired driving and steering input
+    /control/controlcmd is the topic name
     '''
     high_lvl_driving_callback = (high_lvl_control_msg.throttle-min_driving_input)*(max_driving_output-min_driving_output)/(max_driving_input-min_driving_input)+min_driving_output
     high_lvl_steering_callback = (high_lvl_control_msg.steering*180/pi+36.15)/.1721
