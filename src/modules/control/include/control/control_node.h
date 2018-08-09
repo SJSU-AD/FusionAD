@@ -35,14 +35,6 @@ class control_node
     bool debug;
     
   private:
-    struct Position
-    {
-      Position(float x_, float y_, float theta_):
-      x(x_), y(y_), theta(theta_) {}
-      Position();
-      float x = 0, y = 0, theta = 0;
-    }
-
     fusionad::control::lat_controller::stanley lat_control;
     ros::NodeHandle control_nh;
     ros::Publisher control_main_pub;
@@ -62,7 +54,7 @@ class control_node
     ros::Timer control_cmd_timer;
     
     //Heading Estimator
-    Position prev_pos;
+    float prev_pos[2] = {0, 0};
     Eigen::Vector2f orientation_pos_vector;
     float estimated_orientation;
 

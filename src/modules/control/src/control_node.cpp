@@ -103,9 +103,9 @@ namespace node
     position(1) = veh_state_msg.Position.pose.position.y;
     linear_velocity = veh_state_msg.Speed.twist.linear.x;
 
-    orientation_pos_vector(0) = position(0) - prev_pos.x;   //X delta
-    orientation_pos_vector(1) = position(1) - prev_pos.y;   //Y delta
-    float veh_theta = std::atan2f(orientation_pos_vector(1), orientation_pos_vector(0));
+    orientation_pos_vector(0) = position(0) - prev_pos[0];   //X delta
+    orientation_pos_vector(1) = position(1) - prev_pos[1];   //Y delta
+    float veh_theta = std::atan2(orientation_pos_vector(1), orientation_pos_vector(0));
     if((abs(veh_theta)/veh_theta) < 0)
     {
       //Because ATAN2 has a range of (-pi, +pi)
