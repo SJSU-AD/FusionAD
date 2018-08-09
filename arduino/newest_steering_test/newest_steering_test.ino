@@ -5,7 +5,7 @@
  * To run this code, use the following command
  * $rosrun rosserial_python serial_node.py /dev/ttyACM0
  * Check the USB port and correct for these        ^^^^ if needed
- * 
+ *
  */
 
 
