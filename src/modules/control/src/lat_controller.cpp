@@ -18,10 +18,12 @@ namespace lat_controller{
     
     if(std::isfinite(headingError))
     {
+      debug_info.headingError = headingError;
       return headingError;
     }
     else
     {
+      debug_info.isCalculationInvalid = true;
       std::cout << "Heading Error Calculation Is Not Finite!" << std::endl;
       return std::numeric_limits<float>::quiet_NaN();
     }    
@@ -75,10 +77,12 @@ namespace lat_controller{
     float pathHeadingTheta = atan2(heading_dy, heading_dx);
     if(std::isfinite(pathHeadingTheta))
     {
+      debug_info.pathHeading = pathHeadingTheta;
       return pathHeadingTheta;
     }
     else
     {
+      debug_info.isCalculationInvalid = true;
       std::cout << "Path Heading Calculation Is Not Finite!" << std::endl;
       return std::numeric_limits<float>::quiet_NaN();
     }  
@@ -91,10 +95,12 @@ namespace lat_controller{
     float lateralError = (-1) * ((cosTheta * dy) - (sinTheta * dx));    
     if(std::isfinite(lateralError))
     {
+      debug_info.CTE = lateralError;
       return lateralError;
     }
     else
     {
+      debug_info.isCalculationInvalid = true;
       std::cout << "Lateral Error Calculation Is Not Finite!" << std::endl;
       return std::numeric_limits<float>::quiet_NaN();
     }    
@@ -141,10 +147,12 @@ namespace lat_controller{
     float steeringAngle = headingDelta + std::atan((gain * crossTrackError)/vehSpeed);
     if(std::isfinite(steeringAngle))
     {
+      debug_info.steeringAngle = steeringAngle;
       return steeringAngle;
     }
     else
     {
+      debug_info.isCalculationInvalid = true;
       std::cout << "Steering Angle Calculation Is Not Finite!" << std::endl;
       return std::numeric_limits<float>::quiet_NaN();
     }

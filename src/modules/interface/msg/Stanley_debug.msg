@@ -1,0 +1,14 @@
+Header Header
+
+bool debugContoller                  #Debug Boolean
+
+bool isCalculationInvalid            #Bool value on integrity of calculation
+
+float64 CTE                          #CrossTrack Error
+float64 headingError 
+float64 pathHeading
+float64 steeringAngle
+
+
+float64 estimated_heading 
+float64 imu_heading

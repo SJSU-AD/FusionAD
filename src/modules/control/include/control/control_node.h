@@ -38,6 +38,7 @@ class control_node
     fusionad::control::lat_controller::stanley lat_control;
     ros::NodeHandle control_nh;
     ros::Publisher control_main_pub;
+    ros::Publisher control_debug_pub;
     ros::Subscriber path_sub;
     ros::Subscriber localization_sub;
     ros::Subscriber imu_sub;

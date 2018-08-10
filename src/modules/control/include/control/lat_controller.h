@@ -7,6 +7,7 @@
 #include <vector>
 #include <iostream>
 #include <limits>
+#include <interface/Stanley_debug.h>
 
 //Namespace declaration
 namespace fusionad
@@ -20,6 +21,7 @@ class stanley
   public:
     stanley();
     ~stanley();
+    interface::Stanley_debug debug_info;
     float computeSteeringAngle(const Eigen::Vector2f &vehPos,const std::vector<float> &routeX,
                                 const std::vector<float> &routeY,const float &vehSpeed,
                                 const int &wpIndex, const float &vehTheta,const float &gain);
