@@ -42,7 +42,7 @@ class Translator:
         command.header = message.header
         if message.axes[THROTTLE_AXIS] >= 0:
             command.throttle = message.axes[THROTTLE_AXIS]
-            command.brake = 0.0
+            #command.brake = 0.0
         #else:
             #command.brake = message.axes[THROTTLE_AXIS] * -1
             #command.throttle = 0.0

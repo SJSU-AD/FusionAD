@@ -1,4 +1,7 @@
 <launch>
-  <node type="rc.py" pkg="control" name="joy_translator" output="screen">
+  <node type="rc_car.py" pkg="control" name="joy_translator" output="screen">
   </node>
+  <node pkg="joy" type="joy_node" name="joy_node0">
+    <param name="dev" value="/dev/input/js0"/>
+  </node>  
 </launch>
