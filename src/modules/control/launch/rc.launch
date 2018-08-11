@@ -1,0 +1,4 @@
+<launch>
+  <node type="rc.py" pkg="control" name="joy_translator" output="screen">
+  </node>
+</launch>
