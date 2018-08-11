@@ -12,6 +12,7 @@
 #include <interface/Controlcmd.h>
 #include <interface/Chassis_state.h>
 #include "Eigen/Dense"
+#include "math.h"
 #include <string>
 #include "tf/tf.h"
 #include <algorithm>
@@ -37,6 +38,7 @@ class control_node
     fusionad::control::lat_controller::stanley lat_control;
     ros::NodeHandle control_nh;
     ros::Publisher control_main_pub;
+    ros::Publisher control_debug_pub;
     ros::Subscriber path_sub;
     ros::Subscriber localization_sub;
     ros::Subscriber imu_sub;
@@ -51,6 +53,12 @@ class control_node
     int targetPointIndex;
     float least_distance;
     ros::Timer control_cmd_timer;
+    
+    //Heading Estimator
+    float prev_pos[2] = {0, 0};
+    Eigen::Vector2f orientation_pos_vector;
+    float estimated_orientation;
+
     //TODO: Safety Mechanism bool
     //bool isWorking;
 
