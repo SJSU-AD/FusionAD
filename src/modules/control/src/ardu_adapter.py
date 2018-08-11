@@ -3,8 +3,9 @@ import rospy
 from std_msgs.msg import Float64
 from interface.msg import Controlcmd
 '''
-NOTE: Please be in ~/FusionAD to run
-$rosrun control ardu_adapter.py
+NOTE: Please be in ~/FusionAD to run this code with the following commands:
+$ se
+$ rosrun control ardu_adapter.py
 
 This script is subscribed to both the high level control node and the Arduino
 The high level control node gives the throttle and steering values with a custom message definition
@@ -20,7 +21,7 @@ global driving_callback
 global high_lvl_driving_callback
 global high_lvl_steering_callback
 
-high_lvl_steering_callback = 80
+high_lvl_steering_callback = 220
 steering_callback = 0
 high_lvl_driving_callback = 0
 driving_callback = 0
@@ -52,7 +53,14 @@ def high_lvl_callback(high_lvl_control_msg):
     /control/controlcmd is the topic name
     '''
     high_lvl_driving_callback = (high_lvl_control_msg.throttle-min_driving_input)*(max_driving_output-min_driving_output)/(max_driving_input-min_driving_input)+min_driving_output
-    high_lvl_steering_callback = (high_lvl_control_msg.steering*180/pi+36.15)/.1721
+    steering_angle = 0
+
+    if(abs(high_lvl_control_msg.steeringAngle) > 0.33):
+      steering_angle = 0.33 * (abs(high_lvl_control_msg.steeringAngle)/high_lvl_control_msg.steeringAngle)
+    else:
+      steering_angle = high_lvl_control_msg.steeringAngle  
+
+    high_lvl_steering_callback = (steering_angle*180/pi+36.15)/.1721
 
 '''
 def driving_high_lvl_callback(high_driving_msg):
@@ -75,9 +83,9 @@ def Control_Adapter_Arduino_node():
     rospy.init_node('Control_Adapter', anonymous = True)
 
     steering_low_lvl_node_publisher = rospy.Publisher('/control/steering_channel', Float64, queue_size=10)
-    steering_publisher_to_high_lvl = rospy.Publisher('/control/steering_feedback', Float64, queue_size=10)
+    #steering_publisher_to_high_lvl = rospy.Publisher('/control/steering_feedback', Float64, queue_size=10)
     driving_low_lvl_node_publisher = rospy.Publisher('/control/driving_channel', Float64, queue_size=10)
-    driving_publisher_to_high_lvl = rospy.Publisher('/control/driving_feedback', Float64, queue_size=10)
+    #driving_publisher_to_high_lvl = rospy.Publisher('/control/driving_feedback', Float64, queue_size=10)
 
     rate = rospy.Rate(50)
 
@@ -88,9 +96,9 @@ def Control_Adapter_Arduino_node():
         low_lvl_driving_subscriber = rospy.Subscriber("/control/driving_response", Float64, callback_drive)
         #high_lvl_driving_subscriber = rospy.Subscriber("/control/driving_desired", Float64, driving_high_lvl_callback)
         steering_low_lvl_node_publisher.publish(high_lvl_steering_callback)
-        steering_publisher_to_high_lvl.publish(steering_callback)
+        #steering_publisher_to_high_lvl.publish(steering_callback)
         driving_low_lvl_node_publisher.publish(high_lvl_driving_callback)
-        driving_publisher_to_high_lvl.publish(driving_callback)
+        #driving_publisher_to_high_lvl.publish(driving_callback)
         rate.sleep()
         #rospy.spin()
 
