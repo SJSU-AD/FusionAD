@@ -3,4 +3,7 @@
 	  <param name="control_gain" value="1"/>
     <param name="debug" value="false"/>
   </node>
+
+  <node type="ardu_adapter.py" pkg="control" name="Control_Adapter" output="screen">
+  </node>
 </launch>

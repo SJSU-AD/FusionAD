@@ -41,7 +41,7 @@ class Translator:
         command = Controlcmd()
         command.header = message.header
         if message.axes[THROTTLE_AXIS] >= 0:
-            command.throttle = message.axes[THROTTLE_AXIS]
+            command.throttle = message.axes[THROTTLE_AXIS] * 100
             #command.brake = 0.0
         #else:
             #command.brake = message.axes[THROTTLE_AXIS] * -1
@@ -56,8 +56,10 @@ class Translator:
         #    command.shift_gears = Control.REVERSE
         #else:
         #    command.shift_gears = Control.NO_COMMAND
-
-        command.steeringAngle = message.axes[STEERING_AXIS]
+        if abs(message.axes[STEERING_AXIS]) < 0.03:
+            command.steeringAngle = 0
+        else:
+            command.steeringAngle = message.axes[STEERING_AXIS] * 0.33
         self.last_published = message
         self.pub.publish(command)
 
