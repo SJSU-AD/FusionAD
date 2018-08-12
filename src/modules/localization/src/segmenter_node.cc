@@ -23,7 +23,7 @@ int main(int argc, char** argv)
   segmenter segmenter_object;
   segmenter_object.InitRosComm();
 
-  ros::Rate loop_rate(6);
+  ros::Rate loop_rate(2);
 
   while(ros::ok())
   {
@@ -35,8 +35,8 @@ int main(int argc, char** argv)
 
 void segmenter::InitRosComm()
 {
-  segmenter_pub = segmenter_nh.advertise<std_msgs::Bool>("/localization/object_detected", 10);
-  point_cloud_pub = segmenter_nh.advertise<sensor_msgs::PointCloud2>("/localization/clusters", 10);
+  segmenter_pub = segmenter_nh.advertise<std_msgs::Bool>("/control/mode", 2);
+  point_cloud_pub = segmenter_nh.advertise<sensor_msgs::PointCloud2>("/localization/clusters", 2);
   segmenter_sub = segmenter_nh.subscribe("velodyne_sweep", 100, &segmenter::MessageCallback, this);
   ROS_INFO("Subscriber has been set");
 }
@@ -82,7 +82,7 @@ void segmenter::MessageCallback(const velodyne_puck_msgs::VelodynePuckSweep::Con
   seg_processor.FilterPoints(20);
 
   std_msgs::Bool obstacle_detected;
-  obstacle_detected.data = seg_processor.FindObstacles();
+  obstacle_detected.data = !seg_processor.FindObstacles();
   segmenter_pub.publish(obstacle_detected);  
 
   final_point_cloud = seg_processor.GenerateColoredPointCloud();

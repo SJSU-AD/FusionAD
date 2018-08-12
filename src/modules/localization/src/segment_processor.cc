@@ -71,7 +71,7 @@ bool SegmentProcessor::FindObstacles()
 
     bool obstacle_detected = false;
     float x_max = 2.5;
-    float y_max = 0.4;
+    float y_max = 0.6;
 
     for (size_t i = 0; i < cluster_indices.size(); i++)
     {
@@ -80,7 +80,7 @@ bool SegmentProcessor::FindObstacles()
         int points_in_range = PointsInRange(i, x_max, y_max);
        // double dist = sqrt(centroid.x * centroid.x + centroid.y * centroid.y)
 
-        if(points_in_range > 100)
+        if(points_in_range > 60)
         {
             obstacle_detected = true;
             std::cout << "Obstacle detected with " << points_in_range << " points" << std::endl;
