@@ -37,7 +37,7 @@ void segmenter::InitRosComm()
 {
   segmenter_pub = segmenter_nh.advertise<std_msgs::Bool>("/control/mode", 2);
   point_cloud_pub = segmenter_nh.advertise<sensor_msgs::PointCloud2>("/localization/clusters", 2);
-  segmenter_sub = segmenter_nh.subscribe("velodyne_sweep", 100, &segmenter::MessageCallback, this);
+  segmenter_sub = segmenter_nh.subscribe("velodyne_sweep", 1, &segmenter::MessageCallback, this);
   ROS_INFO("Subscriber has been set");
 }
 
