@@ -84,6 +84,9 @@ namespace node
 
   void control_node::pathCallback(const nav_msgs::Path& trajectory_msg)
   {
+    //Flush all vectors at the end
+    pathPointListX.clear();
+    pathPointListY.clear(); 
     dynamicArraySize = trajectory_msg.poses.size();
     pathPointListX.resize(dynamicArraySize);
     pathPointListY.resize(dynamicArraySize);
@@ -171,7 +174,9 @@ namespace node
       ROS_WARN("Obstacle Ahead, Vehicle Stopped!");
     }
 
-    if((imuInitialized) && (stateInitialized) && (pathInitialized) && (!obstacleDetected) && (autonomousDrivingFlag))
+    float steering_angle;
+    float cmd_linear_vel;    
+    if((imuInitialized) && (stateInitialized) && (pathInitialized) && (!obstacleDetected))
     {
       //Compute the closest waypoint
       std::vector<float> distance;
@@ -201,9 +206,6 @@ namespace node
       {
         goalReached = false;
       }
-
-      float steering_angle;
-      float cmd_linear_vel;
 
       if(!goalReached)
       {
@@ -242,16 +244,15 @@ namespace node
       else
       {
         control_core_command.debugControl = false;
-      }
-
+      }     
+    }
+    
+    if((!obstacleDetected) && (autonomousDrivingFlag))
+    {
       control_core_command.steeringAngle = steering_angle;
       control_core_command.throttle = cmd_linear_vel; 
       control_core_command.inOperation = true;  
-
-      //Flush all vectors at the end
-      pathPointListX.clear();
-      pathPointListY.clear();
-      dynamicArraySize = 0;      
+    
     }
     else
     {
