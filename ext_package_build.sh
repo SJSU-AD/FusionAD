@@ -21,3 +21,6 @@ make && sudo make install
 
 cd ~
 git clone 
+
+sudo apt-get install ros-kinetic-joy
+

@@ -2,5 +2,5 @@
   <!--Swiftnav ROS is included in the geodesy-->
   <include file="$(find geodesy)/launch/geodesy.launch" />
   <include file="$(find control)/launch/control.launch" />
-  <include file="$(find razor_imu_9dof)/launch/razor_pub.launch" />
+  <include file="$(find razor_imu_9dof)/launch/razor-pub.launch" />
 </launch>
