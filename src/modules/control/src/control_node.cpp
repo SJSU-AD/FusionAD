@@ -6,7 +6,13 @@ namespace control
 {
 namespace node
 {
-  control_node::control_node()
+  control_node::control_node():
+  pathInitialized(false),
+  stateInitialized(false),
+  imuInitialized(false),
+  autonomousDrivingFlag(false),
+  obstacleDetected(false),
+  debug(false)
   {
     least_distance = 0;
     roll = 0;
@@ -15,6 +21,7 @@ namespace node
     controlGain = 0;
     targetPointIndex = 0;
     dynamicArraySize = 0;
+    estimated_orientation = 0;
   }
 
   control_node::~control_node()
@@ -23,30 +30,43 @@ namespace node
 
   void control_node::initRosComm()
   {
-    //Create Timer Function for running the control stack, currently set to 100 hz
-    //control_cmd_timer = control_nh.createTimer(ros::Duration(0.01), &control_node::masterTimerCallback, this);  
+    //Create Timer Function for running the control stack, currently set to 25 hz
+    control_cmd_timer = control_nh.createTimer(ros::Duration(0.04), &control_node::masterTimerCallback, this);  
     
     //Control Main publisher
     control_main_pub = control_nh.advertise<interface::Controlcmd>("/control/controlcmd", 100);
-    ROS_INFO("Control Node Master Publisher Set!");
+    ROS_INFO_ONCE("Control Node Master Publisher Set!");
+
+    if(debug)
+    {
+      //Control debug publisher
+      control_debug_pub = control_nh.advertise<interface::Stanley_debug>("/control/debug", 100);
+      ROS_WARN_ONCE("Control DEBUG Publisher Set!");      
+    }
 
     //Control Trajectory Subscriber
     path_sub = control_nh.subscribe("/planning/trajectory", 100, &control_node::pathCallback, this);
-    ROS_INFO("Control Node Path Subscriber Set!");
+    ROS_INFO_ONCE("Control Node Path Subscriber Set!");
 
     //Control State Subscriber
     localization_sub = control_nh.subscribe("/localization/state", 100, &control_node::stateCallback, this);
-    ROS_INFO("Control Node Path Subscriber Set!");
+    ROS_INFO_ONCE("Control Node Path Subscriber Set!");
 
     imu_sub = control_nh.subscribe("/imu", 100, &control_node::imuCallback, this);
-    ROS_INFO("Control Node IMU Subscriber Set!");
+    ROS_INFO_ONCE("Control Node IMU Subscriber Set!");
+
+    obstacle_sub = control_nh.subscribe("/localization/obstacle", 100, &control_node::obstacleCallback, this);
+    ROS_INFO_ONCE("Control Node Obstacle Subscriber Set!");
+
+    mode_sub = control_nh.subscribe("/control/mode", 100, &control_node::modeCallback, this);
+    ROS_INFO_ONCE("Control Node Mode Subscriber Set!");
   }
 
   bool control_node::getParameter()
   {
     //Obtain parameter to initialize the node
     std::string node_name = ros::this_node::getName();
-    if(!control_nh.param<double>(node_name+"/control_gain",controlGain, 1 ))
+    if(!control_nh.param<float>(node_name+"/control_gain",controlGain, 1 ))
     {
       ROS_WARN("Param control gain not set, using default - 1");
       return false;
@@ -79,6 +99,10 @@ namespace node
     {
       ROS_FATAL("Path List not flushed! Abort!");
     }
+    if(!pathInitialized)
+    {
+      pathInitialized = true;
+    }
   }
 
   void control_node::stateCallback(const interface::Chassis_state& veh_state_msg)
@@ -86,6 +110,31 @@ namespace node
     position(0) = veh_state_msg.Position.pose.position.x;
     position(1) = veh_state_msg.Position.pose.position.y;
     linear_velocity = veh_state_msg.Speed.twist.linear.x;
+
+    orientation_pos_vector(0) = position(0) - prev_pos[0];   //X delta
+    orientation_pos_vector(1) = position(1) - prev_pos[1];   //Y delta
+    float veh_theta = std::atan2(orientation_pos_vector(1), orientation_pos_vector(0));
+    if((abs(veh_theta)/veh_theta) < 0)
+    {
+      //Because ATAN2 has a range of (-pi, +pi)
+      //If the atan2 return ngative, put in the phase shift
+      estimated_orientation = 180 + abs(veh_theta); 
+    }
+    else
+    {
+      //if the value is positive, leave it as is
+      estimated_orientation = veh_theta;
+    }
+    
+    lat_control.debug_info.estimated_heading = estimated_orientation;
+
+    prev_pos[0] = position(0);
+    prev_pos[1] = position(1);
+
+    if(!stateInitialized)
+    {
+      stateInitialized = true;
+    }
   }
 
   void control_node::imuCallback(const sensor_msgs::Imu& inertial_msg)
@@ -96,81 +145,122 @@ namespace node
                                       inertial_msg.orientation.w);
     tf::Matrix3x3 temp_rotation_matrix(chassis_quaternion);
     temp_rotation_matrix.getRPY(roll, pitch, yaw);
+
+    lat_control.debug_info.imu_heading = yaw;
+    if(!imuInitialized)
+    {
+      imuInitialized = true;
+    }
+  }
+
+  void control_node::obstacleCallback(const std_msgs::Bool& obstacleDetection_msg)
+  {
+    obstacleDetected = obstacleDetection_msg.data;
+  }
+
+  void control_node::modeCallback(const std_msgs::Bool& autonomous_mode_msg)
+  {
+    autonomousDrivingFlag = autonomous_mode_msg.data;
   }
 
   void control_node::masterTimerCallback(const ros::TimerEvent& controlTimeEvent)
   {
-    //Compute the closest waypoint
-    std::vector<double> distance;
-    for(size_t i = 0; i < pathPointListX.size(); i++)
-    {
-      distance.push_back(sqrt(pow((position(0) - pathPointListX[i]),2)
-                           + pow((position(1) - pathPointListY[i]),2)));
-    }
-    for(size_t j=0; j < distance.size(); j++)
-    {
-      if(least_distance > distance[j])
-      {
-        least_distance = distance[j];
-        targetPointIndex = j;
-      }
-    }
-
-    //Check if goal is reached
-    if(targetPointIndex == (distance.size() - 1))
-    {
-      //Goal reached
-      goalReached = true;
-    }
-    else
-    {
-      goalReached = false;
-    }
-
     interface::Controlcmd control_core_command;
-    double steering_angle;
-    double cmd_linear_vel;
-
-    if(!goalReached)
+    if(obstacleDetected)
     {
-      steering_angle = lat_control.computeSteeringAngle(position,
-                                            pathPointListX,
-                                            pathPointListY,
-                                            linear_velocity,
-                                            targetPointIndex,
-                                            yaw,
-                                            controlGain
-                                            );
+      ROS_WARN("Obstacle Ahead, Vehicle Stopped!");
+    }
 
-      //TODO: Implement longitudinal Control --> blocker: Planning
-      //TODO: Replace throttle function with a lamda function --> lamda(throttle, brake)
-      cmd_linear_vel = 50; //In percentage
+    if((imuInitialized) && (stateInitialized) && (pathInitialized) && (!obstacleDetected) && (autonomousDrivingFlag))
+    {
+      //Compute the closest waypoint
+      std::vector<float> distance;
+      for(size_t i = 0; i < pathPointListX.size(); i++)
+      {
+        distance.push_back(sqrt(pow((position(0) - pathPointListX[i]),2)
+                            + pow((position(1) - pathPointListY[i]),2)));
+      }
+      for(size_t j=0; j < distance.size(); j++)
+      {
+        if(least_distance > distance[j])
+        {
+          least_distance = distance[j];
+          targetPointIndex = j;
+        }
+      }
+
+      //Check if goal is reached
+      if(targetPointIndex == (distance.size() - 1))
+      {
+        //Goal reached
+        goalReached = true;
+        ROS_WARN("Goal reached. End of Path. Autonomy mode set to manual.");
+        autonomousDrivingFlag = false;
+      }
+      else
+      {
+        goalReached = false;
+      }
+
+      float steering_angle;
+      float cmd_linear_vel;
+
+      if(!goalReached)
+      {
+        //Changed the controller to run on estimation 
+        /*steering_angle = lat_control.computeSteeringAngle(position,
+                                              pathPointListX,
+                                              pathPointListY,
+                                              linear_velocity,
+                                              targetPointIndex,
+                                              yaw,
+                                              controlGain
+                                              );*/
+        steering_angle = lat_control.computeSteeringAngle(position,
+                                                      pathPointListX,
+                                                      pathPointListY,
+                                                      linear_velocity,
+                                                      targetPointIndex,
+                                                      estimated_orientation,
+                                                      controlGain
+                                                      );
+        //TODO: Implement longitudinal Control --> blocker: Planning
+        //TODO: Replace throttle function with a lamda function --> lamda(throttle, brake)
+        cmd_linear_vel = 50; //In percentage
+      }
+      else
+      {
+        steering_angle = 0;
+        cmd_linear_vel = 0;
+      }
+
+      if(debug)
+      {
+        control_core_command.debugControl = true;
+        control_debug_pub.publish(lat_control.debug_info);
+      }
+      else
+      {
+        control_core_command.debugControl = false;
+      }
+
+      control_core_command.steeringAngle = steering_angle;
+      control_core_command.throttle = cmd_linear_vel; 
+      control_core_command.inOperation = true;  
+
+      //Flush all vectors at the end
+      pathPointListX.clear();
+      pathPointListY.clear();
+      dynamicArraySize = 0;      
     }
     else
     {
-      steering_angle = 0;
-      cmd_linear_vel = 0;
+      control_core_command.inOperation = false;
+      control_core_command.steeringAngle = 0;
+      control_core_command.throttle = 0;
     }
-
-    if(debug)
-    {
-      control_core_command.debugControl = true;
-    }
-    else
-    {
-      control_core_command.debugControl = false;
-    }
-
-    control_core_command.steeringAngle = steering_angle;
-    control_core_command.throttle = cmd_linear_vel;   
-
     //PUBLISH CONTROL MESSAGE
     control_main_pub.publish(control_core_command);
-
-    //Flush all vectors at the end
-    pathPointListX.clear();
-    pathPointListY.clear();
-    dynamicArraySize = 0;
   }
 }
 }
