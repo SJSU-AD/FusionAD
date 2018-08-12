@@ -15,8 +15,14 @@ ros::NodeHandle nh;
 
 float steering_value = 173;
 float driving_value = 0;
+float past_steering_value = 173;
+
+unsigned int pot_constant = 112;
+
 unsigned long steering_timestamp = 0;
 unsigned long loop_timestamp = 0;
+
+float message_rate = 50;
 
 void drivingcallback(const std_msgs::Float64& driving_msg)
 {
@@ -26,23 +32,90 @@ void drivingcallback(const std_msgs::Float64& driving_msg)
 
 void steeringcallback(const std_msgs::Float64& steering_msg)
 {
+ // bool idling = false;
   steering_timestamp = millis();
-  
-  if (steering_msg.data >= 350)
+ /* 
+  if ((steering_msg.data >= 209) && (steering_msg.data <= 211))
   {
-    steering_value == 350;
+    if (abs(steering_msg.data-(analogRead(0)-112)) < 10)
+    {
+      no_operation();
+      idling = true;
+    }
+    else
+    {
+      idling = false;
+    }
   }
 
-  else if (steering_msg.data <= 70)
+  if(!idling)
   {
-    steering_value == 70;
+    if (steering_msg.data >= 350)
+    {
+      steering_value == 350;
+    }
+    else if (steering_msg.data <= 70)
+    {
+      steering_value == 70;
+    }
+    else
+    {
+      operation(steering_value);
+    }
   }
-
   else
   {
-    operation(steering_value);
-    steering_value = steering_msg.data;
+    no_operation();
   }
+  */
+  
+    if (steering_msg.data >= 350)
+    {
+      steering_value == 350;
+    }
+    else if (steering_msg.data <= 70)
+    {
+      steering_value == 70;
+    }
+    else
+    {
+      steering_value = steering_msg.data;
+      if (abs(steering_value-analogRead(0)-112) > 5)
+      {
+        operation(steering_value);
+      }
+      else
+      {
+        no_operation();
+      } 
+    }
+  
+/*
+  else
+  {
+    steering_value = steering_msg.data;
+      if (abs(steering_value-analogRead(0)-112) > 5)
+      {
+        operation(steering_value);
+      }
+      else {
+        no_operation();
+      }
+    else
+    {
+      //operation(steering_value);
+      if (abs(steering_value-analogRead(0)-112) > 5)
+      {
+        operation(steering_value);
+      }
+      else
+      {
+        no_operation();
+      } 
+    }
+  }
+  past_steering_value = steering_value;
+  */
 }
 
 std_msgs::Float64 feedback;
@@ -291,10 +364,21 @@ void forward_drive(double driving_pwm)
 
 void reverse_drive(double driving_pwm)
 {
-  digitalWrite(Motor_R_EN, HIGH);
-  digitalWrite(Motor_L_EN, HIGH);
-  analogWrite(Motor_LPWM, driving_pwm*-1);
-  analogWrite(Motor_RPWM, 0);
+  if (abs(driving_pwm <= 100))
+  {
+    digitalWrite(Motor_R_EN, HIGH);
+    digitalWrite(Motor_L_EN, HIGH);
+    analogWrite(Motor_LPWM, abs(driving_pwm));
+    analogWrite(Motor_RPWM, 0);
+  }
+
+  else if (abs(driving_pwm>100))
+  {
+    digitalWrite(Motor_R_EN, HIGH);
+    digitalWrite(Motor_L_EN, HIGH);
+    analogWrite(Motor_LPWM, abs(driving_pwm));
+    analogWrite(Motor_RPWM, 0);
+  }
 }
 void braking()
 {
