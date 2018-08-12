@@ -114,25 +114,25 @@ void steeringcallback(const std_msgs::Float64& steering_msg)
   }
   */
   
-    if (steering_msg.data >= 350)
+    if (steering_msg.data > 350)
     {
-      steering_value == 350;
+      steering_value = 350;
     }
-    else if (steering_msg.data <= 70)
+    else if (steering_msg.data < 70)
     {
-      steering_value == 70;
+      steering_value = 70;
     }
     else
     {
       steering_value = steering_msg.data;
-      if (abs(steering_value-analogRead(0)-112) > 5)
+      if((abs(steering_value-(analogRead(0)-112)) < 13))
       {
-        operation(steering_value);
+        no_operation();
       }
       else
       {
-        no_operation();
-      } 
+        operation(steering_value);
+      }
     }
     feedback.data = analogRead(0)-112; // feedback.data is equal to the input of the linear actuator
     steering_error_feedback.data = steering_value-feedback.data;
