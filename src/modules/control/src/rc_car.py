@@ -18,15 +18,18 @@
 import rospy
 from interface.msg import Controlcmd
 from sensor_msgs.msg import Joy
+from std_msgs.msg import Bool
 
 
 STEERING_AXIS = 0
 THROTTLE_AXIS = 4
 
+#obstacle_detected = false
 
 class Translator:
     def __init__(self):
         self.sub = rospy.Subscriber("joy", Joy, self.callback)
+        #self.obs_sub = rospy.Subscriber("/localization/obstacle", Bool, self.lidar_cb)
         self.pub = rospy.Publisher('/control/controlcmd', Controlcmd, queue_size=1)
         self.last_published_time = rospy.get_rostime()
         self.last_published = None
@@ -40,12 +43,13 @@ class Translator:
         rospy.logdebug("joy_translater received axes %s",message.axes)
         command = Controlcmd()
         command.header = message.header
+        global obstacle_detected
         if message.axes[THROTTLE_AXIS] >= 0:
             command.throttle = message.axes[THROTTLE_AXIS] * 100
             #command.brake = 0.0
-        #else:
+        else:
             #command.brake = message.axes[THROTTLE_AXIS] * -1
-            #command.throttle = 0.0
+            command.throttle = message.axes[THROTTLE_AXIS] * 100
         #Brake not needed for red car
 
         #if message.buttons[3]:
@@ -62,6 +66,11 @@ class Translator:
             command.steeringAngle = message.axes[STEERING_AXIS] * 0.33
         self.last_published = message
         self.pub.publish(command)
+    
+   # def lidar_cb(self, message):
+    #    global obstacle_detected
+
+        
 
 if __name__ == '__main__':
     rospy.init_node('joy_translator')

@@ -41,7 +41,7 @@ namespace lat_controller{
     {
       //Because ATAN2 has a range of (-pi, +pi)
       //If the atan2 return ngative, put in the phase shift
-      pathHeadingTheta = M_PI + abs(untouched_theta); 
+      pathHeadingTheta = (2*M_PI) - abs(untouched_theta); 
     }
     else
     {

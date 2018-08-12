@@ -8,10 +8,56 @@
  *
  */
 
-
+ 
 #include <ros.h>
 #include <std_msgs/Float64.h>
 ros::NodeHandle nh;
+
+float message_rate = 50;
+std_msgs::Float64 feedback;
+std_msgs::Float64 driving_feedback;
+std_msgs::Float64 steering_error_feedback;
+ros::Publisher steering_response("/control/steering_response", &feedback); // publish error instead
+ros::Publisher driving_response("/control/driving_response", &driving_feedback);
+ros::Publisher steering_error_response("/control/steering_error", &steering_error_feedback);
+
+#include <PID_v1.h> // PID LIBRARY 
+
+#define R_EN 12 // ENABLE PIN steering
+#define L_EN 13
+
+#define RPWM 6 // inward motion steering
+#define LPWM 5 // outward motion steering
+
+#define Motor_R_EN 3 // ENABLE PIN DRIVE
+#define Motor_L_EN 4 
+
+#define Motor_RPWM 9 //
+#define Motor_LPWM 10
+
+double left_setpoint = 0; // declare ALL the variables
+double right_setpoint = 0;
+double setpoint = 207;
+double input = 0;
+double right_output = 0;
+double left_output = 0;
+double wheel_angle = 0;
+double error = 0; 
+
+/* POTENTIOMETER VALUES!!!
+   BOUNDS ARE 350 FULL LOCK RIGHT
+              207 STRAIGHT
+              70  FULL LOCK LEFT
+*/
+
+unsigned int Kp = 120; // proportional gain
+unsigned int Ki = 1;    // integral gain
+unsigned int Kd = 1;  // derivative gain
+
+PID left(&input, &left_output, &left_setpoint, Kp, Ki, Kd, REVERSE); // Turning left is more negative
+PID right(&input, &right_output, &right_setpoint, Kp, Ki, Kd, DIRECT); // Turning right is more positive (referencing the pot)
+
+
 
 float steering_value = 173;
 float driving_value = 0;
@@ -22,7 +68,6 @@ unsigned int pot_constant = 112;
 unsigned long steering_timestamp = 0;
 unsigned long loop_timestamp = 0;
 
-float message_rate = 50;
 
 void drivingcallback(const std_msgs::Float64& driving_msg)
 {
@@ -89,7 +134,12 @@ void steeringcallback(const std_msgs::Float64& steering_msg)
         no_operation();
       } 
     }
-  
+    feedback.data = analogRead(0)-112; // feedback.data is equal to the input of the linear actuator
+    steering_error_feedback.data = steering_value-feedback.data;
+    driving_feedback.data = driving_value; // driving feedback is equal to the driving value (until we have motor feedback)
+    driving_response.publish(&driving_feedback); 
+    steering_response.publish(&feedback);
+    steering_error_response.publish(&steering_error_feedback);    
 /*
   else
   {
@@ -117,52 +167,8 @@ void steeringcallback(const std_msgs::Float64& steering_msg)
   past_steering_value = steering_value;
   */
 }
-
-std_msgs::Float64 feedback;
-std_msgs::Float64 driving_feedback;
-std_msgs::Float64 steering_error_feedback;
-
 ros::Subscriber<std_msgs::Float64> steering_sub("/control/steering_channel", &steeringcallback); //subscriber initialization
 ros::Subscriber<std_msgs::Float64> driving_sub("/control/driving_channel", &drivingcallback); 
-ros::Publisher steering_response("/control/steering_response", &feedback); // publish error instead
-ros::Publisher driving_response("/control/driving_response", &driving_feedback);
-ros::Publisher steering_error_response("/control/steering_error", &steering_error_feedback);
-
-#include <PID_v1.h> // PID LIBRARY 
-
-#define R_EN 12 // ENABLE PIN steering
-#define L_EN 13
-
-#define RPWM 6 // inward motion steering
-#define LPWM 5 // outward motion steering
-
-#define Motor_R_EN 3 // ENABLE PIN DRIVE
-#define Motor_L_EN 4 
-
-#define Motor_RPWM 9 //
-#define Motor_LPWM 10
-
-double left_setpoint = 0; // declare ALL the variables
-double right_setpoint = 0;
-double setpoint = 207;
-double input = 0;
-double right_output = 0;
-double left_output = 0;
-double wheel_angle = 0;
-double error = 0; 
-
-/* POTENTIOMETER VALUES!!!
-   BOUNDS ARE 350 FULL LOCK RIGHT
-              207 STRAIGHT
-              70  FULL LOCK LEFT
-*/
-
-unsigned int Kp = 120; // proportional gain
-unsigned int Ki = 1;    // integral gain
-unsigned int Kd = 1;  // derivative gain
-
-PID left(&input, &left_output, &left_setpoint, Kp, Ki, Kd, REVERSE); // Turning left is more negative
-PID right(&input, &right_output, &right_setpoint, Kp, Ki, Kd, DIRECT); // Turning right is more positive (referencing the pot)
 
 void setup() {
   // put your setup code here, to run once:
@@ -197,12 +203,6 @@ void setup() {
 
 void loop() {
   // put your main code here, to run repeatedly:
-  feedback.data = analogRead(0)-112; // feedback.data is equal to the input of the linear actuator
-  steering_error_feedback.data = steering_value-feedback.data;
-  driving_feedback.data = driving_value; // driving feedback is equal to the driving value (until we have motor feedback)
-  driving_response.publish(&driving_feedback); 
-  steering_response.publish(&feedback);
-  steering_error_response.publish(&steering_error_feedback);
   nh.spinOnce();
   
   loop_timestamp = millis();
