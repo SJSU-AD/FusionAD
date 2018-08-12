@@ -12,7 +12,7 @@
 #include <interface/Controlcmd.h>
 #include <interface/Chassis_state.h>
 #include "Eigen/Dense"
-#include "math.h"
+#include <cmath>
 #include <string>
 #include "tf/tf.h"
 #include <algorithm>

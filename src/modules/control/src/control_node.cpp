@@ -88,9 +88,11 @@ namespace node
     pathPointListX.clear();
     pathPointListY.clear(); 
     dynamicArraySize = trajectory_msg.poses.size();
-    pathPointListX.resize(dynamicArraySize);
-    pathPointListY.resize(dynamicArraySize);
-    if(dynamicArraySize != 0)
+    
+    lat_control.debug_info.pathSize = dynamicArraySize;
+    //pathPointListX.resize(dynamicArraySize);
+    //pathPointListY.resize(dynamicArraySize);
+    if(pathPointListX.empty())
     {
       for(size_t i = 0; i < trajectory_msg.poses.size(); i++)
       {
@@ -102,6 +104,7 @@ namespace node
     {
       ROS_FATAL("Path List not flushed! Abort!");
     }
+
     if(!pathInitialized)
     {
       pathInitialized = true;
@@ -121,7 +124,7 @@ namespace node
     {
       //Because ATAN2 has a range of (-pi, +pi)
       //If the atan2 return ngative, put in the phase shift
-      estimated_orientation = 180 + abs(veh_theta); 
+      estimated_orientation = (2*M_PI) - abs(veh_theta); 
     }
     else
     {
@@ -175,16 +178,20 @@ namespace node
     }
 
     float steering_angle;
-    float cmd_linear_vel;    
+    float cmd_linear_vel;   
+
     if((imuInitialized) && (stateInitialized) && (pathInitialized) && (!obstacleDetected))
     {
       //Compute the closest waypoint
       std::vector<float> distance;
       for(size_t i = 0; i < pathPointListX.size(); i++)
       {
-        distance.push_back(sqrt(pow((position(0) - pathPointListX[i]),2)
-                            + pow((position(1) - pathPointListY[i]),2)));
+        distance.push_back(std::sqrt(std::pow((position(0) - pathPointListX[i]),2)
+                               + std::pow((position(1) - pathPointListY[i]),2)));
       }
+
+      least_distance = distance[0];
+
       for(size_t j=0; j < distance.size(); j++)
       {
         if(least_distance > distance[j])
@@ -194,8 +201,11 @@ namespace node
         }
       }
 
+      lat_control.debug_info.currentWPIndex = targetPointIndex;
+      lat_control.debug_info.distance_to_wp = least_distance;
+
       //Check if goal is reached
-      if(targetPointIndex == (distance.size() - 1))
+      if((targetPointIndex == (distance.size() - 1)) && (!goalReached))
       {
         //Goal reached
         goalReached = true;
@@ -224,7 +234,8 @@ namespace node
                                                       linear_velocity,
                                                       targetPointIndex,
                                                       estimated_orientation,
-                                                      controlGain
+                                                      controlGain,
+                                                      dynamicArraySize
                                                       );
         //TODO: Implement longitudinal Control --> blocker: Planning
         //TODO: Replace throttle function with a lamda function --> lamda(throttle, brake)
@@ -247,7 +258,7 @@ namespace node
       }     
     }
     
-    if((!obstacleDetected) && (autonomousDrivingFlag))
+    if((!obstacleDetected) && (autonomousDrivingFlag) && (!goalReached))
     {
       control_core_command.steeringAngle = steering_angle;
       control_core_command.throttle = cmd_linear_vel; 
