@@ -9,7 +9,6 @@ import math
 
 from geodesy import Geodesy
 
-
 class GeodesyConverterECEF(Geodesy):
 
     def __init__(self, latitudesData, longitudesData, heightsData):

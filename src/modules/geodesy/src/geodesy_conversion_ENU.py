@@ -118,7 +118,6 @@ class GeodesyConverterENU(GeodesyConverterECEF):
 
         xd = -sinPhi * east - cosPhi * sinLambda * north + cosLambda * cosPhi * up
         yd = cosPhi * east - sinLambda * sinPhi * north + cosLambda * sinPhi * up
-        # double zd = cos_lambda * yNorth + sin_lambda * zUp
         zd = cosLambda * north + sinLambda * up
 
         x = xd + x0
@@ -131,12 +130,9 @@ class GeodesyConverterENU(GeodesyConverterECEF):
         xData = []
         yData = []
         zData = []
-        print("entered function")
 
         for i in range(min(len(eData), len(nData), len(uData))):
-            print("entered for loop")
             x, y, z = self.geodetic_to_ENU_point(eData[i], nData[i], uData[i])
-            print("x: {}, y: {}, z: {}".format(x, y, z))
             xData.append(x)
             yData.append(y)
             zData.append(z)
