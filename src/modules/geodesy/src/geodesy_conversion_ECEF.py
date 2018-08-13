@@ -9,20 +9,24 @@ import math
 
 from geodesy import Geodesy
 
+
 class GeodesyConverterECEF(Geodesy):
-    
+
     def __init__(self, latitudesData, longitudesData, heightsData):
-        self.latitudesData  = latitudesData
+        self.latitudesData = latitudesData
         self.longitudesData = longitudesData
-        self.heightsData    = heightsData
+        self.heightsData = heightsData
 
     def geodetic_to_ECEF_point(self, lat, lng, h):
         """Convert a point in geodetic latitude/longitude/height format to ECEF X/Y/Z format"""
 
-        N = Geodesy.a / math.sqrt(1-(Geodesy.e**2) * (math.sin(lat*math.pi/180)**2))        # prime vertical radius of curvature
-        x = (N+h) * math.cos(lat*math.pi/180) * math.cos(lng*math.pi/180) 
+        # prime vertical radius of curvature
+        N = Geodesy.a / math.sqrt(1-(Geodesy.e**2) *
+                                  (math.sin(lat*math.pi/180)**2))
+        x = (N+h) * math.cos(lat*math.pi/180) * math.cos(lng*math.pi/180)
         y = (N+h) * math.cos(lat*math.pi/180) * math.sin(lng*math.pi/180)
-        z = ((Geodesy.b**2) / (Geodesy.a**2) * N+h) * math.sin(lat * math.pi/180)
+        z = ((Geodesy.b**2) / (Geodesy.a**2) * N+h) * \
+            math.sin(lat * math.pi/180)
 
         return x, y, z
 
@@ -59,11 +63,12 @@ class GeodesyConverterECEF(Geodesy):
         zPositions = []
 
         for i in range(min(len(self.latitudesData), len(self.longitudesData), len(self.heightsData))):
-            x, y, z = self.geodetic_to_ECEF_point(self.latitudesData[i], self.longitudesData[i], self.heightsData[i])
+            x, y, z = self.geodetic_to_ECEF_point(
+                self.latitudesData[i], self.longitudesData[i], self.heightsData[i])
             xPositions.append(x)
             yPositions.append(y)
             zPositions.append(z)
-        
+
         return xPositions, yPositions, zPositions
 
     def global_to_relative_ECEF(self, xPositions, yPositions, zPositions):
@@ -71,7 +76,7 @@ class GeodesyConverterECEF(Geodesy):
         globalXInitial = xPositions[0]
         globalYInitial = yPositions[0]
         globalZInitial = zPositions[0]
-        
+
         relativeXData = []
         relativeYData = []
         relativeZData = []
@@ -80,5 +85,40 @@ class GeodesyConverterECEF(Geodesy):
             relativeXData.append(xPositions[i] - globalXInitial)
             relativeYData.append(yPositions[i] - globalYInitial)
             relativeZData.append(zPositions[i] - globalZInitial)
-        
+
         return relativeXData, relativeYData, relativeZData
+
+    def ECEF_to_geodetic_point(self, x, y, z):
+        """From https://gist.github.com/govert/1b373696c9a27ff4c72a"""
+
+        eps = self.eSquared / (1.0 - self.eSquared)
+        p = math.sqrt(x * x + y * y)
+        q = math.atan2((z * self.a), (p * self.b))
+        sinQ = math.sin(q)
+        cosQ = math.cos(q)
+        sinQ3 = sinQ * sinQ * sinQ
+        cosQ3 = cosQ * cosQ * cosQ
+        phi = math.atan2((z + eps * self.b * sinQ3),
+                         (p - self.eSquared * self.a * cosQ3))
+        lambdaValue = math.atan2(y, x)
+        v = self.a / math.sqrt(1.0 - self.eSquared *
+                               math.sin(phi) * math.sin(phi))
+        h = (p / math.cos(phi)) - v
+
+        lat = math.degrees(phi)
+        lon = math.degrees(lambdaValue)
+
+        return lat, lon
+
+    def ECEF_data_to_geodetic_data(self, xData, yData, zData):
+        latitudesData = []
+        longitudesData = []
+        heightsData = []
+
+        for i in range(min(len(xData), len(yData), len(zData))):
+            lat, lon = self.ECEF_to_geodetic_point(
+                xData[i], yData[i], zData[i])
+            latitudesData.append(lat)
+            longitudesData.append(lon)
+
+        return latitudesData, longitudesData
