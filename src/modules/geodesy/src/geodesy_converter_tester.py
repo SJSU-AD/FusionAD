@@ -59,31 +59,31 @@ def verify_gps_csv_data(readFile, outFile):
         latsAndLongs = zip(latitudesBack, longitudesBack)
         csvWriter.writerows(latsAndLongs)
 
-def verify_gps_point(latitudePoint, longitudePoint):
+def verify_gps_point(readFile, latitudePoint, longitudePoint):
     """Converts input lat/long point to ENU and back"""
-    rawLatitude, rawLongitude, rawHeights = lat_lon_csv_reader("gps.csv")
+    rawLatitude, rawLongitude, rawHeights = lat_lon_csv_reader(readFile)
 
     pointENUConv = GeodesyConverterENU(rawLatitude, rawLongitude, rawHeights)
 
     ePoint, nPoint, uPoint = pointENUConv.geodetic_to_ENU_point(rawLatitude[0], rawLongitude[0], rawHeights[0])
-    print("ePoint: {}, nPoint: {}, uPoint: {}".format(ePoint, nPoint, uPoint))
+    print("ePoint: {:.16e}, nPoint: {:.16f}, uPoint: {:.16f}".format(ePoint, nPoint, uPoint))
 
     xPoint, yPoint, zPoint = pointENUConv.ENU_to_ECEF_point(ePoint, nPoint, uPoint)
-    print("xPoint: {}, yPoint: {}, zPoint: {}".format(xPoint, yPoint, zPoint))
+    print("xPoint: {:.10f}, yPoint: {:.10f}, zPoint: {:.10f}".format(xPoint, yPoint, zPoint))
 
     latitudePointBack, longitudePointBack = pointENUConv.ECEF_to_geodetic_point(xPoint, yPoint, zPoint)
-    print("latitudePointBack: {}, longitudePointBack: {}".format(
+    print("latitudePointBack: {:.14f}, longitudePointBack: {:.14f}".format(
         latitudePointBack, longitudePointBack))
 
     return latitudePointBack, longitudePointBack
 
 def main():
     print("=====Converting CSV Points=====")
-    verify_gps_csv_data("gps.csv", "back_from_enu.csv")
+    verify_gps_csv_data("gps_single_point.csv", "back_from_enu_single.csv")
     print()
 
     print("=====Converting Single Lat/Lon Point=====")
-    latitudePointBack, longitudePointBack = verify_gps_point(
+    latitudePointBack, longitudePointBack = verify_gps_point("gps_single_point.csv",
         37.3371440781, -121.879934136)
     
     print()
