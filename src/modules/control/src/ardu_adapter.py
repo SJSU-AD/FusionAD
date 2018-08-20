@@ -97,4 +97,4 @@ if __name__ == '__main__':
     try:
         Control_Adapter_Arduino_node()
     except rospy.ROSInterruptException:
-pass
+        pass
