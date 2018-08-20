@@ -6,7 +6,6 @@ from interface.msg import Controlcmd
 NOTE: Please be in ~/FusionAD to run this code with the following commands:
 $ se
 $ rosrun control ardu_adapter.py
-
 This script is subscribed to both the high level control node and the Arduino
 The high level control node gives the throttle and steering values with a custom message definition
     high_lvl_callback is the callback function for the high level control
@@ -18,7 +17,7 @@ Eventually this script will be used for low level control when we move away from
 '''
 
 
-high_lvl_steering_callback = 220
+high_lvl_steering_callback = 319
 steering_callback = 0
 high_lvl_driving_callback = 0
 driving_callback = 0
@@ -53,16 +52,15 @@ def high_lvl_callback(high_lvl_control_msg):
     '''
     global high_lvl_driving_callback
     high_lvl_driving_callback = (high_lvl_control_msg.throttle-min_driving_input)*(max_driving_output-min_driving_output)/(max_driving_input-min_driving_input)+min_driving_output
-    #driving_low_lvl_node_publisher.publish(high_lvl_driving_callback)
     steering_angle = 0
-    if(abs(high_lvl_control_msg.steeringAngle) > 0.33):
-      steering_angle = 0.33 * ((-1)*abs(high_lvl_control_msg.steeringAngle)/high_lvl_control_msg.steeringAngle)
+
+    if(abs(high_lvl_control_msg.steeringAngle) > 0.33): # establishing limits in radians for steering
+      steering_angle = 0.33*((-1)*abs(high_lvl_control_msg.steeringAngle)/high_lvl_control_msg.steeringAngle)
     else:
       steering_angle = high_lvl_control_msg.steeringAngle 
-      #rospy.logwarn(high_lvl_control_msg.steeringAngle)
+
     global high_lvl_steering_callback
     high_lvl_steering_callback = ((-1)*steering_angle*180/pi+36.15)/.1721
-    #steering_low_lvl_node_publisher.publish(high_lvl_steering_callback)
 
 '''
 def driving_high_lvl_callback(high_driving_msg):
@@ -70,11 +68,9 @@ def driving_high_lvl_callback(high_driving_msg):
     #Desired PWM Value from the high lvl control
     
     high_lvl_driving_callback = (high_driving_msg.data-min_driving_input)*(max_driving_output-min_driving_output)/(max_driving_input-min_driving_input)+min_driving_output
-
 def steering_high_lvl_callback(high_steering_msg):
     
     #Converts steering angle required from high lvl control to analog input for the linear actuator
-
     high_lvl_steering_callback = (high_steering_msg.data*180/pi + 36.15)/.1721
 '''
 
@@ -85,31 +81,20 @@ def Control_Adapter_Arduino_node():
     rospy.init_node('Control_Adapter', anonymous = True)
 
     steering_low_lvl_node_publisher = rospy.Publisher('/control/steering_channel', Float64, queue_size=10)
-    #steering_publisher_to_high_lvl = rospy.Publisher('/control/steering_feedback', Float64, queue_size=10)
     driving_low_lvl_node_publisher = rospy.Publisher('/control/driving_channel', Float64, queue_size=10)
-    #driving_publisher_to_high_lvl = rospy.Publisher('/control/driving_feedback', Float64, queue_size=10)
-    #high_lvl_steering_subscriber = rospy.Subscriber("/control/steering_desired", Float64, steering_high_lvl_callback)
     high_lvl_subscriber = rospy.Subscriber("/control/controlcmd", Controlcmd, high_lvl_callback)
     low_lvl_steering_subscriber = rospy.Subscriber("/control/steering_response", Float64, callback_steer)
     low_lvl_driving_subscriber = rospy.Subscriber("/control/driving_response", Float64, callback_drive)
-    #high_lvl_driving_subscriber = rospy.Subscriber("/control/driving_desired", Float64, driving_high_lvl_callback)
 
     rate = rospy.Rate(50)
 
     while not rospy.is_shutdown():
-        
         steering_low_lvl_node_publisher.publish(high_lvl_steering_callback)
-        #steering_publisher_to_high_lvl.publish(steering_callback)
         driving_low_lvl_node_publisher.publish(high_lvl_driving_callback)
-        #driving_publisher_to_high_lvl.publish(driving_callback)
         rate.sleep()
-        #rospy.spin()
 
 if __name__ == '__main__':
     try:
         Control_Adapter_Arduino_node()
     except rospy.ROSInterruptException:
-        pass
-
-
-    
+pass

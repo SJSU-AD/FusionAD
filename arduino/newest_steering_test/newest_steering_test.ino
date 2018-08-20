@@ -13,7 +13,6 @@
 #include <std_msgs/Float64.h>
 ros::NodeHandle nh;
 
-float message_rate = 50;
 std_msgs::Float64 feedback;
 std_msgs::Float64 driving_feedback;
 std_msgs::Float64 steering_error_feedback;
@@ -37,17 +36,21 @@ ros::Publisher steering_error_response("/control/steering_error", &steering_erro
 
 double left_setpoint = 0; // declare ALL the variables
 double right_setpoint = 0;
-double setpoint = 207;
+double setpoint = 319;
 double input = 0;
 double right_output = 0;
 double left_output = 0;
 double wheel_angle = 0;
 double error = 0; 
+double upper_steering_limit = 462;
+double lower_steering_limit = 182;
+double driving_limit = 100;
+double steering_tolerance = 13;
 
 /* POTENTIOMETER VALUES!!!
-   BOUNDS ARE 350 FULL LOCK RIGHT
-              207 STRAIGHT
-              70  FULL LOCK LEFT
+   BOUNDS ARE 462 FULL LOCK RIGHT
+              319 STRAIGHT
+              182  FULL LOCK LEFT
 */
 
 unsigned int Kp = 120; // proportional gain
@@ -57,16 +60,12 @@ unsigned int Kd = 1;  // derivative gain
 PID left(&input, &left_output, &left_setpoint, Kp, Ki, Kd, REVERSE); // Turning left is more negative
 PID right(&input, &right_output, &right_setpoint, Kp, Ki, Kd, DIRECT); // Turning right is more positive (referencing the pot)
 
-
-
-float steering_value = 173;
+float steering_value = 319;
 float driving_value = 0;
-float past_steering_value = 173;
-
-unsigned int pot_constant = 112;
 
 unsigned long steering_timestamp = 0;
 unsigned long loop_timestamp = 0;
+unsigned long time_out = 200;
 
 
 void drivingcallback(const std_msgs::Float64& driving_msg)
@@ -77,55 +76,20 @@ void drivingcallback(const std_msgs::Float64& driving_msg)
 
 void steeringcallback(const std_msgs::Float64& steering_msg)
 {
- // bool idling = false;
   steering_timestamp = millis();
- /* 
-  if ((steering_msg.data >= 209) && (steering_msg.data <= 211))
-  {
-    if (abs(steering_msg.data-(analogRead(0)-112)) < 10)
-    {
-      no_operation();
-      idling = true;
-    }
-    else
-    {
-      idling = false;
-    }
-  }
-
-  if(!idling)
-  {
-    if (steering_msg.data >= 350)
-    {
-      steering_value == 350;
-    }
-    else if (steering_msg.data <= 70)
-    {
-      steering_value == 70;
-    }
-    else
-    {
-      operation(steering_value);
-    }
-  }
-  else
-  {
-    no_operation();
-  }
-  */
   
-    if (steering_msg.data > 350)
+    if (steering_msg.data > upper_steering_limit)
     {
-      steering_value = 350;
+      steering_value = upper_steering_limit;
     }
-    else if (steering_msg.data < 70)
+    else if (steering_msg.data < lower_steering_limit)
     {
-      steering_value = 70;
+      steering_value = lower_steering_limit;
     }
     else
     {
       steering_value = steering_msg.data;
-      if((abs(steering_value-(analogRead(0)-112)) < 13))
+      if((abs(steering_value-(analogRead(0)) < steering_tolerance))) // need to rethink requirements of low lvl control on test platform
       {
         no_operation();
       }
@@ -134,39 +98,15 @@ void steeringcallback(const std_msgs::Float64& steering_msg)
         operation(steering_value);
       }
     }
-    feedback.data = analogRead(0)-112; // feedback.data is equal to the input of the linear actuator
+
+    feedback.data = analogRead(0); // feedback.data is equal to the input of the linear actuator
     steering_error_feedback.data = steering_value-feedback.data;
     driving_feedback.data = driving_value; // driving feedback is equal to the driving value (until we have motor feedback)
     driving_response.publish(&driving_feedback); 
     steering_response.publish(&feedback);
     steering_error_response.publish(&steering_error_feedback);    
-/*
-  else
-  {
-    steering_value = steering_msg.data;
-      if (abs(steering_value-analogRead(0)-112) > 5)
-      {
-        operation(steering_value);
-      }
-      else {
-        no_operation();
-      }
-    else
-    {
-      //operation(steering_value);
-      if (abs(steering_value-analogRead(0)-112) > 5)
-      {
-        operation(steering_value);
-      }
-      else
-      {
-        no_operation();
-      } 
-    }
-  }
-  past_steering_value = steering_value;
-  */
 }
+
 ros::Subscriber<std_msgs::Float64> steering_sub("/control/steering_channel", &steeringcallback); //subscriber initialization
 ros::Subscriber<std_msgs::Float64> driving_sub("/control/driving_channel", &drivingcallback); 
 
@@ -207,7 +147,7 @@ void loop() {
   
   loop_timestamp = millis();
 
-  if (abs(loop_timestamp-steering_timestamp)>200)
+  if (abs(loop_timestamp-steering_timestamp)>time_out)
   {
     no_operation();
   }
@@ -217,8 +157,7 @@ void loop() {
 
 void operation(double incoming_input)
 {
-  input = analogRead(0)-112;
-  //setpoint = (wheel_angle*180/3.141592654 + 36.15)/.1721; // need to input a desired wheel_angle
+  input = analogRead(0);
   setpoint = incoming_input;
   error = setpoint - input;
 
@@ -227,14 +166,11 @@ void operation(double incoming_input)
     right_operation(setpoint); // turn right
     steering_limits(input);
   }
-
   else if (error < 0)
   {
     left_operation(setpoint); // turn left
     steering_limits(input);
-
   }
-
   else if (error == 0)
   {
     no_operation(); // go straight
@@ -244,22 +180,21 @@ void operation(double incoming_input)
 void right_operation(double right_side_setpoint)
 {
   right_setpoint = right_side_setpoint;
-  input = analogRead(0)-112;
+  input = analogRead(0);
   steering_limits(input);
 
   if (input >= right_side_setpoint)
   {
-    input = analogRead(0)-112;
+    input = analogRead(0);
     right_setpoint = right_side_setpoint;
     left.SetMode(MANUAL);
     right.SetMode(MANUAL);
     analogWrite(LPWM, 0);
     analogWrite(RPWM, 0);
   }
-
   else if (input < right_side_setpoint)
   {
-    input = analogRead(0)-112;
+    input = analogRead(0);
     right_setpoint = right_side_setpoint;
     left.SetMode(MANUAL);
     right.SetMode(AUTOMATIC);
@@ -269,7 +204,7 @@ void right_operation(double right_side_setpoint)
 
     if (input >= right_side_setpoint)
     {
-      input = analogRead(0)-112;
+      input = analogRead(0);
       right_setpoint = right_side_setpoint;
       left.SetMode(MANUAL);
       right.SetMode(MANUAL);
@@ -285,17 +220,16 @@ void left_operation(double left_side_setpoint)
   
   if (input <= left_side_setpoint)
   {
-    input = analogRead(0)-112;
+    input = analogRead(0);
     left_setpoint = left_side_setpoint;
     right.SetMode(MANUAL);
     left.SetMode(MANUAL);
     analogWrite(RPWM, 0);
     analogWrite(LPWM, 0);
   }
-
   else if (input > left_side_setpoint)
   {
-    input = analogRead(0)-112;
+    input = analogRead(0);
     left_setpoint = left_side_setpoint;
     right.SetMode(MANUAL);
     left.SetMode(AUTOMATIC);
@@ -305,7 +239,7 @@ void left_operation(double left_side_setpoint)
 
     if (input <= left_side_setpoint)
     {
-      input = analogRead(0)-112;
+      input = analogRead(0);
       left_setpoint = left_side_setpoint;
       right.SetMode(MANUAL);
       left.SetMode(MANUAL);
@@ -317,7 +251,7 @@ void left_operation(double left_side_setpoint)
 
 void no_operation()
 {
-  input = analogRead(0)-112;
+  input = analogRead(0);
   right.SetMode(MANUAL);
   left.SetMode(MANUAL);
   analogWrite(RPWM, 0);
@@ -330,13 +264,10 @@ void driving_operation(double incoming_driving_input)
   {
     forward_drive(incoming_driving_input);
   }
-
   else if (incoming_driving_input < 0)
   {
     reverse_drive(incoming_driving_input);
   }
-
-
   else if (incoming_driving_input == 0)
   {
     braking();
@@ -345,15 +276,14 @@ void driving_operation(double incoming_driving_input)
 
 void forward_drive(double driving_pwm)
 {
-  if (driving_pwm <= 100)
+  if (driving_pwm <= driving_limit)
   {
     digitalWrite(Motor_R_EN, HIGH);
     digitalWrite(Motor_L_EN, HIGH);
     analogWrite(Motor_LPWM, 0);
     analogWrite(Motor_RPWM, driving_pwm);
   }
-
-  else if (driving_pwm>100)
+  else if (driving_pwm>driving_limit)
   {
     digitalWrite(Motor_R_EN, HIGH);
     digitalWrite(Motor_L_EN, HIGH);
@@ -364,15 +294,14 @@ void forward_drive(double driving_pwm)
 
 void reverse_drive(double driving_pwm)
 {
-  if (abs(driving_pwm <= 100))
+  if (abs(driving_pwm <= driving_limit))
   {
     digitalWrite(Motor_R_EN, HIGH);
     digitalWrite(Motor_L_EN, HIGH);
     analogWrite(Motor_LPWM, abs(driving_pwm));
     analogWrite(Motor_RPWM, 0);
   }
-
-  else if (abs(driving_pwm>100))
+  else if (abs(driving_pwm>driving_limit))
   {
     digitalWrite(Motor_R_EN, HIGH);
     digitalWrite(Motor_L_EN, HIGH);
@@ -390,14 +319,12 @@ void braking()
 
 void steering_limits(double steering_input_limit)
 {
-  if (steering_input_limit >= 360)
+  if (steering_input_limit >= upper_steering_limit)
   {
     no_operation();
   }
-
-  else if (steering_input_limit <= -1)
+  else if (steering_input_limit <= lower_steering_limit)
   {
     no_operation();
   }
 }
-
