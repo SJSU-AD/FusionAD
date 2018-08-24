@@ -3,5 +3,5 @@
   <include file="$(find geodesy)/launch/geodesy.launch" />
   <include file="$(find control)/launch/control.launch" />
   <include file="$(find razor_imu_9dof)/launch/razor-pub.launch" />
-  <include file="$(find localization)/launch/localization.launch"/>
+  <!--include file="$(find localization)/launch/localization.launch"/-->
 </launch>

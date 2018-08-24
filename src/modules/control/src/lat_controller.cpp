@@ -29,7 +29,7 @@ namespace lat_controller{
     }    
   }
   
-  float stanley::estimatePathHeading(const std::vector<float> &pathX, const std::vector<float> &pathY, const int& index)
+  /*float stanley::estimatePathHeading(const std::vector<float> &pathX, const std::vector<float> &pathY, const int& index)
   {
     //Linear interpolate the vector
     float heading_dx = pathX[index + 1] - pathX[index];
@@ -60,37 +60,73 @@ namespace lat_controller{
       std::cout << "Path Heading Calculation Is Not Finite!" << std::endl;
       return std::numeric_limits<float>::quiet_NaN();
     }      
-  }
+  }*/
 
   float stanley::computePathHeading(const std::vector<float> &navX, const std::vector<float> &navY ,const int &targetIndex, const int &navSize)
   {
     //TODO: Complete path Heading interpolation
     Eigen::Matrix4f designMatrix;
     Eigen::Vector4f responseVector;
-    if(targetIndex < (navSize - 3))
+    if((targetIndex > 0) && (targetIndex < (navSize - 2))) //One point before, two points forward
     {
-      designMatrix << std::pow(navX[targetIndex],3)   , std::pow(navX[targetIndex],2)  , navX[targetIndex],   1,
-                    std::pow(navX[targetIndex+1],3) , std::pow(navX[targetIndex+1],2), navX[targetIndex+1], 1,
-                    std::pow(navX[targetIndex+2],3) , std::pow(navX[targetIndex+2],2), navX[targetIndex+2], 1,
-                    std::pow(navX[targetIndex+2],3) , std::pow(navX[targetIndex+2],2), navX[targetIndex+2], 1;
+      designMatrix <<   std::pow(navX[targetIndex-1],3) , std::pow(navX[targetIndex-1],2), navX[targetIndex-1], 1,
+                        std::pow(navX[targetIndex],3) ,   std::pow(navX[targetIndex],2),   navX[targetIndex],   1,
+                        std::pow(navX[targetIndex+1],3) , std::pow(navX[targetIndex+1],2), navX[targetIndex+1], 1,
+                        std::pow(navX[targetIndex+2],3) , std::pow(navX[targetIndex+2],2), navX[targetIndex+2], 1;
+    
+      responseVector << navY[targetIndex-1],
+                        navY[targetIndex],
+                        navY[targetIndex+1],
+                        navY[targetIndex+2];
+    }
+    else if(targetIndex == 0)                               //Three point forward at beginning
+    {
+      designMatrix <<   std::pow(navX[targetIndex],3) ,   std::pow(navX[targetIndex],2)  , navX[targetIndex],     1,
+                        std::pow(navX[targetIndex+1],3) , std::pow(navX[targetIndex+1],2), navX[targetIndex+1],   1,
+                        std::pow(navX[targetIndex+2],3) , std::pow(navX[targetIndex+2],2), navX[targetIndex+2],   1,
+                        std::pow(navX[targetIndex+3],3) , std::pow(navX[targetIndex+3],2), navX[targetIndex+3],   1;
     
       responseVector << navY[targetIndex],
                         navY[targetIndex+1],
                         navY[targetIndex+2],
                         navY[targetIndex+3];
-
-      Eigen::ColPivHouseholderQR<Eigen::Matrix4f> dec(designMatrix);
-      Eigen::Vector4f x = dec.solve(responseVector);  
-      Eigen::Vector3f pathYawCoeff;
-      pathYawCoeff << x(0)*3,
-                      x(1)*2,
-                      x(2);     
-                
-      //Calculate pathSlope at index value;
-      pathSlope = pathYawCoeff(0)*pow(navX[targetIndex],2) +
-                  pathYawCoeff(1)*navX[targetIndex] +
-                  pathYawCoeff(2);      
     }
+    else if(targetIndex == (navSize - 2))                   //Two points before, one point forward
+    {
+      designMatrix <<   std::pow(navX[targetIndex-2],3) , std::pow(navX[targetIndex-2],2)  , navX[targetIndex-2], 1,
+                        std::pow(navX[targetIndex-1],3) , std::pow(navX[targetIndex-1],2),   navX[targetIndex-1], 1,
+                        std::pow(navX[targetIndex],3) ,   std::pow(navX[targetIndex],2),     navX[targetIndex],   1,
+                        std::pow(navX[targetIndex+1],3) , std::pow(navX[targetIndex+1],2),   navX[targetIndex+1], 1;
+    
+      responseVector << navY[targetIndex-2],
+                        navY[targetIndex-1],
+                        navY[targetIndex],
+                        navY[targetIndex+1]; 
+    }
+    else if(targetIndex == (navSize - 1))
+    {
+      designMatrix <<   std::pow(navX[targetIndex-3],3) , std::pow(navX[targetIndex-3],2)  , navX[targetIndex-3],   1,
+                        std::pow(navX[targetIndex-2],3) , std::pow(navX[targetIndex-2],2),   navX[targetIndex-2],   1,
+                        std::pow(navX[targetIndex-1],3) , std::pow(navX[targetIndex-1],2),   navX[targetIndex-1],   1,
+                        std::pow(navX[targetIndex],3) ,   std::pow(navX[targetIndex],2),     navX[targetIndex],     1;
+    
+      responseVector << navY[targetIndex-3],
+                        navY[targetIndex-2],
+                        navY[targetIndex-1],
+                        navY[targetIndex];       
+    }
+
+    Eigen::ColPivHouseholderQR<Eigen::Matrix4f> dec(designMatrix);
+    Eigen::Vector4f x = dec.solve(responseVector);  
+    Eigen::Vector3f pathYawCoeff;
+    pathYawCoeff << x(0)*3,
+                    x(1)*2,
+                    x(2);     
+              
+    //Calculate pathSlope at index value;
+    pathSlope = pathYawCoeff(0)*pow(navX[targetIndex],2) +
+                pathYawCoeff(1)*navX[targetIndex] +
+                pathYawCoeff(2);     
 
     float nextXpos = navX[targetIndex + 1];
     float nextYpos = navY[targetIndex + 1];
@@ -111,7 +147,7 @@ namespace lat_controller{
 
     float untouched_theta = atan2(heading_dy, heading_dx);
     float pathHeadingTheta;
-    if((abs(untouched_theta)/untouched_theta) < 0)
+    /*if((abs(untouched_theta)/untouched_theta) < 0)
     {
       //Because ATAN2 has a range of (-pi, +pi)
       //If the atan2 return ngative, put in the phase shift
@@ -121,7 +157,7 @@ namespace lat_controller{
     {
       //if the value is positive, leave it as is
       pathHeadingTheta = untouched_theta;
-    }
+    }*/
 
     if(std::isfinite(pathHeadingTheta))
     {
@@ -229,31 +265,8 @@ namespace lat_controller{
   float stanley::computeSteeringAngle(const Eigen::Vector2f &vehPos, const std::vector<float> &routeX, const std::vector<float> &routeY,
                                       const float &vehSpeed, const int &wpIndex, const float& vehTheta, const float &gain,const int &pathSize)
   {
-    int trimmedIndex;
-    pathMatrix42f trimmedRoute;
-    //Stuff the trimmed route into the matrix
-    if(wpIndex != 0)
-    {
-      for(int j = wpIndex+2 , i = 0 ; j >= wpIndex-1 , i < 4 ; j--, i++)
-      {
-        trimmedRoute(i,0) = routeX[j];
-        trimmedRoute(i,1) = routeY[j];
-      }
-      trimmedIndex = 0;
-    }
-    else if(wpIndex == 0)
-    {
-      for(int j = wpIndex+3 , i = 0; j >= wpIndex , i < 4; j-- , i++)
-      {
-        trimmedRoute(i,0) = routeX[j];
-        trimmedRoute(i,1) = routeY[j];
-      }
-      trimmedIndex = 1;
-    }
-    //Now the trimmed route matrix is populated
-
     //obtain the path heading
-    float unusedpathTheta = estimatePathHeading(routeX, routeY, wpIndex);
+    //float unusedpathTheta = estimatePathHeading(routeX, routeY, wpIndex);
     //float unused_pathTheta = computePathHeading(trimmedRoute, trimmedIndex);
     float pathTheta = computePathHeading(routeX, routeY, wpIndex, pathSize);
     //Find the global x delta of veh2path

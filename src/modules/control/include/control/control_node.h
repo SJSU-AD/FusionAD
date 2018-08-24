@@ -46,14 +46,13 @@ class control_node
     ros::Subscriber mode_sub;
     typedef Eigen::Matrix<float, 4, 2> pathMatrix42f; 
     Eigen::Vector2f position;
-    bool pathInitialized, stateInitialized, imuInitialized;
+    bool pathInitialized, stateInitialized, imuInitialized, failFlag;
     bool autonomousDrivingFlag, obstacleDetected;
     double roll, pitch, yaw;
     float controlGain, linear_velocity;
     int targetPointIndex;
-    float least_distance;
     ros::Timer control_cmd_timer;
-    
+
     //Heading Estimator
     float prev_pos[2] = {0, 0};
     Eigen::Vector2f orientation_pos_vector;
