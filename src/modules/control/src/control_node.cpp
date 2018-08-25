@@ -180,7 +180,7 @@ namespace node
     float steering_angle;
     float cmd_linear_vel;   
 
-    if((imuInitialized) && (stateInitialized) && (pathInitialized) && (!obstacleDetected) && (!failFlag) && (!goalReached))
+    if((imuInitialized) && (stateInitialized) && (pathInitialized) && (!obstacleDetected) && (!failFlag) && (!goalReached) && (autonomousDrivingFlag))
     {
       //Compute the closest waypoint
       std::vector<float> distance;

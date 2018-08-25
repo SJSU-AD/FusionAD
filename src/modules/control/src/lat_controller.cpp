@@ -115,6 +115,12 @@ namespace lat_controller{
                         navY[targetIndex-1],
                         navY[targetIndex];       
     }
+    else
+    {
+      debug_info.isCalculationInvalid = true;
+      std::cout << "Path Heading fit not work!" << std::endl;
+      return std::numeric_limits<float>::quiet_NaN();      
+    }
 
     Eigen::ColPivHouseholderQR<Eigen::Matrix4f> dec(designMatrix);
     Eigen::Vector4f x = dec.solve(responseVector);  
