@@ -152,7 +152,7 @@ namespace lat_controller{
     float heading_dy = nextYslope - targetYpos;
 
     float untouched_theta = atan2(heading_dy, heading_dx);
-    float pathHeadingTheta;
+    float pathHeadingTheta = untouched_theta;
     /*if((abs(untouched_theta)/untouched_theta) < 0)
     {
       //Because ATAN2 has a range of (-pi, +pi)

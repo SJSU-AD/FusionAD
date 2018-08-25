@@ -123,7 +123,7 @@ namespace node
     orientation_pos_vector(1) = position(1) - prev_pos[1];   //Y delta
     float veh_theta = std::atan2(orientation_pos_vector(1), orientation_pos_vector(0));
     
-
+    estimated_orientation = veh_theta;
     prev_pos[0] = position(0);
     prev_pos[1] = position(1);
 
