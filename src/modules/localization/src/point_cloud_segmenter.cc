@@ -78,7 +78,6 @@ void  PointCloudSegmenter::GroundPlaneFitting(std::vector<Vec3>& cloud) {
     this->p_gnd.insert(p_gnd.end(), cur_p_gnd.begin(), cur_p_gnd.end());
     break;
 
-     /*
     for(int j = 0; j < n_iter; j++) {
 
       Vec3 normal = CalculatePlaneNormal(cur_p_gnd);
@@ -102,17 +101,16 @@ void  PointCloudSegmenter::GroundPlaneFitting(std::vector<Vec3>& cloud) {
           dist = abs(normal.x * seg_it->x + normal.y * seg_it->y + normal.z * seg_it->z + d) / normal_mag;
 
           if (dist < th_dist) {
-	    if (j == n_iter) 
-	    {
-  	      seg_it->label = -3;
-	    }
+	          if (j == n_iter) 
+	          {
+  	          seg_it->label = -3;
+	          }
             cur_p_gnd.push_back(*seg_it);
             cur_p_list.push_back(*seg_it);
           } else {
             cur_p_ngnd.push_back(*seg_it);
             cur_p_list.push_back(*seg_it);
           }
-
         }
       }
     }
@@ -125,7 +123,7 @@ void  PointCloudSegmenter::GroundPlaneFitting(std::vector<Vec3>& cloud) {
     cur_p_gnd.clear();
     cur_p_ngnd.clear();
     cur_p_list.clear();
-*/
+
   }
 }
 
@@ -167,10 +165,10 @@ void PointCloudSegmenter::ExtractInitialSeeds(std::vector<Vec3>& cloud_seg, std:
     {
       if (it->z - lpr.z < this->th_seeds) 
       {
-        it->label = -3;
+        //it->label = -3;
         seeds.push_back(*it);
       }
-      this->p_all.push_back(*it);
+      //this->p_all.push_back(*it);
     }
   }
 }
@@ -188,6 +186,10 @@ Vec3 PointCloudSegmenter::CalculatePlaneNormal(std::vector<Vec3>& cur_p_gnd) {
 
   if (n > 3) {
     //Calculate centroid
+    Matrix<double, n, 3> A;
+    Matrix<double, n, 1> B;
+    Matrix<double, 3, 1> X;
+
     Vec3 centroid;
 
     std::vector<Vec3>::iterator it;
@@ -205,52 +207,62 @@ Vec3 PointCloudSegmenter::CalculatePlaneNormal(std::vector<Vec3>& cur_p_gnd) {
     cloud_centroid = centroid;
 
     //Calc covarience matrix
-    double xx = 0, xy = 0, xz = 0,
-          yy = 0, yz = 0, zz = 0;
+    // double xx = 0, xy = 0, xz = 0,
+    //       yy = 0, yz = 0, zz = 0;
 
     Vec3 r;
 
-    for (it = cur_p_gnd.begin(); it != cur_p_gnd.end(); it++) {
+    for (it = cur_p_gnd.begin(), i = 0; it != cur_p_gnd.end(); it++, i++) {
       r.x = it->x - centroid.x;
       r.y = it->y - centroid.y;
       r.z = it->z - centroid.z;
+      A(i,0) = r.x;
+      A(i,1) = r.y;
+      A(i,2) = 1;
+      B(i,0) = r.z
 
-      xx += r.x * r.x;
-      xy += r.x * r.y;
-      xz += r.x * r.z;
-      yy += r.y * r.y;
-      yz += r.y * r.z;
-      zz += r.z * r.z;
+      // xx += r.x * r.x;
+      // xy += r.x * r.y;
+      // xz += r.x * r.z;
+      // yy += r.y * r.y;
+      // yz += r.y * r.z;
+      // zz += r.z * r.z;
     }
 
-    double det_x = yy*zz - yz*yz;
-    double det_y = xx*zz - xz*xz;
-    double det_z = xx*yy - xy*xy;
-
-    double det_max = std::max(det_x, std::max(det_y, det_z));
-
+    X = (A.transpose() * A).inverse() * A.transpose() * B;
     Vec3 norm;
+    norm.x = X(0,0);
+    norm.y = X(1,0);
+    norm.z = X(2,0);
 
-    // Pick path with best conditioning
-    if (det_max == det_x) {
-      norm.x = det_x;
-      norm.y = xz*yz - xy*zz;
-      norm.z = xy*yz - xz*yy;
-    } else if (det_max == det_y) {
-      norm.x = xz*yz - xy*zz;
-      norm.y = det_y;
-      norm.z = xy*xz - yz*xx;
-    } else {
-      norm.x = xy*yz - xz*yy;
-      norm.y = xy*xz - yz*xx;
-      norm.z = det_z;
-    }
+    // double det_x = yy*zz - yz*yz;
+    // double det_y = xx*zz - xz*xz;
+    // double det_z = xx*yy - xy*xy;
 
-    double dir_mag = sqrt(pow(norm.x, 2) + pow(norm.y, 2) + pow(norm.z, 2));
+    // double det_max = std::max(det_x, std::max(det_y, det_z));
 
-    norm.x /= dir_mag;
-    norm.y /= dir_mag;
-    norm.z /= dir_mag;
+    
+
+    // // Pick path with best conditioning
+    // if (det_max == det_x) {
+    //   norm.x = det_x;
+    //   norm.y = xz*yz - xy*zz;
+    //   norm.z = xy*yz - xz*yy;
+    // } else if (det_max == det_y) {
+    //   norm.x = xz*yz - xy*zz;
+    //   norm.y = det_y;
+    //   norm.z = xy*xz - yz*xx;
+    // } else {
+    //   norm.x = xy*yz - xz*yy;
+    //   norm.y = xy*xz - yz*xx;
+    //   norm.z = det_z;
+    // }
+
+    // double dir_mag = sqrt(pow(norm.x, 2) + pow(norm.y, 2) + pow(norm.z, 2));
+
+    // norm.x /= dir_mag;
+    // norm.y /= dir_mag;
+    // norm.z /= dir_mag;
 
     return norm;
   }

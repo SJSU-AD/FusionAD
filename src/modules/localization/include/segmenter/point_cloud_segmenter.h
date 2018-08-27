@@ -1,6 +1,7 @@
 #include <vector>
 #include "vec3.h"
 #include "nanoflann.h"
+#include "Eigen/Dense"
 
 struct ScanlinePointCloud {
 
