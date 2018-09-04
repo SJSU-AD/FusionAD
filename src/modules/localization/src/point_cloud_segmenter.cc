@@ -182,13 +182,15 @@ void PointCloudSegmenter::ExtractInitialSeeds(std::vector<Vec3>& cloud_seg, std:
         and do simple linear regression along that axis
 */
 Vec3 PointCloudSegmenter::CalculatePlaneNormal(std::vector<Vec3>& cur_p_gnd) {
-  int n = cur_p_gnd.size();
+  const int n = cur_p_gnd.size();
 
   if (n > 3) {
     //Calculate centroid
-    Matrix<double, n, 3> A;
-    Matrix<double, n, 1> B;
-    Matrix<double, 3, 1> X;
+    Eigen::Matrix<double, Eigen::Dynamic, 3> A;
+    A.resize(n, 3);
+    Eigen::Matrix<double, Eigen::Dynamic, 1> B;
+    B.resize(n, 1);
+    Eigen::Matrix<double, 3, 1> X;
 
     Vec3 centroid;
 
@@ -211,6 +213,7 @@ Vec3 PointCloudSegmenter::CalculatePlaneNormal(std::vector<Vec3>& cur_p_gnd) {
     //       yy = 0, yz = 0, zz = 0;
 
     Vec3 r;
+    int i;
 
     for (it = cur_p_gnd.begin(), i = 0; it != cur_p_gnd.end(); it++, i++) {
       r.x = it->x - centroid.x;
@@ -219,7 +222,7 @@ Vec3 PointCloudSegmenter::CalculatePlaneNormal(std::vector<Vec3>& cur_p_gnd) {
       A(i,0) = r.x;
       A(i,1) = r.y;
       A(i,2) = 1;
-      B(i,0) = r.z
+      B(i,0) = r.z;
 
       // xx += r.x * r.x;
       // xy += r.x * r.y;
