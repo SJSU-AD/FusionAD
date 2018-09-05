@@ -36,6 +36,8 @@ namespace node
     tf::Matrix3x3 temp_rotation_matrix(chassis_quaternion);
     temp_rotation_matrix.getRPY(roll, pitch, yaw);
 
+    tf_rotation.imuStamp.twist.angular.x = roll;
+    tf_rotation.imuStamp.twist.angular.y = pitch;
     tf_rotation.imuStamp.twist.angular.z = yaw;
     tf_master_main_pub.publish(tf_rotation);
 

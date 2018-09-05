@@ -1,3 +1,7 @@
 Header header
 
-geometry_msgs/TwistStamped imuStamp        #Contains rotation from IMU
+# Contains rotation from IMU, where
+# x = roll
+# y = pitch
+# z = yaw
+geometry_msgs/TwistStamped imuStamp
