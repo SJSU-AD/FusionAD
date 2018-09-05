@@ -79,11 +79,11 @@ def verify_gps_point(readFile, latitudePoint, longitudePoint):
 
 def main():
     print("=====Converting CSV Points=====")
-    verify_gps_csv_data("gps_single_point.csv", "back_from_enu_single.csv")
+    verify_gps_csv_data("../geodesy_data/data_validation/gps.csv", "../geodesy_data/data_validation/back_from_enu.csv")
     print()
 
     print("=====Converting Single Lat/Lon Point=====")
-    latitudePointBack, longitudePointBack = verify_gps_point("gps_single_point.csv",
+    latitudePointBack, longitudePointBack = verify_gps_point("../geodesy_data/data_validation/gps.csv",
         37.3371440781, -121.879934136)
     
     print()
