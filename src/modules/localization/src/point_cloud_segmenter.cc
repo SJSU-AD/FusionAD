@@ -209,9 +209,9 @@ Eigen::Vector4d CalculatePlaneNormal(std::vector<Vec3>& cur_p_gnd) {
     C += (r - centroid) * (r - centroid).transpose();
   }
 
-  Eigen::JacobiSVD<MatrixXf> svd(C, Eigen::ComputeFullU);
+  Eigen::JacobiSVD<Eigen::Matrix3d> svd( C, Eigen::ComputeFullU);
 
-  Eigen::Vector3d normal = svd.col(2);
+  Eigen::Vector3d normal = svd.matrixU().col(2);
   double d = -normal.dot(centroid);
 
   Eigen::Vector4d output;
