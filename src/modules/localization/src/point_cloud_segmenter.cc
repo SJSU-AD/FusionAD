@@ -80,10 +80,9 @@ void  PointCloudSegmenter::GroundPlaneFitting(std::vector<Vec3>& cloud) {
 
     for(int j = 0; j < n_iter; j++) {
 
-      Vec3 normal = CalculatePlaneNormal(cur_p_gnd);
+      Eigen::Vector4d normal = CalculatePlaneNormal(cur_p_gnd);
 
-      double d = -((normal.x * cloud_centroid.x) + (normal.y * cloud_centroid.y) + (normal.z * cloud_centroid.z));
-      double normal_mag = sqrt(normal.x * normal.x +normal.y * normal.y + normal.z * normal.z);
+      double normal_mag = sqrt(normal(0) * normal(0) + normal(1) * normal(1) + normal(2) * normal(2));
 
       if (normal_mag != 0) {
 
@@ -98,7 +97,7 @@ void  PointCloudSegmenter::GroundPlaneFitting(std::vector<Vec3>& cloud) {
         std::vector<Vec3>::iterator seg_it;
         for (seg_it = cur_cloud_seg.begin(); seg_it != cur_cloud_seg.end(); seg_it++) {
 
-          dist = abs(normal.x * seg_it->x + normal.y * seg_it->y + normal.z * seg_it->z + d) / normal_mag;
+          dist = abs(normal(0) * seg_it->x + normal(1) * seg_it->y + normal(3) * seg_it->z + normal(3)) / normal_mag;
 
           if (dist < th_dist) {
 	          if (j == n_iter) 
@@ -181,96 +180,47 @@ void PointCloudSegmenter::ExtractInitialSeeds(std::vector<Vec3>& cloud_seg, std:
     3. Find the main axis (the component of the plane normal which will have the largest absolute value)
         and do simple linear regression along that axis
 */
-Vec3 PointCloudSegmenter::CalculatePlaneNormal(std::vector<Vec3>& cur_p_gnd) {
+Eigen::Vector4d CalculatePlaneNormal(std::vector<Vec3>& cur_p_gnd) {
   const int n = cur_p_gnd.size();
 
-  if (n > 3) {
-    //Calculate centroid
-    Eigen::Matrix<double, Eigen::Dynamic, 3> A;
-    A.resize(n, 3);
-    Eigen::Matrix<double, Eigen::Dynamic, 1> B;
-    B.resize(n, 1);
-    Eigen::Matrix<double, 3, 1> X;
+  //Calculate centroid
+  Eigen::Matrix<double, 3, 3> C;
+  Eigen::Vector3d centroid(0,0,0);
 
-    Vec3 centroid;
+  std::vector<Vec3>::iterator it;
 
-    std::vector<Vec3>::iterator it;
-
-    for (it = cur_p_gnd.begin(); it != cur_p_gnd.end(); it++) {
-      centroid.x += it->x;
-      centroid.y += it->y;
-      centroid.z += it->z;
-    }
-
-    centroid.x /= n;
-    centroid.y /= n;
-    centroid.z /= n;
-
-    cloud_centroid = centroid;
-
-    //Calc covarience matrix
-    // double xx = 0, xy = 0, xz = 0,
-    //       yy = 0, yz = 0, zz = 0;
-
-    Vec3 r;
-    int i;
-
-    for (it = cur_p_gnd.begin(), i = 0; it != cur_p_gnd.end(); it++, i++) {
-      r.x = it->x - centroid.x;
-      r.y = it->y - centroid.y;
-      r.z = it->z - centroid.z;
-      A(i,0) = r.x;
-      A(i,1) = r.y;
-      A(i,2) = 1;
-      B(i,0) = r.z;
-
-      // xx += r.x * r.x;
-      // xy += r.x * r.y;
-      // xz += r.x * r.z;
-      // yy += r.y * r.y;
-      // yz += r.y * r.z;
-      // zz += r.z * r.z;
-    }
-
-    X = (A.transpose() * A).inverse() * A.transpose() * B;
-    Vec3 norm;
-    norm.x = X(0,0);
-    norm.y = X(1,0);
-    norm.z = X(2,0);
-
-    // double det_x = yy*zz - yz*yz;
-    // double det_y = xx*zz - xz*xz;
-    // double det_z = xx*yy - xy*xy;
-
-    // double det_max = std::max(det_x, std::max(det_y, det_z));
-
-    
-
-    // // Pick path with best conditioning
-    // if (det_max == det_x) {
-    //   norm.x = det_x;
-    //   norm.y = xz*yz - xy*zz;
-    //   norm.z = xy*yz - xz*yy;
-    // } else if (det_max == det_y) {
-    //   norm.x = xz*yz - xy*zz;
-    //   norm.y = det_y;
-    //   norm.z = xy*xz - yz*xx;
-    // } else {
-    //   norm.x = xy*yz - xz*yy;
-    //   norm.y = xy*xz - yz*xx;
-    //   norm.z = det_z;
-    // }
-
-    // double dir_mag = sqrt(pow(norm.x, 2) + pow(norm.y, 2) + pow(norm.z, 2));
-
-    // norm.x /= dir_mag;
-    // norm.y /= dir_mag;
-    // norm.z /= dir_mag;
-
-    return norm;
+  for (it = cur_p_gnd.begin(); it != cur_p_gnd.end(); it++) {
+    centroid(0) += it->x;
+    centroid(1) += it->y;
+    centroid(2) += it->z;
   }
 
-  return Vec3();
+  centroid(0) /= n;
+  centroid(1) /= n;
+  centroid(2) /= n;
+
+  Eigen::Vector3d r(3);
+  int i;
+
+  for (it = cur_p_gnd.begin(), i = 0; it != cur_p_gnd.end(); it++, i++) {
+    r(0) = it->x;
+    r(1) = it->y;
+    r(2) = it->z;
+    C += (r - centroid) * (r - centroid).transpose();
+  }
+
+  Eigen::JacobiSVD<MatrixXf> svd(C, Eigen::ComputeFullU);
+
+  Eigen::Vector3d normal = svd.col(2);
+  double d = -normal.dot(centroid);
+
+  Eigen::Vector4d output;
+  output(0) = normal(0);
+  output(1) = normal(1);
+  output(2) = normal(2);
+  output(3) = d;
+
+  return output;
 }
 
 

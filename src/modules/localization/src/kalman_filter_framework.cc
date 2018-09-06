@@ -16,3 +16,8 @@ void KalmanFilter::measurement_update(VectorXd & measurement) {
     MatrixXd temp = K * C;
     cur_covariance = (MatrixXd::Identity(temp.cols(), temp.rows()) - temp) * pred_covariance;
 }
+
+void KalmanFilter::step_once(VectorXd & control_input, VectorXd & measurement) {
+    prediction_update(control_input);
+    measurement_update(measurement);
+}
