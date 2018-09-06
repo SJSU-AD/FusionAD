@@ -51,14 +51,14 @@ void segmenter::MessageCallback(const velodyne_puck_msgs::VelodynePuckSweep::Con
   ROS_INFO("Message Recieved");
   int n_iters = 3;
   int n_lpr = 20;
-  int n_segs = 1;
-  float seed_thresh = 0.3; //meters
-  float dist_thresh = 0.1; //meters
+  int n_segs = 3;
+  float seed_thresh = 0.4; //meters
+  float dist_thresh = 0.2; //meters
 
   float th_run = 0.5;
   float th_merge = 1.0;
-  int x_max = 20;
-  int y_max = 20;
+  int x_max = 50;
+  int y_max = 50;
   int n_scanlines = 16;
 
   pcl::PointCloud<pcl::PointXYZI>::Ptr final_point_cloud;

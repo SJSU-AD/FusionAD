@@ -17,7 +17,6 @@
 
 //************************************************************************************************
 
-Vec3 cloud_centroid;
 #define PI 3.14155926
 
 bool CompareZ(Vec3 const& a, Vec3 const& b) {
@@ -46,7 +45,7 @@ std::ostream& operator<<(std::ostream& os, const Vec3& vec) {
         calculate the new estimated
 */
 void  PointCloudSegmenter::GroundPlaneFitting(std::vector<Vec3>& cloud) {
-  float segment_size = (2 * max_x) / n_segs;
+  int segment_size = (int)(ceil((2 * max_x) / n_segs));
   std::vector<Vec3> cloud_segs[n_segs];
 
   std::vector<Vec3>::iterator it;
@@ -58,6 +57,8 @@ void  PointCloudSegmenter::GroundPlaneFitting(std::vector<Vec3>& cloud) {
     group = int((it->x+max_x) / segment_size);
     if (group < n_segs) {
       cloud_segs[group].push_back(*it);
+    } else {
+      cloud_segs[n_segs-1].push_back(*it);
     } 
   }
 
@@ -75,8 +76,7 @@ void  PointCloudSegmenter::GroundPlaneFitting(std::vector<Vec3>& cloud) {
 
     //Get initial ground points
     ExtractInitialSeeds(cur_cloud_seg, cur_p_gnd);
-    this->p_gnd.insert(p_gnd.end(), cur_p_gnd.begin(), cur_p_gnd.end());
-    break;
+    //this->p_gnd.insert(p_gnd.end(), cur_p_gnd.begin(), cur_p_gnd.end());
 
     for(int j = 0; j < n_iter; j++) {
 
@@ -97,7 +97,7 @@ void  PointCloudSegmenter::GroundPlaneFitting(std::vector<Vec3>& cloud) {
         std::vector<Vec3>::iterator seg_it;
         for (seg_it = cur_cloud_seg.begin(); seg_it != cur_cloud_seg.end(); seg_it++) {
 
-          dist = abs(normal(0) * seg_it->x + normal(1) * seg_it->y + normal(3) * seg_it->z + normal(3)) / normal_mag;
+          dist = (normal(0) * seg_it->x + normal(1) * seg_it->y + normal(2) * seg_it->z + normal(3)) / normal_mag;
 
           if (dist < th_dist) {
 	          if (j == n_iter) 
@@ -134,7 +134,6 @@ void PointCloudSegmenter::ExtractInitialSeeds(std::vector<Vec3>& cloud_seg, std:
 {
   if (!cloud_seg.empty()) 
   {
-
     //Sort points in current segment by height
     std::sort(cloud_seg.begin(), cloud_seg.end(), CompareZ);
 
@@ -142,17 +141,14 @@ void PointCloudSegmenter::ExtractInitialSeeds(std::vector<Vec3>& cloud_seg, std:
 
     //Calc Lowest Point Representative (LPR)
     std::vector<Vec3>::iterator it;
-    int i = 0;
+    int i;
 
-    for (it = cloud_seg.begin(); it != cloud_seg.end(); it++) 
+    for (it = cloud_seg.begin(), i = 0;; it != cloud_seg.end(); it++, i++) 
     {
       if (i == n_lpr) break;
-
       lpr.x += it->x;
       lpr.y += it->y;
       lpr.z += it->z;
-
-      i++;
     }
 
     lpr.x /= n_lpr;
@@ -162,9 +158,8 @@ void PointCloudSegmenter::ExtractInitialSeeds(std::vector<Vec3>& cloud_seg, std:
     //Add point as initial seed if its dist to lpr is < th_seeds
     for (it = cloud_seg.begin(); it != cloud_seg.end(); it++) 
     {
-      if (it->z - lpr.z < this->th_seeds) 
+      if ((it->z - lpr.z) < this->th_seeds) 
       {
-        //it->label = -3;
         seeds.push_back(*it);
       }
       //this->p_all.push_back(*it);
@@ -183,12 +178,11 @@ void PointCloudSegmenter::ExtractInitialSeeds(std::vector<Vec3>& cloud_seg, std:
 Eigen::Vector4d CalculatePlaneNormal(std::vector<Vec3>& cur_p_gnd) {
   const int n = cur_p_gnd.size();
 
-  //Calculate centroid
-  Eigen::Matrix<double, 3, 3> C;
-  Eigen::Vector3d centroid(0,0,0);
-
+  Eigen::Matrix<double, 3, 3> C; //Covariance of estimated points
+  Eigen::Vector3d centroid(0,0,0); //Center of mass of point
   std::vector<Vec3>::iterator it;
 
+  //Calculate Centroid (average)
   for (it = cur_p_gnd.begin(); it != cur_p_gnd.end(); it++) {
     centroid(0) += it->x;
     centroid(1) += it->y;
@@ -201,7 +195,7 @@ Eigen::Vector4d CalculatePlaneNormal(std::vector<Vec3>& cur_p_gnd) {
 
   Eigen::Vector3d r(3);
   int i;
-
+  //Compute Covariance
   for (it = cur_p_gnd.begin(), i = 0; it != cur_p_gnd.end(); it++, i++) {
     r(0) = it->x;
     r(1) = it->y;
@@ -209,10 +203,11 @@ Eigen::Vector4d CalculatePlaneNormal(std::vector<Vec3>& cur_p_gnd) {
     C += (r - centroid) * (r - centroid).transpose();
   }
 
+  //Perform SVD and take left singular vector 
+  //corresponding to smallest singular value (axis with least variance)
   Eigen::JacobiSVD<Eigen::Matrix3d> svd( C, Eigen::ComputeFullU);
-
   Eigen::Vector3d normal = svd.matrixU().col(2);
-  double d = -normal.dot(centroid);
+  double d = -(normal.dot(centroid));
 
   Eigen::Vector4d output;
   output(0) = normal(0);
