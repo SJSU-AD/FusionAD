@@ -57,8 +57,8 @@ void segmenter::MessageCallback(const velodyne_puck_msgs::VelodynePuckSweep::Con
 
   float th_run = 0.5;
   float th_merge = 1.0;
-  int x_max = 50;
-  int y_max = 50;
+  int x_max = 20;
+  int y_max = 20;
   int n_scanlines = 16;
 
   pcl::PointCloud<pcl::PointXYZI>::Ptr final_point_cloud;
@@ -88,9 +88,6 @@ void segmenter::MessageCallback(const velodyne_puck_msgs::VelodynePuckSweep::Con
   final_point_cloud = seg_processor.GenerateColoredPointCloud();
 
   point_cloud_pub.publish(final_point_cloud);
-
-  //int time2 = clock();
-  //std::cout << "Segmentation runtime: " << (time2 - time1) / double(CLOCKS_PER_SEC) * 1000 << " ms\n" << std::endl;
 }
 
 

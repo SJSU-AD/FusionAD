@@ -100,10 +100,10 @@ void  PointCloudSegmenter::GroundPlaneFitting(std::vector<Vec3>& cloud) {
           dist = (normal(0) * seg_it->x + normal(1) * seg_it->y + normal(2) * seg_it->z + normal(3)) / normal_mag;
 
           if (dist < th_dist) {
-	          if (j == n_iter) 
-	          {
-  	          seg_it->label = -3;
-	          }
+	    if (j == n_iter-1) 
+	    {
+  	      seg_it->label = -3;
+	    }
             cur_p_gnd.push_back(*seg_it);
             cur_p_list.push_back(*seg_it);
           } else {
@@ -143,7 +143,7 @@ void PointCloudSegmenter::ExtractInitialSeeds(std::vector<Vec3>& cloud_seg, std:
     std::vector<Vec3>::iterator it;
     int i;
 
-    for (it = cloud_seg.begin(), i = 0;; it != cloud_seg.end(); it++, i++) 
+    for (it = cloud_seg.begin(), i = 0; it != cloud_seg.end(); it++, i++) 
     {
       if (i == n_lpr) break;
       lpr.x += it->x;
@@ -175,7 +175,7 @@ void PointCloudSegmenter::ExtractInitialSeeds(std::vector<Vec3>& cloud_seg, std:
     3. Find the main axis (the component of the plane normal which will have the largest absolute value)
         and do simple linear regression along that axis
 */
-Eigen::Vector4d CalculatePlaneNormal(std::vector<Vec3>& cur_p_gnd) {
+Eigen::Vector4d PointCloudSegmenter::CalculatePlaneNormal(std::vector<Vec3>& cur_p_gnd) {
   const int n = cur_p_gnd.size();
 
   Eigen::Matrix<double, 3, 3> C; //Covariance of estimated points
