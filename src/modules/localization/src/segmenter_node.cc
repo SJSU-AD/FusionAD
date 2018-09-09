@@ -54,7 +54,7 @@ void segmenter::MessageCallback(const velodyne_puck_msgs::VelodynePuckSweep::Con
   std::vector<Vec3> predicted_ground;
   std::vector<Vec3> predicted_clusters;
 
-  PointCloudSegmenter segmenter(x_max, y_max, n_iters, n_lpr, n_segs, seed_thresh, dist_thresh, n_scanlines, th_run, th_merge);
+  PointCloudSegmenter segmenter(x_max, y_max, z_min, n_iters, n_lpr, n_segs, seed_thresh, dist_thresh, n_scanlines, th_run, th_merge);
   ParseInput(input_cloud, segmenter, msg);
 
   segmenter.GroundPlaneFitting(input_cloud);

@@ -107,6 +107,7 @@ class PointCloudSegmenter {
 
     float max_x;
     float max_y;
+    float min_z;
 
     PointCloudSegmenter() {
       n_iter = 0;
@@ -116,12 +117,13 @@ class PointCloudSegmenter {
       th_dist = 0.2;
       max_x = 40;
       max_y = 20;
+      min_z = 0;
       n_scanlines = 16;
       th_run = 0.5;
       th_merge = 1.0;
     }
 
-    PointCloudSegmenter(int m_x, int m_y, int iterations, int num_lpr, int num_segs, double seed_thresh, double dist_thresh, int n_scan, double run_thresh, double merge_thresh) { //Constructor
+    PointCloudSegmenter(int m_x, int m_y, int m_z,  int iterations, int num_lpr, int num_segs, double seed_thresh, double dist_thresh, int n_scan, double run_thresh, double merge_thresh) { //Constructor
       n_iter = iterations;
       n_lpr = num_lpr;
       n_segs = num_segs;
@@ -129,6 +131,7 @@ class PointCloudSegmenter {
       th_dist = dist_thresh;
       max_x = m_x;
       max_y = m_y;
+      min_z = m_z;
       n_scanlines = n_scan;
       th_run = run_thresh;
       th_merge = merge_thresh;
