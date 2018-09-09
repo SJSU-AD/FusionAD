@@ -1,10 +1,17 @@
+#ifndef POINT_CLOUD_SEGMENTER_H
+#define POINT_CLOUD_SEGMENTER_H
+
 #include <vector>
+#include <algorithm>
+#include <math.h>
+#include <iostream>
+#include <ctime>
+#include <string>
+#include <map>
 #include "vec3.h"
 #include "nanoflann.h"
 #include "Eigen/Dense"
-
 struct ScanlinePointCloud {
-
   struct ScanlinePoint {
     Vec3 point;
     size_t scanline_index;
@@ -170,3 +177,4 @@ class PointCloudSegmenter {
     std::vector<Vec3> ExtractClusters(std::vector<Scanline>& scanlines);
 };
 
+#endif

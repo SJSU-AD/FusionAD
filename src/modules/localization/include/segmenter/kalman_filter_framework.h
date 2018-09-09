@@ -1,3 +1,6 @@
+#ifndef KALMAN_FILTER_FRAMEWORK_H
+#define KALMAN_FILTER_FRAMEWORK_H
+
 #include "Eigen/Dense"
 
 class KalmanFilter {
@@ -17,3 +20,5 @@ class KalmanFilter {
         MatrixXd calc_kalman_gain();
         void measurement_update(VectorXd &);
 };
+
+#endif

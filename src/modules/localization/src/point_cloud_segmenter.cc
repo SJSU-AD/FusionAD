@@ -4,14 +4,6 @@
   Brief:
   Date: MAR 1 2018
 ***************************************************************************************/
-
-#include <vector>
-#include <algorithm>
-#include <math.h>
-#include <iostream>
-#include <ctime>
-#include <string>
-#include <map>
 #include "segmenter/point_cloud_segmenter.h"
 #include "segmenter/nanoflann.h"
 
@@ -45,7 +37,7 @@ std::ostream& operator<<(std::ostream& os, const Vec3& vec) {
         calculate the new estimated
 */
 void  PointCloudSegmenter::GroundPlaneFitting(std::vector<Vec3>& cloud) {
-  int segment_size = (int)(ceil((2 * max_x) / n_segs));
+  float segment_size = (2 * max_x) / n_segs;
   std::vector<Vec3> cloud_segs[n_segs];
 
   std::vector<Vec3>::iterator it;
@@ -71,7 +63,6 @@ void  PointCloudSegmenter::GroundPlaneFitting(std::vector<Vec3>& cloud) {
   for (i = 0; i < n_segs; i++) {
 
     cur_cloud_seg = cloud_segs[i];
-
     //std::sort(cur_cloud_seg.begin(), cur_cloud_seg.end(), CompareX);
 
     //Get initial ground points

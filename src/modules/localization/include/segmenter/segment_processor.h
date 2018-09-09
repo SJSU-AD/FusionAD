@@ -1,3 +1,6 @@
+#ifndef SEGMENT_PROCESSOR_H
+#define SEGMENT_PROCESSOR_H
+
 #include "vec3.h"
 #include <pcl_ros/point_cloud.h>
 #include <pcl/point_types.h>
@@ -47,3 +50,5 @@ class SegmentProcessor
         bool FindObstacles();
 
 };
+
+#endif
