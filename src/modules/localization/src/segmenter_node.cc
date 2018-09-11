@@ -38,13 +38,13 @@ void segmenter::MessageCallback(const velodyne_puck_msgs::VelodynePuckSweep::Con
   int n_lpr = 20;
   int n_segs = 3;
   float seed_thresh = 0.4; //meters
-  float dist_thresh = 0.2; //meters
+  float dist_thresh = 0.3; //meters
 
   float th_run = 0.5;
   float th_merge = 1.0;
   int x_max = 30;
   int y_max = 30;
-  int z_min = -3;
+  int z_min = -1.5;
   int n_scanlines = 16;
 
   pcl::PointCloud<pcl::PointXYZI>::Ptr final_point_cloud;
@@ -89,7 +89,7 @@ void segmenter::ParseInput(std::vector<Vec3>& in, PointCloudSegmenter& seg,
     {
       vlp_point = cloud->scans[i].points[j];
 
-      if (vlp_point.x <= seg.max_x && vlp_point.x >= -seg.max_x && vlp_point.y <= seg.max_y && vlp_point.y >= -seg.max_y && vlp_point.z > z_min) 
+      if (vlp_point.x <= seg.max_x && vlp_point.x >= -seg.max_x && vlp_point.y <= seg.max_y && vlp_point.y >= -seg.max_y && vlp_point.z > seg.min_z) 
       {
         point.x = vlp_point.x; //(vlp_point.x * std::cos(theta)) + (vlp_point.z * std::sin(theta));
         point.y = vlp_point.y;

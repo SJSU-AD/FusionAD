@@ -14,8 +14,8 @@
 class segmenter
 {
   public:
-    segmenter();
-    ~segmenter();
+    segmenter(){};
+    ~segmenter(){};
     void InitRosComm();
 
   private:
