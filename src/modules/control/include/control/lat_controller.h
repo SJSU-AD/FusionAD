@@ -3,10 +3,11 @@
 
 //Declare all used external libraries
 #include "Eigen/Dense"
-#include "math.h"
+#include <cmath>
 #include <vector>
 #include <iostream>
 #include <limits>
+#include <interface/Stanley_debug.h>
 
 //Namespace declaration
 namespace fusionad
@@ -20,15 +21,18 @@ class stanley
   public:
     stanley();
     ~stanley();
-    double computeSteeringAngle(const Eigen::Vector2d &vehPos,const std::vector<double> &routeX,
-                                const std::vector<double> &routeY,const double &vehSpeed,
-                                const int &wpIndex, const double &vehTheta,const double &gain);
+    interface::Stanley_debug debug_info;
+    float computeSteeringAngle(const Eigen::Vector2f &vehPos,const std::vector<float> &routeX,
+                                const std::vector<float> &routeY,const float &vehSpeed,
+                                const int &wpIndex, const float &vehTheta,const float &gain, const int &pathSize);
 
   private:
-    typedef Eigen::Matrix<double, 4, 2> pathMatrix42d; 
-    double computeHeadingError(const double &vehHeading, const double &pathHeading);
-    double computePathHeading(const pathMatrix42d &trajectory, const int &targetIndex);
-    double computeCrossTrackError(const double &routeTheta, const double &dx, const double &delta_y);
+    float pathSlope;
+    typedef Eigen::Matrix<float, 4, 2> pathMatrix42f; 
+    float computeHeadingError(const float &vehHeading, const float &pathHeading);
+    float computePathHeading(const std::vector<float> &navX, const std::vector<float> &navY ,const int &targetIndex, const int &navSize);
+    float estimatePathHeading(const std::vector<float> &pathX, const std::vector<float> &pathY, const int &index);
+    float computeCrossTrackError(const float &routeTheta, const float &dx, const float &delta_y);
 };
 }
 }
