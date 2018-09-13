@@ -139,7 +139,7 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable(node_face_detect ~/FusionAD/src/modules/perception/obstacle/faces/node_face_detect.cpp)
+add_executable(node_face_detect obstacle/faces/node_face_detect.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
