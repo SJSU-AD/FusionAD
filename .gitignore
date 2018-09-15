@@ -30,4 +30,7 @@ coverage.xml
 # pyenv
 .python-version
 
-######################
+#####################
+
+# Mac OSX Cache
+.DS_Store

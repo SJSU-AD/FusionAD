@@ -1,9 +1,17 @@
+#ifndef POINT_CLOUD_SEGMENTER_H
+#define POINT_CLOUD_SEGMENTER_H
+
 #include <vector>
+#include <algorithm>
+#include <math.h>
+#include <iostream>
+#include <ctime>
+#include <string>
+#include <map>
 #include "vec3.h"
 #include "nanoflann.h"
-
+#include "Eigen/Dense"
 struct ScanlinePointCloud {
-
   struct ScanlinePoint {
     Vec3 point;
     size_t scanline_index;
@@ -99,6 +107,7 @@ class PointCloudSegmenter {
 
     float max_x;
     float max_y;
+    float min_z;
 
     PointCloudSegmenter() {
       n_iter = 0;
@@ -108,12 +117,13 @@ class PointCloudSegmenter {
       th_dist = 0.2;
       max_x = 40;
       max_y = 20;
+      min_z = 0;
       n_scanlines = 16;
       th_run = 0.5;
       th_merge = 1.0;
     }
 
-    PointCloudSegmenter(int m_x, int m_y, int iterations, int num_lpr, int num_segs, double seed_thresh, double dist_thresh, int n_scan, double run_thresh, double merge_thresh) { //Constructor
+    PointCloudSegmenter(int m_x, int m_y, int m_z,  int iterations, int num_lpr, int num_segs, double seed_thresh, double dist_thresh, int n_scan, double run_thresh, double merge_thresh) { //Constructor
       n_iter = iterations;
       n_lpr = num_lpr;
       n_segs = num_segs;
@@ -121,6 +131,7 @@ class PointCloudSegmenter {
       th_dist = dist_thresh;
       max_x = m_x;
       max_y = m_y;
+      min_z = m_z;
       n_scanlines = n_scan;
       th_run = run_thresh;
       th_merge = merge_thresh;
@@ -134,7 +145,7 @@ class PointCloudSegmenter {
 
     void ExtractInitialSeeds(std::vector<Vec3>& cloud_seg, std::vector<Vec3>& seeds); //Returns inital seeds to be used in first plane model estimation
 
-    Vec3 CalculatePlaneNormal(std::vector<Vec3>& cur_p_gnd); //Returns the normal of the estimated ground plane model
+    Eigen::Vector4d CalculatePlaneNormal(std::vector<Vec3>& cur_p_gnd); //Returns the normal of the estimated ground plane model
 
     std::vector<Vec3> GetGroundPoints( void ) {  //Returns points that have been classified as ground points
       return p_gnd;
@@ -169,3 +180,4 @@ class PointCloudSegmenter {
     std::vector<Vec3> ExtractClusters(std::vector<Scanline>& scanlines);
 };
 
+#endif

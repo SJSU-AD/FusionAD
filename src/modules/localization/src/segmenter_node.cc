@@ -7,16 +7,6 @@
 #include "segmenter/segment_processor.h"
 #include "segmenter/segmenter_node.h"
 
-segmenter::segmenter()
-{
-
-}
-
-segmenter::~segmenter()
-{
-
-}
-
 int main(int argc, char** argv)
 {
   ros::init(argc, argv, "segmenter_node");
@@ -41,24 +31,20 @@ void segmenter::InitRosComm()
   ROS_INFO("Subscriber has been set");
 }
 
-void segmenter::PublishSegments()
-{
-  
-}
-
 void segmenter::MessageCallback(const velodyne_puck_msgs::VelodynePuckSweep::ConstPtr& msg)
 {
-  ROS_INFO("Message Recieved");
+  ROS_INFO("Point Cloud Recieved");
   int n_iters = 3;
   int n_lpr = 20;
-  int n_segs = 1;
-  float seed_thresh = 0.3; //meters
-  float dist_thresh = 0.1; //meters
+  int n_segs = 3;
+  float seed_thresh = 0.4; //meters
+  float dist_thresh = 0.3; //meters
 
   float th_run = 0.5;
   float th_merge = 1.0;
-  int x_max = 20;
-  int y_max = 20;
+  int x_max = 30;
+  int y_max = 30;
+  int z_min = -1.5;
   int n_scanlines = 16;
 
   pcl::PointCloud<pcl::PointXYZI>::Ptr final_point_cloud;
@@ -68,14 +54,14 @@ void segmenter::MessageCallback(const velodyne_puck_msgs::VelodynePuckSweep::Con
   std::vector<Vec3> predicted_ground;
   std::vector<Vec3> predicted_clusters;
 
-  PointCloudSegmenter segmenter(x_max, y_max, n_iters, n_lpr, n_segs, seed_thresh, dist_thresh, n_scanlines, th_run, th_merge);
+  PointCloudSegmenter segmenter(x_max, y_max, z_min, n_iters, n_lpr, n_segs, seed_thresh, dist_thresh, n_scanlines, th_run, th_merge);
   ParseInput(input_cloud, segmenter, msg);
+
   segmenter.GroundPlaneFitting(input_cloud);
   predicted_ground = segmenter.GetGroundPoints();
 
   predicted_clusters = segmenter.ScanLineRun(segmenter.p_all);
 
-  //clusters = GenerateOutput(predicted_clusters);
   SegmentProcessor seg_processor;
 
   seg_processor.ExtractIndices(predicted_clusters);
@@ -88,9 +74,6 @@ void segmenter::MessageCallback(const velodyne_puck_msgs::VelodynePuckSweep::Con
   final_point_cloud = seg_processor.GenerateColoredPointCloud();
 
   point_cloud_pub.publish(final_point_cloud);
-
-  //int time2 = clock();
-  //std::cout << "Segmentation runtime: " << (time2 - time1) / double(CLOCKS_PER_SEC) * 1000 << " ms\n" << std::endl;
 }
 
 
@@ -106,14 +89,14 @@ void segmenter::ParseInput(std::vector<Vec3>& in, PointCloudSegmenter& seg,
     {
       vlp_point = cloud->scans[i].points[j];
 
-      if (vlp_point.x < seg.max_x && vlp_point.x > -seg.max_x && vlp_point.y < seg.max_y && vlp_point.y > -seg.max_y) 
+      if (vlp_point.x <= seg.max_x && vlp_point.x >= -seg.max_x && vlp_point.y <= seg.max_y && vlp_point.y >= -seg.max_y && vlp_point.z > seg.min_z) 
       {
         point.x = vlp_point.x; //(vlp_point.x * std::cos(theta)) + (vlp_point.z * std::sin(theta));
         point.y = vlp_point.y;
         point.z = vlp_point.z; //(vlp_point.x * std::sin(theta)) + (vlp_point.z * std::cos(theta));
         point.intensity = vlp_point.intensity;
-	point.theta = vlp_point.azimuth;
-        //point.label = -1; //TODO!!
+	      point.theta = vlp_point.azimuth;
+        point.label = -1;
         point.scanline = i;
 
         in.push_back(point); 

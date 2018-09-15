@@ -7,7 +7,6 @@ class Vec3 {
     float x;
     float y;
     float z;
-    //float r;
     float intensity;
     float theta;
     int label;
@@ -16,11 +15,8 @@ class Vec3 {
     Vec3() : x(0), y(0), z(0), intensity(0), label(-1), scanline(0) {};
 
     Vec3(float a, float b, float c) : x(a), y(b), z(c) {
-      //r = sqrt(x*x + y*y);
       label = -1;
       theta = 0;
-      //theta = atan2(y, x) - 3.14159265/2;
-      //azimuth = atan2(y, x) - 3.14159265/2;
     }
 
     float distance(Vec3 v1) const {
@@ -39,5 +35,4 @@ class Vec3 {
 };
 
 #endif
-//std::ostream& operator<<(std::ostream&, const Vec3& vec);
 

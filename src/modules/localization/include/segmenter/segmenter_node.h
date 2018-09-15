@@ -3,12 +3,10 @@
 
 #include <vector>
 #include <sstream>
-
 #include "ros/ros.h"
 #include <velodyne_puck_msgs/VelodynePuckPoint.h>
 #include <velodyne_puck_msgs/VelodynePuckScan.h>
 #include <velodyne_puck_msgs/VelodynePuckSweep.h>
-
 #include <pcl_conversions/pcl_conversions.h>
 #include <pcl_ros/point_cloud.h>
 #include <pcl/point_types.h>
@@ -16,10 +14,9 @@
 class segmenter
 {
   public:
-    segmenter();
-    ~segmenter();
+    segmenter(){};
+    ~segmenter(){};
     void InitRosComm();
-    void PublishSegments();
 
   private:
     ros::NodeHandle segmenter_nh;
