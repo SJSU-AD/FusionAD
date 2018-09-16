@@ -273,12 +273,12 @@ boolean output_errors = false;  // true or false
 // For the M0, only the extended magnetometer calibration seems to be really necessary if DEBUG__USE_DMP_M0 is set to true...
 // Accelerometer
 // "accel x,y,z (min/max) = X_MIN/X_MAX  Y_MIN/Y_MAX  Z_MIN/Z_MAX"
-float ACCEL_X_MIN = -260.13;
-float ACCEL_X_MAX = 248.9;
-float ACCEL_Y_MIN = -255.49;
-float ACCEL_Y_MAX = 257.45;
-float ACCEL_Z_MIN = -250;
-float ACCEL_Z_MAX = 268.31;
+float ACCEL_X_MIN = -262.82;
+float ACCEL_X_MAX = 254.88;
+float ACCEL_Y_MIN = -255.74;
+float ACCEL_Y_MAX = 271.61;
+float ACCEL_Z_MIN = -253.78;
+float ACCEL_Z_MAX = 276.37;
 
 // Magnetometer (standard calibration mode)
 // "magn x,y,z (min/max) = X_MIN/X_MAX  Y_MIN/Y_MAX  Z_MIN/Z_MAX"
@@ -291,9 +291,9 @@ float MAGN_Z_MAX = 600;
 
 // Magnetometer (extended calibration mode)
 // Set to true to use extended magnetometer calibration (compensates hard & soft iron errors)
-boolean CALIBRATION__MAGN_USE_EXTENDED = false;
-float magn_ellipsoid_center[3] = {0, 0, 0};
-float magn_ellipsoid_transform[3][3] = {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}};
+boolean CALIBRATION__MAGN_USE_EXTENDED = true;
+float magn_ellipsoid_center[3] = {287.405, 70.0630, -187.006};
+float magn_ellipsoid_transform[3][3] = {{0.830467, -0.00911048, 0.0308036}, {-0.00911048, 0.998409, -0.00172653}, {0.0308036, -0.00172653, 0.984020}};
 
 // Gyroscope
 // "gyro x,y,z (current/average) = .../OFFSET_X  .../OFFSET_Y  .../OFFSET_Z

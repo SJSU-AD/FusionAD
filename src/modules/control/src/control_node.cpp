@@ -12,9 +12,9 @@ namespace node
   imuInitialized(false),
   autonomousDrivingFlag(false),
   obstacleDetected(false),
-  debug(false)
+  debug(false),
+  failFlag(false)
   {
-    least_distance = 0;
     roll = 0;
     pitch = 0;
     yaw = 0;
@@ -102,6 +102,7 @@ namespace node
     }
     else
     {
+      failFlag = true;
       ROS_FATAL("Path List not flushed! Abort!");
     }
 
@@ -115,27 +116,26 @@ namespace node
   {
     position(0) = veh_state_msg.Position.pose.position.x;
     position(1) = veh_state_msg.Position.pose.position.y;
-    linear_velocity = veh_state_msg.Speed.twist.linear.x;
-    std::cout << position(0) << std::endl;
+    //linear_velocity = veh_state_msg.Speed.twist.linear.x;
+    linear_velocity = 0.5;
+    //std::cout << position(0) << std::endl;
     orientation_pos_vector(0) = position(0) - prev_pos[0];   //X delta
     orientation_pos_vector(1) = position(1) - prev_pos[1];   //Y delta
     float veh_theta = std::atan2(orientation_pos_vector(1), orientation_pos_vector(0));
-    if(((abs(veh_theta)/veh_theta) < 0) && (veh_theta != 0))
+    
+    estimated_orientation = veh_theta;
+    prev_pos[0] = position(0);
+    prev_pos[1] = position(1);
+  
+    if(std::isfinite(estimated_orientation))
     {
-      //Because ATAN2 has a range of (-pi, +pi)
-      //If the atan2 return ngative, put in the phase shift
-      estimated_orientation = (2*M_PI) - abs(veh_theta); 
+      lat_control.debug_info.estimated_heading = estimated_orientation;
     }
     else
     {
-      //if the value is positive, leave it as is
-      estimated_orientation = veh_theta;
-    }
-    
-    lat_control.debug_info.estimated_heading = estimated_orientation;
-
-    prev_pos[0] = position(0);
-    prev_pos[1] = position(1);
+      std::cout << "Heading Error Calculation Is Not Finite!" << std::endl;
+      failFlag = true;
+    }   
 
     if(!stateInitialized)
     {
@@ -180,7 +180,7 @@ namespace node
     float steering_angle;
     float cmd_linear_vel;   
 
-    if((imuInitialized) && (stateInitialized) && (pathInitialized) && (!obstacleDetected))
+    if((imuInitialized) && (stateInitialized) && (pathInitialized) && (!obstacleDetected) && (!failFlag) && (!goalReached) && (autonomousDrivingFlag))
     {
       //Compute the closest waypoint
       std::vector<float> distance;
@@ -190,7 +190,7 @@ namespace node
                                + std::pow((position(1) - pathPointListY[i]),2)));
       }
 
-      least_distance = distance[0];
+      float least_distance = distance[0];
 
       for(size_t j=0; j < distance.size(); j++)
       {
@@ -205,7 +205,7 @@ namespace node
       lat_control.debug_info.distance_to_wp = least_distance;
 
       //Check if goal is reached
-      if((targetPointIndex == (distance.size() - 1)) && (!goalReached))
+      if((targetPointIndex == (distance.size() - 1)))
       {
         //Goal reached
         goalReached = true;
@@ -217,36 +217,29 @@ namespace node
         goalReached = false;
       }
 
-      if(!goalReached)
-      {
-        //Changed the controller to run on estimation 
-        /*steering_angle = lat_control.computeSteeringAngle(position,
-                                              pathPointListX,
-                                              pathPointListY,
-                                              linear_velocity,
-                                              targetPointIndex,
-                                              yaw,
-                                              controlGain
-                                              );*/
-        steering_angle = lat_control.computeSteeringAngle(position,
-                                                      pathPointListX,
-                                                      pathPointListY,
-                                                      linear_velocity,
-                                                      targetPointIndex,
-                                                      estimated_orientation,
-                                                      controlGain,
-                                                      dynamicArraySize
-                                                      );
-        //TODO: Implement longitudinal Control --> blocker: Planning
-        //TODO: Replace throttle function with a lamda function --> lamda(throttle, brake)
-        cmd_linear_vel = 50; //In percentage
-      }
-      else
-      {
-        steering_angle = 0;
-        cmd_linear_vel = 0;
-      }
+      //Changed the controller to run on estimation 
+      /*steering_angle = lat_control.computeSteeringAngle(position,
+                                            pathPointListX,
+                                            pathPointListY,
+                                            linear_velocity,
+                                            targetPointIndex,
+                                            yaw,
+                                            controlGain
+                                            );*/
+      steering_angle = lat_control.computeSteeringAngle(position,
+                                                    pathPointListX,
+                                                    pathPointListY,
+                                                    linear_velocity,
+                                                    targetPointIndex,
+                                                    estimated_orientation,
+                                                    controlGain,
+                                                    dynamicArraySize
+                                                    );
+      //TODO: Implement longitudinal Control --> blocker: Planning
+      //TODO: Replace throttle function with a lamda function --> lamda(throttle, brake)
+      cmd_linear_vel = 50; //In percentage
 
+      //IF DEBUG IS TRUE
       if(debug)
       {
         control_core_command.debugControl = true;
@@ -256,14 +249,10 @@ namespace node
       {
         control_core_command.debugControl = false;
       }     
-    }
-    /*
-    if((!obstacleDetected) && (autonomousDrivingFlag) && (!goalReached))
-    {
+
       control_core_command.steeringAngle = steering_angle;
       control_core_command.throttle = cmd_linear_vel; 
       control_core_command.inOperation = true;  
-    
     }
     else
     {
@@ -271,8 +260,9 @@ namespace node
       control_core_command.steeringAngle = 0;
       control_core_command.throttle = 0;
     }
+
     //PUBLISH CONTROL MESSAGE
-    control_main_pub.publish(control_core_command);*/
+    control_main_pub.publish(control_core_command);
   }
 }
 }
