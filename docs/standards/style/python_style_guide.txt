@@ -1,0 +1,33 @@
+###==== FusionAD Python Style Guide ====###
+NOTE: If not explicitly stated in this guide, defer to PEP 8 standard
+
+==========
+==Naming==
+==========
+- Modules - Snake Case
+example: some_random_module
+
+- Classes - Pascal Case
+example: SomeRandomClass
+
+- Methods - Snake Case
+example: some_random_method
+
+- Variables - Camel Case
+example: someRandomVariable
+
+==============
+==Docstrings==
+==============
+- Unless otherwise specified, docstring format should follow numpy docstring format, as specified in numpydoc v0.9.dev0 Manual.
+
+- All modules, classes, and methods shall include at minimum a short summary, parameters section, and returns section. Exceptions to this rule is stated below
+    - All modules, classes, and methods under 10 lines may include only the short summary
+    - All trivial modules, classes, and methods may omit docstrings, at discretion of developer, provided that self-explanatory naming is utilized.
+
+===================
+==Important Notes==
+===================
+- Use ```from __future__ import division``` in accordance with PEP 238
+- Use ```#!/usr/bin/env python``` for shebang lines when applicable
+

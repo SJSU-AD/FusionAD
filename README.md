@@ -5,7 +5,7 @@ FusionAD is an autonomous driving software stack developed by engineering studen
 #### **Run the ```ext_package_build.sh``` to ensure all the prerequisites of the external ROS packages used in this stack are met and installed**
 
 ```
-sh ext_package_build.sh
+sudo sh ext_package_build.sh
 ```
 ### Development:
-Please pull from the branch "develop", not master.
+Please develop from the branch "develop", not master.
