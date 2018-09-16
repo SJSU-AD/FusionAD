@@ -126,7 +126,7 @@ namespace node
     estimated_orientation = veh_theta;
     prev_pos[0] = position(0);
     prev_pos[1] = position(1);
-
+  
     if(std::isfinite(estimated_orientation))
     {
       lat_control.debug_info.estimated_heading = estimated_orientation;
