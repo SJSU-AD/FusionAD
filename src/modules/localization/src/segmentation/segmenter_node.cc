@@ -1,11 +1,7 @@
-#include <iostream>
-#include <sstream>
-#include <math.h>
-#include <ctime>
 #include "std_msgs/Bool.h"
-#include "segmenter/point_cloud_segmenter.h"
-#include "segmenter/segment_processor.h"
-#include "segmenter/segmenter_node.h"
+#include "localization/segmentation/point_cloud_segmenter.h"
+#include "localization/segmentation/segment_processor.h"
+#include "localization/segmentation/segmenter_node.h"
 
 int main(int argc, char** argv)
 {

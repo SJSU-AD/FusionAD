@@ -4,8 +4,8 @@
   Brief:
   Date: MAR 1 2018
 ***************************************************************************************/
-#include "segmenter/point_cloud_segmenter.h"
-#include "segmenter/nanoflann.h"
+#include "localization/segmentation/point_cloud_segmenter.h"
+#include "localization/segmentation/nanoflann.h"
 
 //************************************************************************************************
 
@@ -20,7 +20,7 @@ bool CompareX(Vec3 const& a, Vec3 const& b) {
 }
 
 bool CompareTheta(Vec3 const& a, Vec3 const& b) {
-   return a.theta < b.theta;
+  return a.theta < b.theta;
 }
 
 // Allows Vec3 to be printed directly to std::cout or std::cerr
@@ -57,23 +57,19 @@ void  PointCloudSegmenter::GroundPlaneFitting(std::vector<Vec3>& cloud) {
   std::vector<Vec3> cur_p_gnd;  //Pts belonging to ground surface in current segment iteration
   std::vector<Vec3> cur_p_ngnd; //Pts not belonging to ground surface in current segment iteration
   std::vector<Vec3> cur_p_list;
-  std::vector<Vec3> cur_cloud_seg;
-
+  Eigen::Vector3d centroid(0,0,0); 
   //Loop through each segment and apply GPF
   for (i = 0; i < n_segs; i++) {
 
-    cur_cloud_seg = cloud_segs[i];
-    //std::sort(cur_cloud_seg.begin(), cur_cloud_seg.end(), CompareX);
-
     //Get initial ground points
-    ExtractInitialSeeds(cur_cloud_seg, cur_p_gnd);
-    //this->p_gnd.insert(p_gnd.end(), cur_p_gnd.begin(), cur_p_gnd.end());
+    ExtractInitialSeeds(cloud_segs[i], cur_p_gnd);
 
     for(int j = 0; j < n_iter; j++) {
 
-      Eigen::Vector4d normal = CalculatePlaneNormal(cur_p_gnd);
+      centroid.setZero();
+      Eigen::Vector4d normal = CalculatePlaneNormal(cur_p_gnd, centroid);
 
-      double normal_mag = sqrt(normal(0) * normal(0) + normal(1) * normal(1) + normal(2) * normal(2));
+      double normal_mag = sqrt((normal(0) * normal(0)) + (normal(1) * normal(1)) + (normal(2) * normal(2));
 
       if (normal_mag != 0) {
 
@@ -86,15 +82,14 @@ void  PointCloudSegmenter::GroundPlaneFitting(std::vector<Vec3>& cloud) {
         //and compare to th_dist
         double dist;
         std::vector<Vec3>::iterator seg_it;
-        for (seg_it = cur_cloud_seg.begin(); seg_it != cur_cloud_seg.end(); seg_it++) {
+        for (seg_it = cloud_segs[i].begin(); seg_it != cloud_segs[i].end(); seg_it++) {
 
-          dist = (normal(0) * seg_it->x + normal(1) * seg_it->y + normal(2) * seg_it->z + normal(3)) / normal_mag;
+          dist = (normal(0) * (seg_it->x - centroid(0)) + normal(1) * (seg_it->y - centroid(1)) + normal(2) * (seg_it->z - centroid(2)) + normal(3)) / normal_mag;
 
           if (dist < th_dist) {
-	    if (j == n_iter-1) 
-	    {
-  	      seg_it->label = -3;
-	    }
+            if (j == n_iter-1) {
+                seg_it->label = -3;
+            }
             cur_p_gnd.push_back(*seg_it);
             cur_p_list.push_back(*seg_it);
           } else {
@@ -113,7 +108,6 @@ void  PointCloudSegmenter::GroundPlaneFitting(std::vector<Vec3>& cloud) {
     cur_p_gnd.clear();
     cur_p_ngnd.clear();
     cur_p_list.clear();
-
   }
 }
 
@@ -127,14 +121,13 @@ void PointCloudSegmenter::ExtractInitialSeeds(std::vector<Vec3>& cloud_seg, std:
   {
     //Sort points in current segment by height
     std::sort(cloud_seg.begin(), cloud_seg.end(), CompareZ);
-
     Vec3 lpr;
 
     //Calc Lowest Point Representative (LPR)
     std::vector<Vec3>::iterator it;
     int i;
 
-    for (it = cloud_seg.begin(), i = 0; it != cloud_seg.end(); it++, i++) 
+    for (it = cloud_seg.begin(), i = 0; it != (cloud_seg.begin() + n_lpr); it++, i++) 
     {
       if (i == n_lpr) break;
       lpr.x += it->x;
@@ -149,11 +142,10 @@ void PointCloudSegmenter::ExtractInitialSeeds(std::vector<Vec3>& cloud_seg, std:
     //Add point as initial seed if its dist to lpr is < th_seeds
     for (it = cloud_seg.begin(); it != cloud_seg.end(); it++) 
     {
-      if ((it->z - lpr.z) < this->th_seeds) 
+      if (it->z  < this->th_seeds + lpr.z) 
       {
         seeds.push_back(*it);
       }
-      //this->p_all.push_back(*it);
     }
   }
 }
@@ -166,11 +158,10 @@ void PointCloudSegmenter::ExtractInitialSeeds(std::vector<Vec3>& cloud_seg, std:
     3. Find the main axis (the component of the plane normal which will have the largest absolute value)
         and do simple linear regression along that axis
 */
-Eigen::Vector4d PointCloudSegmenter::CalculatePlaneNormal(std::vector<Vec3>& cur_p_gnd) {
+Eigen::Vector4d PointCloudSegmenter::CalculatePlaneNormal(std::vector<Vec3>& cur_p_gnd, Eigen::Vector3d& centroid) {
   const int n = cur_p_gnd.size();
 
   Eigen::Matrix<double, 3, 3> C; //Covariance of estimated points
-  Eigen::Vector3d centroid(0,0,0); //Center of mass of point
   std::vector<Vec3>::iterator it;
 
   //Calculate Centroid (average)
