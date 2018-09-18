@@ -132,11 +132,11 @@ include_directories(include
 
 ## Declare a C++ library
 add_library(point_cloud_segmenter
-  src/point_cloud_segmenter.cc
+  src/point_cloud_segmenter.cpp
 )
 
 add_library(segment_processor
-  src/segment_processor.cc
+  src/segment_processor.cpp
 )
 
 ## Add cmake target dependencies of the library
