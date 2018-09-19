@@ -132,11 +132,11 @@ include_directories(include
 
 ## Declare a C++ library
 add_library(point_cloud_segmenter
-  src/point_cloud_segmenter.cpp
+  src/segmentation/point_cloud_segmenter.cpp
 )
 
 add_library(segment_processor
-  src/segment_processor.cpp
+  src/segmentation/segment_processor.cpp
 )
 
 ## Add cmake target dependencies of the library
@@ -147,7 +147,7 @@ add_library(segment_processor
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable(segmenter_node src/segmenter_node.cc)
+add_executable(segmenter_node src/segmentation/segmenter_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
