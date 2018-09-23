@@ -10,6 +10,7 @@
   </node>
   -->
 
+<!-- TODO: Make param for video device, or only use usb_cam -->
   <node name="camera_raw" pkg="perception" type="node_camera.py" output="screen"> </node>
   <!-- <node name="camera_lanes" pkg="perception" type="node_offset_publisher.py" output="screen"> </node> -->
   
