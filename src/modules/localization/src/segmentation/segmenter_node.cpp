@@ -26,7 +26,7 @@ void segmenter::MessageCallback(const velodyne_puck_msgs::VelodynePuckSweep::Con
   ROS_INFO("Point Cloud Recieved");
   int n_iters = 3;
   int n_lpr = 20;
-  int n_segs = 3;
+  int n_segs = 1;
   float seed_thresh = 0.4; //meters
   float dist_thresh = 0.2; //meters
 
@@ -34,7 +34,7 @@ void segmenter::MessageCallback(const velodyne_puck_msgs::VelodynePuckSweep::Con
   float th_merge = 1.0;
   int x_max = 25;
   int y_max = 25;
-  int z_min = -3;
+  int z_min = 0;
   int n_scanlines = 16;
 
   pcl::PointCloud<pcl::PointXYZI>::Ptr final_point_cloud;
@@ -54,7 +54,7 @@ void segmenter::MessageCallback(const velodyne_puck_msgs::VelodynePuckSweep::Con
 
   SegmentProcessor seg_processor;
 
-  seg_processor.ExtractIndices(predicted_ground);
+  seg_processor.ExtractIndices(predicted_clusters);
   //seg_processor.FilterPoints(20);
 
   std_msgs::Bool obstacle_detected;
@@ -76,11 +76,11 @@ void segmenter::ParseInput(std::vector<Vec3>& in, PointCloudSegmenter& seg,
     for (int j = 0; j < cloud->scans[i].points.size(); j++) {
       vlp_point = cloud->scans[i].points[j];
 
-      if (vlp_point.x <= seg.max_x && vlp_point.x >= -seg.max_x && vlp_point.y <= seg.max_y && vlp_point.y >= -seg.max_y && vlp_point.z > seg.min_z) {
+      if (vlp_point.x < seg.max_x && vlp_point.x > -seg.max_x && vlp_point.y < seg.max_y && vlp_point.y > -seg.max_y && vlp_point.z > seg.min_z) {
         //if (vlp_point.x > 0.5 && vlp_point.y > 0.5) {
           point.x = vlp_point.x; //(vlp_point.x * std::cos(theta)) + (vlp_point.z * std::sin(theta));
           point.y = vlp_point.y;
-          point.z = vlp_point.z; //(vlp_point.x * std::sin(theta)) + (vlp_point.z * std::cos(theta));
+          point.z = vlp_point.z + 3; //(vlp_point.x * std::sin(theta)) + (vlp_point.z * std::cos(theta));
           point.intensity = vlp_point.intensity;
           point.theta = vlp_point.azimuth;
           point.label = -1;
