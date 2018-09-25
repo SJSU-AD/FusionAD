@@ -57,11 +57,11 @@ void  PointCloudSegmenter::GroundPlaneFitting(std::vector<Vec3>& cloud) {
 
   std::vector<Vec3> cur_p_gnd;  //Pts belonging to ground surface in current segment iteration
   std::vector<Vec3> cur_p_ngnd; //Pts not belonging to ground surface in current segment iteration
-  std::vector<Vec3> cur_p_list;
+  //std::vector<Vec3> cur_p_list;
   std::vector<Vec3> cur_cloud_seg;
 
   //Loop through each segment and apply GPF
-  for (i = 0; i < n_segs; i++) {
+  for (i = 0; i < 1; i++) {
     cur_cloud_seg = cloud_segs[i];
     //Get initial ground points
     ExtractInitialSeeds(cur_cloud_seg, cur_p_gnd);
@@ -106,10 +106,15 @@ void  PointCloudSegmenter::GroundPlaneFitting(std::vector<Vec3>& cloud) {
       }
     }
 
+    for (it = cur_p_gnd.begin(); it != cur_p_gnd.end(); it++) {
+      it->label = -3;
+    }
+
     //Add results from current segment to main sets
     this->p_gnd.insert(p_gnd.end(), cur_p_gnd.begin(), cur_p_gnd.end());
     this->p_ngnd.insert(p_ngnd.end(), cur_p_ngnd.begin(), cur_p_ngnd.end());
-    this->p_all.insert(p_all.end(), cur_p_list.begin(), cur_p_list.end());
+    this->p_all.insert(p_all.end(), cur_p_gnd.begin(), cur_p_gnd.end());
+    this->p_all.insert(p_all.end(), cur_p_ngnd.begin(), cur_p_ngnd.end());
 
     cur_p_gnd.clear();
     cur_p_ngnd.clear();
@@ -295,7 +300,6 @@ Eigen::Vector4d PointCloudSegmenter::CalculatePlaneNormal(std::vector<Vec3>& cur
 
 
 //**************************************************************** SCAN LINE RUN **********************************************************************
-
 /*
   Main Implementation of Scan Line Run:
 

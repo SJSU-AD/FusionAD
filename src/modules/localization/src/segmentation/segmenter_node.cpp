@@ -80,7 +80,7 @@ void segmenter::ParseInput(std::vector<Vec3>& in, PointCloudSegmenter& seg,
         //if (vlp_point.x > 0.5 && vlp_point.y > 0.5) {
           point.x = vlp_point.x; //(vlp_point.x * std::cos(theta)) + (vlp_point.z * std::sin(theta));
           point.y = vlp_point.y;
-          point.z = vlp_point.z; //(vlp_point.x * std::sin(theta)) + (vlp_point.z * std::cos(theta));
+          point.z = vlp_point.z + 3; //(vlp_point.x * std::sin(theta)) + (vlp_point.z * std::cos(theta));
           point.intensity = vlp_point.intensity;
           point.theta = vlp_point.azimuth;
           point.label = -1;
