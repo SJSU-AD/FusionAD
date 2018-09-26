@@ -24,17 +24,17 @@ void segmenter::InitRosComm() {
 
 void segmenter::MessageCallback(const velodyne_puck_msgs::VelodynePuckSweep::ConstPtr& msg) {
   ROS_INFO("Point Cloud Recieved");
-  int n_iters = 3;
-  int n_lpr = 20;
-  int n_segs = 1;
-  float seed_thresh = 0.4; //meters
-  float dist_thresh = 0.2; //meters
+  int n_iters = 0;
+  int n_lpr = 40;
+  int n_segs = 2;
+  float seed_thresh = 0.6; //meters
+  float dist_thresh = 0.45; //meters
 
   float th_run = 0.5;
   float th_merge = 1.0;
-  int x_max = 25;
+  int x_max = 35;
   int y_max = 25;
-  int z_min = 0;
+  int z_min = -2;
   int n_scanlines = 16;
 
   pcl::PointCloud<pcl::PointXYZI>::Ptr final_point_cloud;
@@ -55,7 +55,7 @@ void segmenter::MessageCallback(const velodyne_puck_msgs::VelodynePuckSweep::Con
   SegmentProcessor seg_processor;
 
   seg_processor.ExtractIndices(predicted_clusters);
-  //seg_processor.FilterPoints(20);
+  seg_processor.FilterPoints(20);
 
   std_msgs::Bool obstacle_detected;
   //obstacle_detected.data = seg_processor.FindObstacles();

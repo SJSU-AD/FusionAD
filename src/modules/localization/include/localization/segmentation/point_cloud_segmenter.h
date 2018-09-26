@@ -143,7 +143,7 @@ class PointCloudSegmenter {
 
     void GroundPlaneFitting( std::vector<Vec3>& cloud ); //Main Loop
 
-    void ExtractInitialSeeds(std::vector<Vec3>& cloud_seg, std::vector<Vec3>& seeds); //Returns inital seeds to be used in first plane model estimation
+    void ExtractInitialSeeds(std::vector<Vec3>& cloud_seg, std::vector<Vec3>& seeds, std::vector<Vec3>& not_seeds); //Returns inital seeds to be used in first plane model estimation
 
     Eigen::Vector4d CalculatePlaneNormal(std::vector<Vec3>&); //Returns the normal of the estimated ground plane model
 
