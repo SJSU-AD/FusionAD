@@ -75,16 +75,17 @@ void  PointCloudSegmenter::GroundPlaneFitting(std::vector<Vec3>& cloud) {
         continue;
       }
 
+      std::cout << normal << std::endl;
+
       //Clear gnd points in between iterations
       cur_p_gnd.clear();
       cur_p_ngnd.clear();
 
       //Calculate distance from point to orthogonal projection
       //and compare to th_dist
-      double dist;
       std::vector<Vec3>::iterator seg_it;
       for (seg_it = cloud_segs[i].begin(); seg_it != cloud_segs[i].end(); seg_it++) {
-        dist = std::abs((normal(0) * seg_it->x) + (normal(1) * seg_it->y) + (normal(2) * seg_it->z) + normal(3)) / normal_mag;
+        double dist = std::abs((normal(0) * seg_it->x) + (normal(1) * seg_it->y) + (normal(2) * seg_it->z) + normal(3)) / normal_mag;
 
         if (dist < th_dist) {
           cur_p_gnd.push_back(*seg_it);
@@ -200,7 +201,6 @@ Eigen::Vector4d PointCloudSegmenter::CalculatePlaneNormal(std::vector<Vec3>& cur
   double det_x = yy*zz - yz*yz;
   double det_y = xx*zz - xz*xz;
   double det_z = xx*yy - xy*xy;
-
   double max_det = std::max(det_x, std::max(det_y, det_z));
   if (max_det < 0.0) {
     Eigen::Vector4d output(0.0,0.0,0.0,0.0);
