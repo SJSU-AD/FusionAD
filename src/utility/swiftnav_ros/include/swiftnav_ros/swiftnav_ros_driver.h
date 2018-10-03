@@ -162,7 +162,7 @@ namespace swiftnav_ros
         double rtk_v_accuracy;
         double rtk_vel_north;
         double rtk_vel_east;
-        double rtk_vel_up;
+        double rtk_vel_down;
         double rtk_vel_v_covariance;
         double rtk_vel_h_covariance;
 
