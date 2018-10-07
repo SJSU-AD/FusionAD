@@ -7,7 +7,7 @@
 #include <limits>
 
 
-// Remove comment in lat_controller.h after testing.
+// Remove comment for "Private:" in lat_controller.h after testing.
 
 /*
 TEST CASE 1:
@@ -39,7 +39,6 @@ TEST(path_heading_test_m_1, ShouldPass)
   // Correct answer will be the arctangent of 1/1 since the slope of the line should be a straight line of 1
   float correct_ans = std::atan2(1,1);
 
-  // TODO: Insert answer
   ASSERT_EQ(correct_ans, stanley_test.computePathHeading(path_x, path_y, target_point, path_size));
 }
 

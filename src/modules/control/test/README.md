@@ -1,4 +1,4 @@
-# CONTROL README  
+# CONTROL TESTING README  
 
 ## Testing  
 The unittest in control package is written with gtest, Google's C++ unittest framework.  
