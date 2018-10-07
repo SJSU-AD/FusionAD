@@ -6,8 +6,18 @@
 #include <iostream>
 #include <limits>
 
-TEST(path_heading_test_m_1, ShouldPass){
+
+// Remove comment in lat_controller.h after testing.
+
+/*
+TEST CASE 1:
+Testing path heading computation with a path of slope = 1, in the first quadrant
+*/
+TEST(path_heading_test_m_1, ShouldPass)
+{
+  // Initialize controller 
   fusionad::control::lat_controller::stanley stanley_test;
+  // Set target setpoint to first point
   int target_point = 0;
   std::vector<float> path_x;
   std::vector<float> path_y;
@@ -15,7 +25,6 @@ TEST(path_heading_test_m_1, ShouldPass){
 
   path_x.clear();
   path_y.clear();
-
 
   //Start with path points that are perfectly linear at m = 1;
   for(int i = 0; i < 4; i++)
@@ -27,10 +36,11 @@ TEST(path_heading_test_m_1, ShouldPass){
   ASSERT_TRUE(path_x.size() == path_y.size());
   path_size = path_x.size();
   
-
+  // Correct answer will be the arctangent of 1/1 since the slope of the line should be a straight line of 1
+  float correct_ans = std::atan2(1,1);
 
   // TODO: Insert answer
-  ASSERT_EQ( 1 , stanley_test.computePathHeading(path_x, path_y, target_point, path_size));
+  ASSERT_EQ(correct_ans, stanley_test.computePathHeading(path_x, path_y, target_point, path_size));
 }
 
 
