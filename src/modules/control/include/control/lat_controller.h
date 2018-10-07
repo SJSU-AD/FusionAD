@@ -25,8 +25,7 @@ class stanley
     float computeSteeringAngle(const Eigen::Vector2f &vehPos,const std::vector<float> &routeX,
                                 const std::vector<float> &routeY,const float &vehSpeed,
                                 const int &wpIndex, const float &vehTheta,const float &gain, const int &pathSize);
-
-  private:
+  //private:
     float pathSlope;
     typedef Eigen::Matrix<float, 4, 2> pathMatrix42f; 
     float computeHeadingError(const float &vehHeading, const float &pathHeading);

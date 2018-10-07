@@ -24,6 +24,7 @@ include_directories(${EIGEN3_INCLUDE_DIR})
 # Locate GTest
 find_package(GTest REQUIRED)
 
+
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
 ## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
@@ -139,7 +140,7 @@ add_library(lateral_control
 
 add_dependencies(lateral_control ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(lateral_control
-  ${GTEST_LIBRARIES} ${catkin_LIBRARIES}
+  ${catkin_LIBRARIES}
 )
 
 ## Add cmake target dependencies of the library
@@ -172,19 +173,20 @@ add_executable(core_control src/control_node.cpp src/lat_controller.cpp)
 
 #add_dependencies(core_control ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 #target_link_libraries(control_core
-# ${GTEST_LIBRARIES} ${catkin_LIBRARIES}
+# ${catkin_LIBRARIES}
 #)
 
 add_dependencies(core_control ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 target_link_libraries(core_control
- ${GTEST_LIBRARIES} ${catkin_LIBRARIES}
+ ${catkin_LIBRARIES}
 )
 
 ## Specify libraries to link a library or executable target against
 # target_link_libraries(${PROJECT_NAME}_node
-#  ${GTEST_LIBRARIES} ${catkin_LIBRARIES}
+# ${catkin_LIBRARIES}
 # )
+
 
 #############
 ## Install ##
@@ -228,11 +230,13 @@ target_link_libraries(core_control
 ## Add gtest based cpp test target and link libraries
 # catkin_add_gtest(${PROJECT_NAME}-test test/test_control.cpp)
 
-catkin_add_gtest(control_test test/control_test.cpp src/control_node.cpp src/lat_controller.cpp)
+catkin_add_gtest(control_test test/control_test.cpp src/lat_controller.cpp)
 
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()
+
+target_link_libraries(control_test ${catkin_LIBRARIES})
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
