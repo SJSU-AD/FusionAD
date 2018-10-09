@@ -17,7 +17,7 @@ W	37.3370886	-121.8798571	3
 W	37.3370421	-121.8797874	4
 ```
 
-This format can be generated from the [GPS Visualizer](http://www.gpsvisualizer.com/draw/), using the "wpt" tool to add markers to the map and export as ".csv" format.
+This format can be generated from the [GPS Visualizer](http://www.gpsvisualizer.com/draw/), using the "wpt" tool to add markers to the map and export as ".csv" format (this is marked as ".txt" format on the gps visualizer website).
 
 ### Choose coordinate output system
 Choices available are:
@@ -132,7 +132,7 @@ process[gps_pose_converter-5]: started with pid [4715]
 ```
 
 A path will publish at the rate noted in the output path publishing method (called in the try block from [Usage: Online or rosbag Validation](Usage-for-online-or-vrosbag-validation)). The default rate is 1 Hz. It is highly reccomended to keep this value as is.
-*Example:* The publishing method for ENU conversion is "interpolation_publish_ENU()"
+*Example:* The publishing method for ENU conversion is `interpolation_publish_ENU()`
 
 **NOTE:** If the launch file does not run, double check that the repo is built with 
 ```
@@ -145,5 +145,21 @@ source devel/setup.bash
 from the root of the workspace.
 
 ## Usage for Offline Validation
+Run the `geodesy_converter_tester.py` script to validate input GPS data in the following format, where the first coordinate in each line is latitude, and the second coordinate in each line is latitude.
+```
+37.3371440781,-121.879934136
+37.3371442522,-121.879934655
+37.3371442441,-121.879934437
+37.3371443401,-121.879934479
+37.3371440806,-121.879933884
+```
 
+Input the relative path to the input and output into the `verify_gps_csv_data_enu()` function to validate the lat/lon data to ENU conversion data. The output file should roughly match the input file. An equivalent function, `verify_gps_point_enu()` is available for validating a single point, where only the first point in the input file will be validated
 
+## Notes
+Coordinate systems follow format specified by [REP 103](http://www.ros.org/reps/rep-0103.html), where 
+```
+x = east
+y = north
+z = up
+```
