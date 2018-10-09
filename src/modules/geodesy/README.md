@@ -5,7 +5,7 @@ Module for geographic coordinate system conversions and reference frame transfor
 
 **OUTPUT:** A linearly interpolated path between the input points, in order of the points input. Coordinate system of choice shown in "[Choose coordinate output system](#choose-coordinate-output-system)"
 
-## Usage Preparation
+## Usage - Preparation
 ### Collect coarse input path data
 Input path in /geodesy_data/gps_coarse_points in the following ".csv" format:
 
@@ -28,7 +28,7 @@ Choices available are:
 Future choices may include (TODO):
 * NED (North, East, Down)
 
-## Usage for online or rosbag validation
+## Usage - Online/rosbag Validation
 Uncomment the line in `path_interpolation.py` corresponding to the desired output coordinate system. This will instantiate the appropriate object for performing conversions on the input path.
 
 ```python
@@ -131,7 +131,7 @@ process[gps_pose_converter-5]: started with pid [4715]
 [INFO] [1539120161.615256]: Published Path with 50 steps
 ```
 
-A path will publish at the rate noted in the output path publishing method (called in the try block from [Usage: Online or rosbag Validation](Usage-for-online-or-vrosbag-validation)). The default rate is 1 Hz. It is highly reccomended to keep this value as is.
+A path will publish at the rate noted in the output path publishing method (called in the try block from [Usage - Online/rosbag Validation](Usage---onlinerosbag-validation)). The default rate is 1 Hz. It is highly reccomended to keep this value as is.
 *Example:* The publishing method for ENU conversion is `interpolation_publish_ENU()`
 
 **NOTE:** If the launch file does not run, double check that the repo is built with 
@@ -144,7 +144,7 @@ source devel/setup.bash
 ```
 from the root of the workspace.
 
-## Usage for Offline Validation
+## Usage - Offline Validation
 Run the `geodesy_converter_tester.py` script to validate input GPS data in the following format, where the first coordinate in each line is latitude, and the second coordinate in each line is latitude.
 ```
 37.3371440781,-121.879934136
