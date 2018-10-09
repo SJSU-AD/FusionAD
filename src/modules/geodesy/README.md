@@ -131,7 +131,7 @@ process[gps_pose_converter-5]: started with pid [4715]
 [INFO] [1539120161.615256]: Published Path with 50 steps
 ```
 
-A path will publish at the rate noted in the output path publishing method (called in the try block from [Usage - Online/rosbag Validation](Usage---onlinerosbag-validation)). The default rate is 1 Hz. It is highly reccomended to keep this value as is.
+A path will publish at the rate noted in the output path publishing method (called in the try block from [Usage - Online/rosbag Validation](#usage---onlinerosbag-validation)). The default rate is 1 Hz. It is highly reccomended to keep this value as is.
 *Example:* The publishing method for ENU conversion is `interpolation_publish_ENU()`
 
 **NOTE:** If the launch file does not run, double check that the repo is built with 
