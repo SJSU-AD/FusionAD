@@ -3,6 +3,9 @@
 
 #include <vector>
 #include <sstream>
+#include <iostream>
+#include <math.h>
+#include <ctime>
 #include "ros/ros.h"
 #include <velodyne_puck_msgs/VelodynePuckPoint.h>
 #include <velodyne_puck_msgs/VelodynePuckScan.h>

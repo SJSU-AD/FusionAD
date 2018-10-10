@@ -1,7 +1,12 @@
 #ifndef SEGMENT_PROCESSOR_H
 #define SEGMENT_PROCESSOR_H
 
-#include "vec3.h"
+#include <map>
+#include <vector>
+#include <math.h>
+#include <stdlib.h>     /* srand, rand */
+#include <time.h> 
+#include "vec3.h"  
 #include <pcl_ros/point_cloud.h>
 #include <pcl/point_types.h>
 
