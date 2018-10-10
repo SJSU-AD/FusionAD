@@ -27,8 +27,8 @@ void segmenter::MessageCallback(const velodyne_puck_msgs::VelodynePuckSweep::Con
   int n_iters = 0;
   int n_lpr = 40;
   int n_segs = 2;
-  float seed_thresh = 0.6; //meters
-  float dist_thresh = 0.45; //meters
+  float seed_thresh = 0.65;
+  float dist_thresh = 0.4;
 
   float th_run = 0.5;
   float th_merge = 1.0;
@@ -41,28 +41,27 @@ void segmenter::MessageCallback(const velodyne_puck_msgs::VelodynePuckSweep::Con
   std::vector<pcl::PointIndices> clusters;
 
   std::vector<Vec3> input_cloud;
-  std::vector<Vec3> predicted_ground;
   std::vector<Vec3> predicted_clusters;
 
   PointCloudSegmenter segmenter(x_max, y_max, z_min, n_iters, n_lpr, n_segs, seed_thresh, dist_thresh, n_scanlines, th_run, th_merge);
+
+  //Perform GPF and SLR
   ParseInput(input_cloud, segmenter, msg);
-
   segmenter.GroundPlaneFitting(input_cloud);
-  predicted_ground = segmenter.GetGroundPoints();
-
   predicted_clusters = segmenter.ScanLineRun(segmenter.p_all);
 
+  //Filter out clusters with low number of points
   SegmentProcessor seg_processor;
-
   seg_processor.ExtractIndices(predicted_clusters);
   seg_processor.FilterPoints(20);
 
+  //Naive Obstacle Detection
   std_msgs::Bool obstacle_detected;
-  //obstacle_detected.data = seg_processor.FindObstacles();
-  //segmenter_pub.publish(obstacle_detected);  
+  obstacle_detected.data = seg_processor.FindObstacles();
+  segmenter_pub.publish(obstacle_detected); 
 
+  //Publish Data
   final_point_cloud = seg_processor.GenerateColoredPointCloud();
-
   point_cloud_pub.publish(final_point_cloud);
 }
 
@@ -77,17 +76,15 @@ void segmenter::ParseInput(std::vector<Vec3>& in, PointCloudSegmenter& seg,
       vlp_point = cloud->scans[i].points[j];
 
       if (vlp_point.x < seg.max_x && vlp_point.x > -seg.max_x && vlp_point.y < seg.max_y && vlp_point.y > -seg.max_y && vlp_point.z > seg.min_z) {
-        //if (vlp_point.x > 0.5 && vlp_point.y > 0.5) {
-          point.x = vlp_point.x; //(vlp_point.x * std::cos(theta)) + (vlp_point.z * std::sin(theta));
-          point.y = vlp_point.y;
-          point.z = vlp_point.z + 3; //(vlp_point.x * std::sin(theta)) + (vlp_point.z * std::cos(theta));
-          point.intensity = vlp_point.intensity;
-          point.theta = vlp_point.azimuth;
-          point.label = -1;
-          point.scanline = i;
+        point.x = vlp_point.x;
+        point.y = vlp_point.y;
+        point.z = vlp_point.z + 3;
+        point.intensity = vlp_point.intensity;
+        point.theta = vlp_point.azimuth;
+        point.label = -1;
+        point.scanline = i;
 
-          in.push_back(point);
-        //} 
+        in.push_back(point);
       }
     } 
   }
