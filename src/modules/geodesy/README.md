@@ -28,6 +28,8 @@ Choices available are:
 Future choices may include (TODO):
 * NED (North, East, Down)
 
+**NOTE:** This vehicle's coordinate system standard is in ENU
+
 ## Usage - Online/rosbag Validation
 Uncomment the line in `path_interpolation.py` corresponding to the desired output coordinate system. This will instantiate the appropriate object for performing conversions on the input path.
 
