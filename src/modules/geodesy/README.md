@@ -1,9 +1,13 @@
 # Geodesy
 Module for geographic coordinate system conversions and reference frame transformations.
 
-**INPUT:** Coarse GPS coordinates in latitude/longitude
+**INPUT:** A set of GPS coordinates to be followed as a path. Check "[Collect coarse input path data](#collect-coarse-input-path-data)" for correct input format.
 
 **OUTPUT:** A linearly interpolated path between the input points, in order of the points input. Coordinate system of choice shown in "[Choose coordinate output system](#choose-coordinate-output-system)"
+
+**OUTPUT:** The current pose in chosen coordinate system.
+
+**NOTE:** This vehicle's coordinate system standard is in ENU
 
 ## Usage - Preparation
 ### Collect coarse input path data
@@ -28,9 +32,9 @@ Choices available are:
 Future choices may include (TODO):
 * NED (North, East, Down)
 
-**NOTE:** This vehicle's coordinate system standard is in ENU
-
 ## Usage - Online/rosbag Validation
+Run in this mode to publish linearly interpolated path from input GPS coordinates and pose.
+
 Uncomment the line in `path_interpolation.py` corresponding to the desired output coordinate system. This will instantiate the appropriate object for performing conversions on the input path.
 
 ```python
@@ -52,6 +56,8 @@ Uncomment the line in `path_interpolation.py` corresponding to the desired outpu
 ```
 
 **NOTE:** *BOTH* the selected interpolator object *AND* the method call line in the 'try' block must be uncommented and correspond appropriately to one another.
+
+Future implementation may allow for conversion selection from launch file (TODO) 
 
 ### Select the path of choice in the main launch file
 Launch file location: /launch/geodesy.launch
@@ -147,6 +153,8 @@ source devel/setup.bash
 from the root of the workspace.
 
 ## Usage - Offline Validation
+Here are the steps for validating conversion points by reading from a ".csv" file and writing the converted values to another ".csv" file, so the data can be validated manually.
+
 Run the `geodesy_converter_tester.py` script to validate input GPS data in the following format, where the first coordinate in each line is latitude, and the second coordinate in each line is latitude.
 ```
 37.3371440781,-121.879934136
