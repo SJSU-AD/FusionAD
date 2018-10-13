@@ -5,46 +5,50 @@
 #include <vector>
 #include <iostream>
 #include <limits>
+#include <fstream>
+#include <vector>
+#include "Eigen/Dense"
+
+// Include the path
+#include <test_data_and_doc/path.h>
+
+using namespace std;
 
 
-// Remove comment for "Private:" in lat_controller.h after testing.
 
-/*
-TEST CASE 1:
-Testing path heading computation with a path of slope = 1, in the first quadrant
-*/
-TEST(path_heading_test_m_1, ShouldPass)
+// TEST CASE 1: Arithmatic test for algorithm, refer to "unittest_cases.pdf" in the folder
+//  ArimthMatic test case 1
+TEST(arithmatic_test_1, ShouldPass)
 {
-  // Initialize controller 
-  fusionad::control::lat_controller::stanley stanley_test;
-  // Set target setpoint to first point
-  int target_point = 0;
-  std::vector<float> path_x;
-  std::vector<float> path_y;
-  size_t path_size;
+  vector<float> pathX(pathArrayX, pathArrayX + sizeof(pathArrayX)/sizeof(pathArrayX[0]));
+  vector<float> pathY(pathArrayY, pathArrayY + sizeof(pathArrayY)/sizeof(pathArrayY[0]));
 
-  path_x.clear();
-  path_y.clear();
+  // Set the position of the vehical at (-1, -1)
+  Eigen::Vector2f veh_pos(-1,-1);
 
-  //Start with path points that are perfectly linear at m = 1;
-  for(int i = 0; i < 4; i++)
-  {
-    path_x.push_back(i);
-    path_y.push_back(i);
-  }
+  float veh_theta = 1.5708;
+  float veh_velocity = 1.2;
 
-  ASSERT_TRUE(path_x.size() == path_y.size());
-  path_size = path_x.size();
-  
-  // Correct answer will be the arctangent of 1/1 since the slope of the line should be a straight line of 1
-  float correct_ans = std::atan2(1,1);
+  int wpIndex = 1;
 
-  ASSERT_EQ(correct_ans, stanley_test.computePathHeading(path_x, path_y, target_point, path_size));
+  float k_hard = 15;
+
+  ASSERT_EQ(pathX.size() , pathY.size());
+
+  size_t path_size = pathX.size();
+
+  computed_steering = computeSteeringAngle(veh_pos, pathX, pathY,
+                                           veh_velocity, wpIndex,
+                                           veh_theta, k_hard, path_size);
+  //ASSERT_EQ(computed_steering, tc1_solution);
+
 }
 
 
 
+
 int main(int argc, char **argv) {
+    //k_soft is implicitly set to zero, algorithm does not account for k soft
     testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }

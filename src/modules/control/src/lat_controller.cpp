@@ -284,7 +284,18 @@ namespace lat_controller{
     //Find heading difference between vehicle orientation and the path
     float headingDelta = computeHeadingError(vehTheta , pathTheta);
     //Apply stanley kinematic control law
-    float steeringAngle = headingDelta + std::atan((gain * crossTrackError)/vehSpeed);
+    float unfilteredSteeringAngle = headingDelta + std::atan((gain * crossTrackError)/vehSpeed);
+
+    // Saturation function for limiting steering output
+    if(std::abs(unfilteredSteeringAngle) > steering_limit)
+    {
+      steeringAngle = (std::abs(unfilteredSteeringAngle)/unfilteredSteeringAngle) * steering_limit;
+    }
+    else
+    {
+      steeringAngle = unfilteredSteeringAngle;
+    }
+
     if(std::isfinite(steeringAngle))
     {
       debug_info.steeringAngle = steeringAngle;
