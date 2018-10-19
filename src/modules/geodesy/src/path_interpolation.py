@@ -17,7 +17,6 @@ def main():
     # From https://www.maps.ie/coordinates.html at SJSU
     filePath = rospy.get_param("~file_path")
     inputLatitudes, inputLongitudes, inputHeights = gps_parser.read_file_coarse_points(filePath, chosenHeight)
-    # print("\ninputLatitudes: {}\ninputLongitudes: {}\ninputHeights: {}".format(inputLatitudes, inputLongitudes, inputHeights))
     
     ##### ECEF #####
     # interpolatorECEF = PathInterpolatorECEF(inputLatitudes, inputLatitudes, inputHeights, chosenHeight)
