@@ -4,6 +4,7 @@
   
   <node type="path_interpolation.py" pkg="geodesy" name="path_interpolator" output="screen">
     <param name="~file_path" value="$(find geodesy)/geodesy_data/gps_coarse_points/student_union_straight.txt" />
+    <param name="~conversion_type" value="foo" />
     <!-- <param name="~file_path" value="$(find geodesy)/geodesy_data/gps_coarse_points/path_1.txt" /> -->
   </node>
 

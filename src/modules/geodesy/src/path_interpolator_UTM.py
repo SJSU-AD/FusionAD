@@ -25,7 +25,7 @@ from geodesy_conversion_UTM import GeodesyConverterUTM
 
 class PathInterpolatorUTM(GeodesyConverterUTM):
     def __init__(self, latitudesData, longitudesData, centimetersPerPoint=25):
-        super(PathInterpolatorUTM, self).__init__(latitudesData, longitudesData, centimetersPerPoint)
+        super(PathInterpolatorUTM, self).__init__(latitudesData, longitudesData)
         self.centimetersPerPoint = centimetersPerPoint
 
     def set_dist_between_points(self, centimetersPerPoint):
