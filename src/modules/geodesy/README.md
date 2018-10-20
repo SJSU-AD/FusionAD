@@ -23,55 +23,21 @@ W	37.3370421	-121.8797874	4
 
 This format can be generated from the [GPS Visualizer](http://www.gpsvisualizer.com/draw/), using the "wpt" tool to add markers to the map and export as ".csv" format (this is marked as ".txt" format on the gps visualizer website).
 
-### Choose coordinate output system
-Choices available are:
-* ECEF (Earth-Centered, Earth-Fixed)
-* ENU (East, North, Up)
-* UTM (Universal Transverse Mercator)
-
-Future choices may include (TODO):
-* NED (North, East, Down)
-
 ## Usage - Online/rosbag Validation
 Run in this mode to publish linearly interpolated path from input GPS coordinates and pose.
-
-Uncomment the line in `path_interpolation.py` corresponding to the desired output coordinate system. This will instantiate the appropriate object for performing conversions on the input path.
-
-```python
-    ##### ECEF #####
-    # interpolatorECEF = PathInterpolatorECEF(inputLatitudes, inputLatitudes, inputHeights, chosenHeight)
-
-    ##### ENU #####
-    interpolatorENU = PathInterpolatorENU(inputLatitudes, inputLongitudes, inputHeights)
-
-    ##### UTM #####
-    # interpolatorUTM = PathInterpolatorUTM(inputLatitudes, inputLongitudes)
-    
-    try:
-        # interpolatorECEF.interpolation_publish_ECEF()
-        interpolatorENU.interpolation_publish_ENU()
-        # interpolatorUTM.interpolation_publish_UTM()
-    except rospy.ROSInterruptException:
-        pass
-```
-
-**NOTE:** *BOTH* the selected interpolator object *AND* the method call line in the 'try' block must be uncommented and correspond appropriately to one another.
-
-Future implementation may allow for conversion selection from launch file (TODO) 
 
 ### Select the path of choice in the main launch file
 Launch file location: /launch/geodesy.launch
 
-Modify the "value" argument in the "param" tags to point to the path of choice, as generated instnsructions in "[Collect coarse input path data](#collect-coarse-input-path-data)" section. The file chosen for the example below is `student_union_straight.txt`.
+Modify the "value" argument in the "~file_path" param tags to point to the path of choice, as generated instnsructions in "[Collect coarse input path data](#collect-coarse-input-path-data)" section. The file chosen for the example below is `student_union_straight.txt`. The option to chose conversion method is available here, but it is recommended to keep this setting at "ENU" to retain a single standard across all modules.
 ```xml
   <node type="path_interpolation.py" pkg="geodesy" name="path_interpolator" output="screen">
     <param name="~file_path" value="$(find geodesy)/geodesy_data/gps_coarse_points/student_union_straight.txt" />
-    <!-- <param name="~file_path" value="$(find geodesy)/geodesy_data/gps_coarse_points/path_1.txt" /> -->
+    <param name="~conversion_type" value="ENU" />
   </node>
 
   <node type="gps_pose.py" pkg="geodesy" name="gps_pose_converter" output="screen">
     <param name="~file_path" value="$(find geodesy)/geodesy_data/gps_coarse_points/student_union_straight.txt" />
-    <!-- <param name="~file_path" value="$(find geodesy)/geodesy_data/gps_coarse_points/path_1.txt" /> -->
   </node>
 ```
 
@@ -152,8 +118,14 @@ source devel/setup.bash
 ```
 from the root of the workspace.
 
+## Usage - Online IMU Validation
+Launch the appropriate launch file:
+```
+roslaunch geodesy tf_launch.launch
+```
+
 ## Usage - Offline Validation
-Here are the steps for validating conversion points by reading from a ".csv" file and writing the converted values to another ".csv" file, so the data can be validated manually.
+Here are the steps for validating conversion points by reading from a ".csv" file and writing the converted values to another ".csv" file, so the conversion data can be validated manually.
 
 Run the `geodesy_converter_tester.py` script to validate input GPS data in the following format, where the first coordinate in each line is latitude, and the second coordinate in each line is latitude.
 ```
@@ -166,8 +138,21 @@ Run the `geodesy_converter_tester.py` script to validate input GPS data in the f
 
 Input the relative path to the input and output into the `verify_gps_csv_data_enu()` function to validate the lat/lon data to ENU conversion data. The output file should roughly match the input file. An equivalent function, `verify_gps_point_enu()` is available for validating a single point, where only the first point in the input file will be validated
 
+## Available coordinate output systems
+Choices available are:
+* ECEF (Earth-Centered, Earth-Fixed)
+* ENU (East, North, Up)
+* UTM (Universal Transverse Mercator)
+
+Future choices may include (TODO):
+* NED (North, East, Down)
+
+**WARNING:** Changes in coordinate system should be done with care. The default across all modules is ENU, and this should be used for all live operating purposes.
+
 ## Notes
-Coordinate systems follow format specified by [REP 103](http://www.ros.org/reps/rep-0103.html), where 
+Coordinate systems follow format specified by [REP 103](http://www.ros.org/reps/rep-0103.html).
+
+For ENU, this specification is as follows:
 ```
 x = east
 y = north
