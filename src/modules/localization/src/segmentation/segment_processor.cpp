@@ -1,9 +1,4 @@
-#include <map>
-#include <vector>
-#include <math.h>
-#include <stdlib.h>     /* srand, rand */
-#include <time.h>        /* atan2 */
-#include "segmenter/segment_processor.h"
+#include "localization/segmentation/segment_processor.h"
 
 #define PI 3.14159265
 
@@ -75,10 +70,7 @@ bool SegmentProcessor::FindObstacles()
 
     for (size_t i = 0; i < cluster_indices.size(); i++)
     {
-        //pcl::PointXYZI centroid = CalculateCentroi(i);
-        //double theta = CalculateTheta(centroid, origin);
         int points_in_range = PointsInRange(i, x_max, y_max);
-       // double dist = sqrt(centroid.x * centroid.x + centroid.y * centroid.y)
 
         if(points_in_range > 60)
         {
@@ -102,7 +94,6 @@ pcl::PointCloud<pcl::PointXYZI>::Ptr SegmentProcessor::GenerateColoredPointCloud
 
     for (c_it = cluster_indices.begin(); c_it != cluster_indices.end(); c_it++, i++)
     {
-        //int new_label = rand() % 256;
         for (i_it = c_it->indices.begin(); i_it != c_it->indices.end(); i_it++)
         {
             pcl::PointXYZI pt = point_cloud.points[*i_it];
@@ -129,7 +120,6 @@ int SegmentProcessor::PointsInRange(size_t cluster_index, float x, float y)
         {
             n_pts++;
         }
-        //centroid.intensity += cur_pt.intensity;
     }
 
     return n_pts;
@@ -152,14 +142,12 @@ pcl::PointXYZI SegmentProcessor::CalculateCentroid(int cluster_index)
         centroid.x += cur_pt.x;
         centroid.y += cur_pt.y;
         centroid.x += cur_pt.z;
-        //centroid.intensity += cur_pt.intensity;
     }
 
     int n_points = cur_cluster.size();
     centroid.x /= n_points;
     centroid.y /= n_points;
     centroid.x /= n_points;
-    // centroid.intensity /= n_points;
 
     return centroid;
 }

@@ -1,0 +1,4 @@
+<launch>
+  <node type="tf_master" pkg="geodesy" name="tf_master" output="screen">
+  </node>
+</launch>
