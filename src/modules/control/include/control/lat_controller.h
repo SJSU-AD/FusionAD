@@ -30,7 +30,6 @@ class stanley
   private:
     float pathSlope;
     typedef Eigen::Matrix<float, 4, 2> pathMatrix42f; 
-    float computeHeadingError(const float &vehHeading, const float &pathHeading);
     float computePathHeading(const std::vector<float> &navX, const std::vector<float> &navY ,const int &targetIndex, const int &navSize);
     float estimatePathHeading(const std::vector<float> &pathX, const std::vector<float> &pathY, const int &index);
     float computeCrossTrackError(const float &routeTheta, const float &dx, const float &delta_y);

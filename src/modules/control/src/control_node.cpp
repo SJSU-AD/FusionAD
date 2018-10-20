@@ -13,7 +13,8 @@ namespace node
   autonomousDrivingFlag(false),
   obstacleDetected(false),
   debug(false),
-  failFlag(false)
+  internalFailFlag(false),
+  externalFailFlag(false)
   {
     roll = 0;
     pitch = 0;
@@ -102,7 +103,7 @@ namespace node
     }
     else
     {
-      failFlag = true;
+      internalFailFlag = true;
       ROS_FATAL("Path List not flushed! Abort!");
     }
 
@@ -114,18 +115,29 @@ namespace node
 
   void control_node::stateCallback(const interface::Chassis_state& veh_state_msg)
   {
-    position(0) = veh_state_msg.Position.pose.position.x;
-    position(1) = veh_state_msg.Position.pose.position.y;
-    //linear_velocity = veh_state_msg.Speed.twist.linear.x;
-    linear_velocity = 0.5;
-    //std::cout << position(0) << std::endl;
-    orientation_pos_vector(0) = position(0) - prev_pos[0];   //X delta
-    orientation_pos_vector(1) = position(1) - prev_pos[1];   //Y delta
-    float veh_theta = std::atan2(orientation_pos_vector(1), orientation_pos_vector(0));
-    
-    estimated_orientation = veh_theta;
-    prev_pos[0] = position(0);
-    prev_pos[1] = position(1);
+    float veh_theta = 0;
+    if(!autonomousDrivingFlag && pathInitialized)
+    {
+      veh_theta = std::atan2(pathPointListY[1] - pathPointListY[0], 
+                             pathPointListX[1] - pathPointListX[0]);
+      estimated_orientation = veh_theta;
+    }
+    else
+    {
+      position(0) = veh_state_msg.Position.pose.position.x;
+      position(1) = veh_state_msg.Position.pose.position.y;
+      //linear_velocity = veh_state_msg.Speed.twist.linear.x;
+      linear_velocity = 0.5;
+      //std::cout << position(0) << std::endl;
+      orientation_pos_vector(0) = position(0) - prev_pos[0];   //X delta
+      orientation_pos_vector(1) = position(1) - prev_pos[1];   //Y delta
+      veh_theta = std::atan2(orientation_pos_vector(1), orientation_pos_vector(0));
+      
+      estimated_orientation = veh_theta;
+      prev_pos[0] = position(0);
+      prev_pos[1] = position(1);
+    }
+
   
     if(std::isfinite(estimated_orientation))
     {
@@ -134,7 +146,7 @@ namespace node
     else
     {
       std::cout << "Heading Error Calculation Is Not Finite!" << std::endl;
-      failFlag = true;
+      internalFailFlag = true;
     }   
 
     if(!stateInitialized)
@@ -177,11 +189,12 @@ namespace node
       ROS_WARN("Obstacle Ahead, Vehicle Stopped!");
     }
 
-    float steering_angle;
-    float cmd_linear_vel;   
+    float steering_angle = 0;
+    float cmd_linear_vel = 0;   
 
-    if((imuInitialized) && (stateInitialized) && (pathInitialized) && (!obstacleDetected) && (!failFlag) && (!goalReached) && (autonomousDrivingFlag))
+    if((imuInitialized) && (stateInitialized) && (pathInitialized) && (!obstacleDetected) && (!internalFailFlag) && (!goalReached) && (autonomousDrivingFlag) && (!externalFailFlag))
     {
+      //TODO: Add new backward search prevention algo
       //Compute the closest waypoint
       std::vector<float> distance;
       for(size_t i = 0; i < pathPointListX.size(); i++)
@@ -205,16 +218,17 @@ namespace node
       lat_control.debug_info.distance_to_wp = least_distance;
 
       //Check if goal is reached
-      if((targetPointIndex == (distance.size() - 1)))
+      /* Goal reached definition:
+          - Reference index is last index
+          - Vehicle's relative distance to the last index waypoint is less than 20 cm
+      */
+      if((targetPointIndex == (distance.size() - 1)) && (least_distance <= 20))
       {
         //Goal reached
         goalReached = true;
         ROS_WARN("Goal reached. End of Path. Autonomy mode set to manual.");
         autonomousDrivingFlag = false;
-      }
-      else
-      {
-        goalReached = false;
+        return;
       }
 
       //Changed the controller to run on estimation 
@@ -227,14 +241,14 @@ namespace node
                                             controlGain
                                             );*/
       steering_angle = lat_control.computeSteeringAngle(position,
-                                                    pathPointListX,
-                                                    pathPointListY,
-                                                    linear_velocity,
-                                                    targetPointIndex,
-                                                    estimated_orientation,
-                                                    controlGain,
-                                                    dynamicArraySize
-                                                    );
+                                                        pathPointListX,
+                                                        pathPointListY,
+                                                        linear_velocity,
+                                                        targetPointIndex,
+                                                        estimated_orientation,
+                                                        controlGain,
+                                                        dynamicArraySize
+                                                        );
       //TODO: Implement longitudinal Control --> blocker: Planning
       //TODO: Replace throttle function with a lamda function --> lamda(throttle, brake)
       cmd_linear_vel = 50; //In percentage
@@ -244,11 +258,7 @@ namespace node
       {
         control_core_command.debugControl = true;
         control_debug_pub.publish(lat_control.debug_info);
-      }
-      else
-      {
-        control_core_command.debugControl = false;
-      }     
+      }   
 
       control_core_command.steeringAngle = steering_angle;
       control_core_command.throttle = cmd_linear_vel; 
@@ -276,7 +286,7 @@ int main(int argc, char **argv)
   if(!core_control.getParameter())
   {
     ROS_FATAL("Parameter Failed! Abort!");
-    //TODO:Put a backup plan here, in case failure to retrieve param
+    core_control.externalFailFlag = true;
   }
   core_control.initRosComm();
   while(ros::ok())
