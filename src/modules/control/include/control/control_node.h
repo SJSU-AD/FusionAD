@@ -31,8 +31,7 @@ class control_node
     ~control_node();
     void initRosComm();
     bool getParameter();
-    bool goalReached;    
-    bool debug;
+    bool goalReached, debug, externalFailFlag;
     
   private:
     fusionad::control::lat_controller::stanley lat_control;
@@ -46,7 +45,7 @@ class control_node
     ros::Subscriber mode_sub;
     typedef Eigen::Matrix<float, 4, 2> pathMatrix42f; 
     Eigen::Vector2f position;
-    bool pathInitialized, stateInitialized, imuInitialized, failFlag;
+    bool pathInitialized, stateInitialized, imuInitialized, internalFailFlag;
     bool autonomousDrivingFlag, obstacleDetected;
     double roll, pitch, yaw;
     float controlGain, linear_velocity;
