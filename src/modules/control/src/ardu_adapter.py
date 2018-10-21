@@ -64,9 +64,9 @@ def high_lvl_callback(high_lvl_control_msg):
     steering_angle = 0
 
     if(abs(high_lvl_control_msg.steeringAngle) > steering_limit_radians): # establishing limits in radians for steering
-      steering_angle = steering_limit_radians*((-1)*abs(high_lvl_control_msg.steeringAngle)/high_lvl_control_msg.steeringAngle)
+        steering_angle = steering_limit_radians*((-1)*abs(high_lvl_control_msg.steeringAngle)/high_lvl_control_msg.steeringAngle)
     else:
-      steering_angle = high_lvl_control_msg.steeringAngle 
+        steering_angle = high_lvl_control_msg.steeringAngle 
 
     global high_lvl_steering_callback
     high_lvl_steering_callback = ((-1)*steering_angle*180/pi+steering_analog_intercept)/steering_analog_slope+potentiometer_offset

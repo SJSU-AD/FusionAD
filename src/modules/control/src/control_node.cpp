@@ -240,7 +240,7 @@ namespace node
                                             yaw,
                                             controlGain
                                             );*/
-      steering_angle = lat_control.computeSteeringAngle(position,
+      steering_angle = (-1) * lat_control.computeSteeringAngle(position,
                                                         pathPointListX,
                                                         pathPointListY,
                                                         linear_velocity,
