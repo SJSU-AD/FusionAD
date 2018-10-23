@@ -24,6 +24,7 @@ namespace node
     // raw IMU data
     imu_sub = tf_master_nh.subscribe("/imu", 100, &tf_master_node::imuCallback, this);
     ROS_INFO_ONCE("tf Master Node IMU Subscriber Set!");
+    ROS_INFO_ONCE("Waiting for IMU messages...");
   }
 
   void tf_master_node::imuCallback(const sensor_msgs::Imu& inertial_msg)
