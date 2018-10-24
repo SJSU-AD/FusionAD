@@ -121,11 +121,17 @@ namespace node
       veh_theta = std::atan2(pathPointListY[1] - pathPointListY[0], 
                              pathPointListX[1] - pathPointListX[0]);
       estimated_orientation = veh_theta;
+      // Transformation to front axle - Red car measures around 34 inchs from GPS to front axle
+      // 34 in = 0.8636 m
+      position(0) = veh_state_msg.Position.pose.position.x + (0.8636 * std::cos(estimated_orientation));
+      position(1) = veh_state_msg.Position.pose.position.y + (0.8636 * std::sin(estimated_orientation));
     }
     else
     {
-      position(0) = veh_state_msg.Position.pose.position.x;
-      position(1) = veh_state_msg.Position.pose.position.y;
+      // Transformation to front axle - Red car measures around 34 inchs from GPS to front axle
+      // 34 in = 0.8636 m
+      position(0) = veh_state_msg.Position.pose.position.x + (0.8636 * std::cos(estimated_orientation));
+      position(1) = veh_state_msg.Position.pose.position.y + (0.8636 * std::sin(estimated_orientation));
       //linear_velocity = veh_state_msg.Speed.twist.linear.x;
       linear_velocity = 0.5;
       //std::cout << position(0) << std::endl;
@@ -240,7 +246,7 @@ namespace node
                                             yaw,
                                             controlGain
                                             );*/
-      steering_angle = (-1) * lat_control.computeSteeringAngle(position,
+      steering_angle = lat_control.computeSteeringAngle(position,
                                                         pathPointListX,
                                                         pathPointListY,
                                                         linear_velocity,
