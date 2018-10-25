@@ -236,6 +236,8 @@ namespace lat_controller{
     //Find heading difference between vehicle orientation and the path
     //Follows the convention of left turn is positive 
     float headingDelta = pathTheta - vehTheta;
+    
+    /**************************NaN Check*****************************/
     if(std::isfinite(headingDelta))
     {
       debug_info.headingError = headingDelta;
@@ -245,6 +247,7 @@ namespace lat_controller{
       debug_info.isCalculationInvalid = true;
       std::cout << "Heading Error Calculation Is Not Finite!" << std::endl;
     }    
+    
     //Apply stanley kinematic control law
     float unfilteredSteeringAngle = headingDelta + std::atan((gain * crossTrackError)/vehSpeed);
 
