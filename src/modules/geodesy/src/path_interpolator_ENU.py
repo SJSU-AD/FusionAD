@@ -47,12 +47,15 @@ class PathInterpolatorENU(GeodesyConverterENU):
         finePointsN = []
         finePointsU = []
 
+        # Fixed point density option
         pointDensity = 10
+
         # Vanilla case: for all points except final point
         if i < numberOfCoarsePoints-1:
+            # Fixed distance option (variable point density)
             # Number of points between each interpolated point
             # pointDensity = self.get_point_density_ENU(eData[i], eData[i], uData[i], 
-                                                    #    eData[i+1], nData[i+1], uData[i+1], self.centimetersPerPoint)
+            #                                            eData[i+1], nData[i+1], uData[i+1], self.centimetersPerPoint)
 
             # Declare the first and second positions for interpolation
             e0 = eData[i]     
