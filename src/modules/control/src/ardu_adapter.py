@@ -60,7 +60,6 @@ def high_lvl_callback(high_lvl_control_msg):
         high_lvl_driving_callback = (high_lvl_control_msg.throttle-min_driving_input)*(max_driving_output-min_driving_output)/(max_driving_input-min_driving_input)+min_driving_output
     else:
         high_lvl_driving_callback = (-1)*(abs(high_lvl_control_msg.throttle)-min_driving_input)*(max_driving_output-min_driving_output)/(max_driving_input-min_driving_input)+min_driving_output
-    
     steering_angle = 0
 
     if(abs(high_lvl_control_msg.steeringAngle) > steering_limit_radians): # establishing limits in radians for steering
@@ -69,7 +68,7 @@ def high_lvl_callback(high_lvl_control_msg):
         steering_angle = high_lvl_control_msg.steeringAngle 
 
     global high_lvl_steering_callback
-    high_lvl_steering_callback = (steering_angle*180/pi+steering_analog_intercept)/steering_analog_slope+potentiometer_offset
+    high_lvl_steering_callback = ((-1)*steering_angle*180/pi+steering_analog_intercept)/steering_analog_slope+potentiometer_offset
 
 '''
 def driving_high_lvl_callback(high_driving_msg):
