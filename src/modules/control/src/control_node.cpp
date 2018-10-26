@@ -176,19 +176,19 @@ namespace node
 
 
     // Declination and IMU transform to ENU
-    float raw_yaw = yaw + magnetic_declination_rad;
+    float adjusted_yaw = yaw + magnetic_declination_rad;
 
-    if(raw_yaw > M_PI)
+    if(adjusted_yaw > M_PI)
     {
-      vehicle_heading = raw_yaw - 2*M_PI;
+      vehicle_heading = adjusted_yaw - 2*M_PI;
     }
-    else if(raw_yaw < (-1)*M_PI)
+    else if(adjusted_yaw < (-1)*M_PI)
     {
-      vehicle_heading = (2*M_PI) + raw_yaw;
+      vehicle_heading = (2*M_PI) + adjusted_yaw;
     }
     else
     {
-      vehicle_heading = raw_yaw;
+      vehicle_heading = adjusted_yaw;
     }  
 
     lat_control.debug_info.imu_transformed_heading = vehicle_heading;
