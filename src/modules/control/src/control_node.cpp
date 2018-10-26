@@ -287,7 +287,7 @@ namespace node
       if(debug)
       {
         control_core_command.debugControl = true;
-        lat_control.debug_info.estimated_heading = estimated_orientation;
+        //lat_control.debug_info.estimated_heading = estimated_orientation;
         control_debug_pub.publish(lat_control.debug_info);
       }   
 
