@@ -22,7 +22,7 @@ namespace node
     controlGain = 0;
     targetPointIndex = 0;
     dynamicArraySize = 0;
-    estimated_orientation = 0;
+    //estimated_orientation = 0;
   }
 
   control_node::~control_node()
@@ -115,8 +115,8 @@ namespace node
 
   void control_node::stateCallback(const interface::Chassis_state& veh_state_msg)
   {
-    float veh_theta = 0;
-    if(!autonomousDrivingFlag && pathInitialized)
+    //float veh_theta = 0;
+    /*if(!autonomousDrivingFlag && pathInitialized)
     {
       veh_theta = std::atan2(pathPointListY[1] - pathPointListY[0], 
                              pathPointListX[1] - pathPointListX[0]);
@@ -142,10 +142,12 @@ namespace node
       estimated_orientation = veh_theta;
       prev_pos[0] = position(0);
       prev_pos[1] = position(1);
-    }
+    }*/
 
+    position(0) = veh_state_msg.Position.pose.position.x + (0.8636 * std::cos(vehicle_heading));
+    position(1) = veh_state_msg.Position.pose.position.y + (0.8636 * std::sin(vehicle_heading));    
   
-    if(std::isfinite(estimated_orientation))
+    /*if(std::isfinite(estimated_orientation))
     {
       lat_control.debug_info.estimated_heading = estimated_orientation;
     }
@@ -153,7 +155,7 @@ namespace node
     {
       std::cout << "Heading Error Calculation Is Not Finite!" << std::endl;
       internalFailFlag = true;
-    }   
+    }   */
 
     if(!stateInitialized)
     {
@@ -171,6 +173,27 @@ namespace node
     temp_rotation_matrix.getRPY(roll, pitch, yaw);
 
     lat_control.debug_info.imu_heading = yaw;
+
+
+    // Declination and IMU transform to ENU
+    float adjusted_yaw = yaw + magnetic_declination_rad;
+
+    if(adjusted_yaw > M_PI)
+    {
+      vehicle_heading = adjusted_yaw - 2*M_PI;
+    }
+    else if(adjusted_yaw < (-1)*M_PI)
+    {
+      vehicle_heading = (2*M_PI) + adjusted_yaw;
+    }
+    else
+    {
+      vehicle_heading = adjusted_yaw;
+    }  
+
+    lat_control.debug_info.imu_transformed_heading = vehicle_heading;
+
+
     if(!imuInitialized)
     {
       imuInitialized = true;
@@ -239,19 +262,20 @@ namespace node
 
       //Changed the controller to run on estimation 
       /*steering_angle = lat_control.computeSteeringAngle(position,
-                                            pathPointListX,
-                                            pathPointListY,
-                                            linear_velocity,
-                                            targetPointIndex,
-                                            yaw,
-                                            controlGain
-                                            );*/
+                                                pathPointListX,
+                                                pathPointListY,
+                                                linear_velocity,
+                                                targetPointIndex,
+                                                estimated_orientation,
+                                                controlGain,
+                                                dynamicArraySize
+                                                );*/
       steering_angle = lat_control.computeSteeringAngle(position,
                                                         pathPointListX,
                                                         pathPointListY,
                                                         linear_velocity,
                                                         targetPointIndex,
-                                                        estimated_orientation,
+                                                        vehicle_heading,
                                                         controlGain,
                                                         dynamicArraySize
                                                         );

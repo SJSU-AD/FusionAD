@@ -48,14 +48,18 @@ class control_node
     bool pathInitialized, stateInitialized, imuInitialized, internalFailFlag;
     bool autonomousDrivingFlag, obstacleDetected;
     double roll, pitch, yaw;
-    float controlGain, linear_velocity;
+    float controlGain, linear_velocity, vehicle_heading;
     int targetPointIndex;
     ros::Timer control_cmd_timer;
 
+    const float magnetic_declination_rad = 1.8326;
+
     //Heading Estimator
+    /*
     float prev_pos[2] = {0, 0};
     Eigen::Vector2f orientation_pos_vector;
     float estimated_orientation;
+    */
 
     //TODO: Safety Mechanism bool
     //bool isWorking;
