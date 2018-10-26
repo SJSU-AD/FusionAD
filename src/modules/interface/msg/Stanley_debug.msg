@@ -13,6 +13,7 @@ float64 steeringAngle
 
 float64 estimated_heading 
 float64 imu_heading
+float64 imu_transformed_heading
 
 int32 pathSize
 float64 distance_to_wp
