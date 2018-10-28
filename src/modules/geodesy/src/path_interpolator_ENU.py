@@ -25,19 +25,20 @@ import gps_parser
 from geodesy_conversion_ENU import GeodesyConverterENU
 
 class PathInterpolatorENU(GeodesyConverterENU):
-    def __init__(self, latitudesData, longitudesData, heightsData, centimetersPerPoint=None):
+    def __init__(self, latitudesData, longitudesData, heightsData, centimetersPerPoint=25):
         super(PathInterpolatorENU, self).__init__(latitudesData, longitudesData, heightsData)
         self.heightsData = heightsData
-        self.centimetersPerPoint = 25 if centimetersPerPoint==None else centimetersPerPoint
+        self.centimetersPerPoint = centimetersPerPoint
 
     def set_dist_between_points(self, centimetersPerPoint):
         """Set distance between points after interpolation"""
         self.centimetersPerPoint = centimetersPerPoint
     
-    def get_point_density_ENU(self, e1, n1, u1, e2, n2, u2, centimetersPerPoint):
-        pointDensity = super(PathInterpolatorENU, self).euclidian_distance_3d(e1, n1, u1, e2, n2, u2) / (centimetersPerPoint / 100.0)
-
-        return int(pointDensity)
+    def get_point_density_ENU(self, e1, n1, u1, e2, n2, u2):
+        print("INSIDE Distance between major points is = {} m".format(super(PathInterpolatorENU, self).euclidian_distance_2d(e1, n1, e2, n2)))
+        pointDensity = super(PathInterpolatorENU, self).euclidian_distance_2d(e1, n1, e2, n2) / (self.centimetersPerPoint / 100.0)
+        print("POINT DENSITY IS: {}".format(pointDensity))
+        return pointDensity
 
     # Instead of different functions for positive and negative
     def interpolate_ENU(self, i, eData, nData, uData, numberOfCoarsePoints):
@@ -47,16 +48,18 @@ class PathInterpolatorENU(GeodesyConverterENU):
         finePointsN = []
         finePointsU = []
 
-        # Fixed point density option
-        pointDensity = 10
+        # OPTION 1: Fixed point density option
+        # pointDensity = 10
 
         # Vanilla case: for all points except final point
-        if i < numberOfCoarsePoints-1:
-            # Fixed distance option (variable point density)
+        if i <= numberOfCoarsePoints - 1:
+            print("Interpolating between ({}, {}) and ({}, {})".format(eData[i], nData[i], eData[i+1], nData[i+1]))
+            # OPTION 2: Fixed distance option (variable point density)
             # Number of points between each interpolated point
-            # pointDensity = self.get_point_density_ENU(eData[i], eData[i], uData[i], 
-            #                                            eData[i+1], nData[i+1], uData[i+1], self.centimetersPerPoint)
-
+            pointDensity = self.get_point_density_ENU(eData[i], nData[i], uData[i], 
+                                                       eData[i+1], nData[i+1], uData[i+1])
+            ##### pointDensity is type float right now #####
+            
             # Declare the first and second positions for interpolation
             e0 = eData[i]     
             e1 = eData[i+1]
@@ -65,24 +68,11 @@ class PathInterpolatorENU(GeodesyConverterENU):
             u0 = uData[i]     
             u1 = uData[i+1]
 
-            for n in range(pointDensity):
-                finePointsE.append( e0 + (e1-e0)*(n/pointDensity) )
-                finePointsN.append( n0 + (n1-n0)*(n/pointDensity) )
-                finePointsU.append( u0 + (u1-u0)*(n/pointDensity) )
+            print("cm per point =", self.centimetersPerPoint, "cm")
+            print("Point density =", pointDensity)
+            print("OUTSIDE Distance between major points {} and {} = {} m".format(i, i+1, super(PathInterpolatorENU, self).euclidian_distance_2d(e0, n0, e1, n1)))
 
-        # Corner case: for final point    
-        if i == numberOfCoarsePoints-1:
-            # pointDensity = self.get_point_density_ENU(eData[i-1], eData[i-1], uData[i-1], 
-            #                                            eData[i], nData[i], uData[i], self.centimetersPerPoint)
-
-            e0 = eData[i-1]
-            e1 = eData[i]
-            n0 = nData[i-1]
-            n1 = nData[i]
-            u0 = uData[i-1]     
-            u1 = uData[i]
-
-            for n in range(pointDensity):
+            for n in range(int(pointDensity)):
                 finePointsE.append( e0 + (e1-e0)*(n/pointDensity) )
                 finePointsN.append( n0 + (n1-n0)*(n/pointDensity) )
                 finePointsU.append( u0 + (u1-u0)*(n/pointDensity) )
@@ -112,15 +102,26 @@ class PathInterpolatorENU(GeodesyConverterENU):
         nInterpolatedPositions = []
         uInterpolatedPositions = []
 
-        numberOfCoarsePoints = len(eData)
+        if len(eData) != len(nData) or len(eData) != len(uData) or len(nData) != len(uData):
+            raise ValueError("Number of E, N, and U coordinates are not equal")
 
-        for i in range(numberOfCoarsePoints):
+        numberOfCoarsePoints = len(eData)
+    
+        totalPoints = 0
+
+        for i in range(numberOfCoarsePoints - 1):
             finePointsE, finePointsN, finePointsU = self.interpolate_ENU(i, eData, nData, uData, numberOfCoarsePoints)
 
             eInterpolatedPositions.extend(finePointsE)
             nInterpolatedPositions.extend(finePointsN)
             uInterpolatedPositions.extend(finePointsU)
-        
+
+            print("Coarse point {} (e, n) = ({}, {})".format(i, eData[i], nData[i]))
+            print("Number of points = {}".format(len(finePointsE)))
+            totalPoints += len(finePointsE)
+            print("Total points so far = {}".format(totalPoints))
+            print()
+
         while not rospy.is_shutdown():
             path = Path()
         
