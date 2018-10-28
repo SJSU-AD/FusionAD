@@ -64,14 +64,6 @@ def high_lvl_callback(high_lvl_control_msg):
 
     global high_lvl_steering_callback
     high_lvl_steering_callback = ((-1)*steering_angle*180/pi+steering_analog_intercept)/steering_analog_slope+potentiometer_offset
-<<<<<<< HEAD
-=======
-
-'''
-def driving_high_lvl_callback(high_driving_msg):
-    
-    #Desired PWM Value from the high lvl control
->>>>>>> c366687e0246975ed8c3c997ae73ffaf1a1192ba
     
     '''
 def timer_callback(event):
