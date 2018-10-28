@@ -122,6 +122,10 @@ class PathInterpolatorENU(GeodesyConverterENU):
             print("Total points so far = {}".format(totalPoints))
             print()
 
+        eInterpolatedPositions.append(eData[-1])
+        nInterpolatedPositions.append(nData[-1])
+        uInterpolatedPositions.append(uData[-1])
+
         while not rospy.is_shutdown():
             path = Path()
         
