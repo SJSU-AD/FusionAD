@@ -59,6 +59,8 @@ find_package(catkin REQUIRED COMPONENTS
    Chassis_state.msg
    Stanley_debug.msg
    Tf_rotate.msg
+   Trajectory.msg
+   Waypoint.msg
  )
 
 ## Generate services in the 'srv' folder
