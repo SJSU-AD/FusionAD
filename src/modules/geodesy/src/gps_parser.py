@@ -22,6 +22,7 @@ def read_file_coarse_points(fileName, chosenHeight, oneLineOnly=False):
     
     Data taken from: http://www.gpsvisualizer.com/draw/
     """
+        
     try:
         if not fileName.endswith(".txt"):
             raise GPSFileFormatError
@@ -32,6 +33,7 @@ def read_file_coarse_points(fileName, chosenHeight, oneLineOnly=False):
     inputLongitudes = []
     inputHeights = []
 
+
     try:
         with open(fileName, "r") as file:
             firstLine = file.readline().split()
@@ -41,12 +43,12 @@ def read_file_coarse_points(fileName, chosenHeight, oneLineOnly=False):
             for line in file:
                 if line[0] == "W":
                     currentLine = line.split()
+                    inputLatitudes.append(float(currentLine[1]))
+                    inputLongitudes.append(float(currentLine[2]))
+                    inputHeights.append(chosenHeight)
                 if oneLineOnly == True:
                     return currentLine[1], currentLine[2], chosenHeight
 
-                inputLatitudes.append(float(currentLine[1]))
-                inputLongitudes.append(float(currentLine[2]))
-                inputHeights.append(chosenHeight)
     except GPSFormatError:
         print("Problem with file format. Make sure to use '.txt' version of file from http://www.gpsvisualizer.com/draw/")
     

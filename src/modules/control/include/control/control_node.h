@@ -52,7 +52,7 @@ class control_node
     int targetPointIndex;
     ros::Timer control_cmd_timer;
 
-    const float magnetic_declination_rad = 1.8326;
+    const float magnetic_declination_rad = M_PI_2;
 
     //Heading Estimator
     /*
