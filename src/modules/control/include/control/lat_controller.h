@@ -3,6 +3,7 @@
 
 //Declare all used external libraries
 #include "Eigen/Dense"
+#include "ros/ros.h"
 #include <cmath>
 #include <vector>
 #include <iostream>
@@ -16,11 +17,11 @@ namespace control
 {
 namespace lat_controller
 {
-class stanley
+class Stanley
 {
   public:
-    stanley();
-    ~stanley();
+    Stanley();
+    ~Stanley();
     interface::Stanley_debug debug_info;
     // Steering Limit is set to 21 deg
     float steering_limit = 0.36652;
