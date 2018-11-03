@@ -4,10 +4,10 @@ namespace fusionad{
 namespace control{
 namespace lat_controller{
 
-  stanley::stanley()
+  Stanley::Stanley()
   {
   }
-  stanley::~stanley()
+  Stanley::~Stanley()
   {
   }
   
@@ -44,7 +44,7 @@ namespace lat_controller{
     }      
   }*/
 
-  float stanley::computePathHeading(const std::vector<float> &navX, const std::vector<float> &navY ,const int &targetIndex, const int &navSize)
+  float Stanley::computePathHeading(const std::vector<float> &navX, const std::vector<float> &navY ,const int &targetIndex, const int &navSize)
   {
     Eigen::Matrix3f designMatrix;
     Eigen::Vector3f responseVector;
@@ -122,8 +122,8 @@ namespace lat_controller{
     }
     else
     {
-      debug_info.isCalculationInvalid = true;
-      std::cout << "Path Heading Calculation Is Not Finite!" << std::endl;
+      debug_info.pathHeadingCalcInvalid = true;
+      ROS_FATAL("Path Heading Calculation Is Not Finite!");
       return std::numeric_limits<float>::quiet_NaN();
     }  
   }
@@ -199,7 +199,7 @@ namespace lat_controller{
     }  
   }
   */
-  float stanley::computeCrossTrackError(const float &routeTheta, const float &dx, const float &dy)
+  float Stanley::computeCrossTrackError(const float &routeTheta, const float &dx, const float &dy)
   {
     // See computeCTE.m for proof  @Menson_Li
     float lateralError = ((std::sin(routeTheta) * dx) - (std::cos(routeTheta) * dy));    
@@ -213,14 +213,14 @@ namespace lat_controller{
     }
     else
     {
-      debug_info.isCalculationInvalid = true;
-      std::cout << "Lateral Error Calculation Is Not Finite!" << std::endl;
+      debug_info.crossTrackErrorCalcInvalid = true;
+      ROS_FATAL("Lateral Error Calculation Is Not Finite!");
       return std::numeric_limits<float>::quiet_NaN();
     }    
   }
 
   //A positive steering angle denotes the vehicle to turn its steering wheel CCW (left)
-  float stanley::computeSteeringAngle(const Eigen::Vector2f &vehPos, const std::vector<float> &routeX, const std::vector<float> &routeY,
+  float Stanley::computeSteeringAngle(const Eigen::Vector2f &vehPos, const std::vector<float> &routeX, const std::vector<float> &routeY,
                                       const float &vehSpeed, const int &wpIndex, const float& vehTheta, const float &gain,const int &pathSize)
   {
     //obtain the path heading
@@ -244,11 +244,11 @@ namespace lat_controller{
     }
     else
     {
-      debug_info.isCalculationInvalid = true;
-      std::cout << "Heading Error Calculation Is Not Finite!" << std::endl;
+      debug_info.headingErrorCalcInvalid = true;
+      ROS_FATAL("Heading Error Calculation Is Not Finite!");
     }    
     
-    //Apply stanley kinematic control law
+    //Apply Stanley kinematic control law
     float unfilteredSteeringAngle = headingDelta + std::atan((gain * crossTrackError)/vehSpeed);
 
     float steeringAngle = 0;
@@ -272,8 +272,8 @@ namespace lat_controller{
     }
     else
     {
-      debug_info.isCalculationInvalid = true;
-      std::cout << "Steering Angle Calculation Is Not Finite! Returning -69 as steering angle." << std::endl;
+      debug_info.steeringAngleCalcInvalid = true;
+      ROS_FATAL("Steering Angle Calculation Is Not Finite! Returning -69 as steering angle.");
       return -69;
     }
   }
