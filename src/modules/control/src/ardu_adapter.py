@@ -87,7 +87,7 @@ def timer_callback(event):
     steering_low_lvl_node_publisher.publish(high_lvl_steering_callback)
     driving_low_lvl_node_publisher.publish(high_lvl_driving_callback)
 
-def Control_Adapter_Arduino_Node():
+def control_adapter_arduino_node():
     '''
     Node to facilitate the publisher and subscriber relationship between the high lvl and low lvl control
     '''
