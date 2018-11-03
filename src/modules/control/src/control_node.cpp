@@ -6,7 +6,7 @@ namespace control
 {
 namespace node
 {
-  control_node::control_node():
+  ControlNode::ControlNode():
   pathInitialized(false),
   stateInitialized(false),
   imuInitialized(false),
@@ -25,14 +25,14 @@ namespace node
     //estimated_orientation = 0;
   }
 
-  control_node::~control_node()
+  ControlNode::~ControlNode()
   {
   }
 
-  void control_node::initRosComm()
+  void ControlNode::initRosComm()
   {
     //Create Timer Function for running the control stack, currently set to 25 hz
-    control_cmd_timer = control_nh.createTimer(ros::Duration(0.04), &control_node::masterTimerCallback, this);  
+    control_cmd_timer = control_nh.createTimer(ros::Duration(0.04), &ControlNode::masterTimerCallback, this);  
     
     //Control Main publisher
     control_main_pub = control_nh.advertise<interface::Controlcmd>("/control/controlcmd", 100);
@@ -46,24 +46,24 @@ namespace node
     }
 
     //Control Trajectory Subscriber
-    path_sub = control_nh.subscribe("/planning/trajectory", 100, &control_node::pathCallback, this);
+    path_sub = control_nh.subscribe("/planning/trajectory", 100, &ControlNode::pathCallback, this);
     ROS_INFO_ONCE("Control Node Path Subscriber Set!");
 
     //Control State Subscriber
-    localization_sub = control_nh.subscribe("/localization/state", 100, &control_node::stateCallback, this);
+    localization_sub = control_nh.subscribe("/localization/state", 100, &ControlNode::stateCallback, this);
     ROS_INFO_ONCE("Control Node Path Subscriber Set!");
 
-    imu_sub = control_nh.subscribe("/imu", 100, &control_node::imuCallback, this);
+    imu_sub = control_nh.subscribe("/imu", 100, &ControlNode::imuCallback, this);
     ROS_INFO_ONCE("Control Node IMU Subscriber Set!");
 
-    obstacle_sub = control_nh.subscribe("/localization/obstacle", 100, &control_node::obstacleCallback, this);
+    obstacle_sub = control_nh.subscribe("/localization/obstacle", 100, &ControlNode::obstacleCallback, this);
     ROS_INFO_ONCE("Control Node Obstacle Subscriber Set!");
 
-    mode_sub = control_nh.subscribe("/control/mode", 100, &control_node::modeCallback, this);
+    mode_sub = control_nh.subscribe("/control/mode", 100, &ControlNode::modeCallback, this);
     ROS_INFO_ONCE("Control Node Mode Subscriber Set!");
   }
 
-  bool control_node::getParameter()
+  bool ControlNode::getParameter()
   {
     //Obtain parameter to initialize the node
     std::string node_name = ros::this_node::getName();
@@ -83,7 +83,7 @@ namespace node
   
 
 
-  void control_node::pathCallback(const nav_msgs::Path& trajectory_msg)
+  void ControlNode::pathCallback(const nav_msgs::Path& trajectory_msg)
   {
     //Flush all vectors at the end
     pathPointListX.clear();
@@ -113,7 +113,7 @@ namespace node
     }
   }
 
-  void control_node::stateCallback(const interface::Chassis_state& veh_state_msg)
+  void ControlNode::stateCallback(const interface::Chassis_state& veh_state_msg)
   {
     //float veh_theta = 0;
     /*if(!autonomousDrivingFlag && pathInitialized)
@@ -163,7 +163,7 @@ namespace node
     }
   }
 
-  void control_node::imuCallback(const sensor_msgs::Imu& inertial_msg)
+  void ControlNode::imuCallback(const sensor_msgs::Imu& inertial_msg)
   {
     tf::Quaternion chassis_quaternion(inertial_msg.orientation.x,
                                       inertial_msg.orientation.y,
@@ -200,17 +200,17 @@ namespace node
     }
   }
 
-  void control_node::obstacleCallback(const std_msgs::Bool& obstacleDetection_msg)
+  void ControlNode::obstacleCallback(const std_msgs::Bool& obstacleDetection_msg)
   {
     obstacleDetected = obstacleDetection_msg.data;
   }
 
-  void control_node::modeCallback(const std_msgs::Bool& autonomous_mode_msg)
+  void ControlNode::modeCallback(const std_msgs::Bool& autonomous_mode_msg)
   {
     autonomousDrivingFlag = autonomous_mode_msg.data;
   }
 
-  void control_node::masterTimerCallback(const ros::TimerEvent& controlTimeEvent)
+  void ControlNode::masterTimerCallback(const ros::TimerEvent& controlTimeEvent)
   {
     interface::Controlcmd control_core_command;
     if(obstacleDetected)
@@ -223,6 +223,7 @@ namespace node
 
     if((imuInitialized) && (stateInitialized) && (pathInitialized) && (!obstacleDetected) && (!internalFailFlag) && (!goalReached) && (autonomousDrivingFlag) && (!externalFailFlag))
     {
+      std::cout << "Entered Timer loop " << std::endl;
       //TODO: Add new backward search prevention algo
       //Compute the closest waypoint
       std::vector<float> distance;
@@ -287,13 +288,28 @@ namespace node
       if(debug)
       {
         control_core_command.debugControl = true;
+        lat_control.debug_info.stanleyGain = controlGain;
         //lat_control.debug_info.estimated_heading = estimated_orientation;
         control_debug_pub.publish(lat_control.debug_info);
       }   
 
-      control_core_command.steeringAngle = steering_angle;
-      control_core_command.throttle = cmd_linear_vel; 
-      control_core_command.inOperation = true;  
+        // Check calculation integrity of lateral controller, invalid calculation will bring vehicle to halt
+      if(lat_control.debug_info.pathHeadingCalcInvalid     || 
+         lat_control.debug_info.crossTrackErrorCalcInvalid ||
+         lat_control.debug_info.headingErrorCalcInvalid    || 
+         lat_control.debug_info.steeringAngleCalcInvalid)
+      {
+        ROS_FATAL("Lateral Controller Error, Vehicle operation stopped! ");
+        control_core_command.steeringAngle = 0;
+        control_core_command.throttle = 0; 
+        control_core_command.inOperation = false;
+      }
+      else
+      {
+        control_core_command.steeringAngle = steering_angle;
+        control_core_command.throttle = cmd_linear_vel; 
+        control_core_command.inOperation = true;
+      }  
     }
     else
     {
@@ -313,7 +329,7 @@ int main(int argc, char **argv)
 {
   //ROS node initialization as "control core"
   ros::init(argc, argv, "core_control");
-  fusionad::control::node::control_node core_control;
+  fusionad::control::node::ControlNode core_control;
   if(!core_control.getParameter())
   {
     ROS_FATAL("Parameter Failed! Abort!");

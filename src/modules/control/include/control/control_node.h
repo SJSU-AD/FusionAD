@@ -24,17 +24,17 @@ namespace control
 {
 namespace node
 {
-class control_node
+class ControlNode
 {
   public:
-    control_node();
-    ~control_node();
+    ControlNode();
+    ~ControlNode();
     void initRosComm();
     bool getParameter();
     bool goalReached, debug, externalFailFlag;
     
   private:
-    fusionad::control::lat_controller::stanley lat_control;
+    fusionad::control::lat_controller::Stanley lat_control;
     ros::NodeHandle control_nh;
     ros::Publisher control_main_pub;
     ros::Publisher control_debug_pub;
