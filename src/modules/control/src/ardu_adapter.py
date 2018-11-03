@@ -41,8 +41,7 @@ min_driving_output = 0
 max_driving_output = 255
 
 def high_lvl_callback(high_lvl_control_msg):
-    '''
-    High lvl control message for both desired driving and steering input
+    ''High lvl control message for both desired driving and steering input
     /control/controlcmd is the topic name
     '''
     global steering_msg
@@ -87,9 +86,9 @@ def timer_callback(event):
     steering_low_lvl_node_publisher.publish(high_lvl_steering_callback)
     driving_low_lvl_node_publisher.publish(high_lvl_driving_callback)
 
-def control_adapter_arduino_node():
-    '''
-    Node to facilitate the publisher and subscriber relationship between the high lvl and low lvl control
+
+def Control_Adapter_Arduino_Node():
+    '''Node to facilitate the publisher and subscriber relationship between the high lvl and low lvl control
     '''
     rospy.init_node('Control_Adapter', anonymous = True)
 
