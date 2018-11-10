@@ -23,9 +23,9 @@ steering_low_lvl_node_publisher = rospy.Publisher('/control/steering_channel', F
 driving_low_lvl_node_publisher = rospy.Publisher('/control/driving_channel', Float64, queue_size=10)
 
 # declaring constants
-high_lvl_steering_callback = 319
+desired_steering = 319
 steering_msg = 0
-high_lvl_driving_callback = 0
+desired_throttle = 0
 driving_msg = 0
 
 pi = 3.1415926535
@@ -41,38 +41,22 @@ min_driving_output = 0
 max_driving_output = 255
 
 def high_lvl_callback(high_lvl_control_msg):
-    ''High lvl control message for both desired driving and steering input
+    '''High lvl control message for both desired driving and steering input
     /control/controlcmd is the topic name
     '''
     global steering_msg
     steering_msg = high_lvl_control_msg.steeringAngle
     global driving_msg
     driving_msg = high_lvl_control_msg.throttle
-    '''
-    global high_lvl_driving_callback
-    if high_lvl_control_msg.throttle>=0:
-        high_lvl_driving_callback = (high_lvl_control_msg.throttle-min_driving_input)*(max_driving_output-min_driving_output)/(max_driving_input-min_driving_input)+min_driving_output
-    else:
-        high_lvl_driving_callback = (-1)*(abs(high_lvl_control_msg.throttle)-min_driving_input)*(max_driving_output-min_driving_output)/(max_driving_input-min_driving_input)+min_driving_output
-    steering_angle = 0
 
-    if(abs(high_lvl_control_msg.steeringAngle) > steering_limit_radians): # establishing limits in radians for steering
-        steering_angle = steering_limit_radians*(abs(high_lvl_control_msg.steeringAngle)/high_lvl_control_msg.steeringAngle)
-    else:
-        steering_angle = high_lvl_control_msg.steeringAngle 
-
-    global high_lvl_steering_callback
-    high_lvl_steering_callback = ((-1)*steering_angle*180/pi+steering_analog_intercept)/steering_analog_slope+potentiometer_offset
-    
-    '''
 def timer_callback(event):
     '''Handles the conversion between steering in radians from the high level control and analog value for the low level control
     '''
-    global high_lvl_driving_callback
+    global desired_throttle
     if driving_msg >= 0:
-        high_lvl_driving_callback = (driving_msg-min_driving_input)*(max_driving_output-min_driving_output)/(max_driving_input-min_driving_input)+min_driving_output
+        desired_throttle = (driving_msg-min_driving_input)*(max_driving_output-min_driving_output)/(max_driving_input-min_driving_input)+min_driving_output
     else:
-        high_lvl_driving_callback = (-1)*(abs(driving_msg)-min_driving_input)*(max_driving_output-min_driving_output)/(max_driving_input-min_driving_input)+min_driving_output
+        desired_throttle = (-1)*(abs(driving_msg)-min_driving_input)*(max_driving_output-min_driving_output)/(max_driving_input-min_driving_input)+min_driving_output
     steering_angle = 0
 
     if(abs(steering_msg) > steering_limit_radians): # establishing limits in radians for steering
@@ -80,11 +64,11 @@ def timer_callback(event):
     else:
         steering_angle = steering_msg 
 
-    global high_lvl_steering_callback
-    high_lvl_steering_callback = ((-1)*steering_angle*180/pi+steering_analog_intercept)/steering_analog_slope+potentiometer_offset
+    global desired_steering
+    desired_steering = ((-1)*steering_angle*180/pi+steering_analog_intercept)/steering_analog_slope+potentiometer_offset
     
-    steering_low_lvl_node_publisher.publish(high_lvl_steering_callback)
-    driving_low_lvl_node_publisher.publish(high_lvl_driving_callback)
+    steering_low_lvl_node_publisher.publish(desired_steering)
+    driving_low_lvl_node_publisher.publish(desired_throttle)
 
 
 def Control_Adapter_Arduino_Node():
@@ -98,11 +82,11 @@ def Control_Adapter_Arduino_Node():
     rospy.spin()
     timer.shutdown()
     '''
-    rate = rospy.Rate(25)
+    rate = rospy.Rate(50)
 
     while not rospy.is_shutdown():
-        steering_low_lvl_node_publisher.publish(high_lvl_steering_callback)
-        driving_low_lvl_node_publisher.publish(high_lvl_driving_callback)
+        steering_low_lvl_node_publisher.publish(desired_steering)
+        driving_low_lvl_node_publisher.publish(desired_throttle)
         rate.sleep()
     '''
 
