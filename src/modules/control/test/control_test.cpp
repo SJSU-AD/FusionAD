@@ -26,7 +26,7 @@ float pathArrayY[1001] = {0,0.131138903,0.260075491,0.386823689,0.511397423,0.63
 //  ArimthMatic test case 1
 TEST(arithmatic_test_1, ShouldPass)
 {
-  fusionad::control::lat_controller::stanley stanley_test_1;
+  fusionad::control::lat_controller::Stanley stanley_test_1;
   vector<float> pathX(pathArrayX, pathArrayX + sizeof(pathArrayX)/sizeof(pathArrayX[0]));
   vector<float> pathY(pathArrayY, pathArrayY + sizeof(pathArrayY)/sizeof(pathArrayY[0]));
 
@@ -57,7 +57,7 @@ TEST(arithmatic_test_1, ShouldPass)
 //  ArimthMatic test case 2
 TEST(arithmatic_test_2, ShouldPass)
 {
-  fusionad::control::lat_controller::stanley stanley_test_2;
+  fusionad::control::lat_controller::Stanley stanley_test_2;
   vector<float> pathX(pathArrayX, pathArrayX + sizeof(pathArrayX)/sizeof(pathArrayX[0]));
   vector<float> pathY(pathArrayY, pathArrayY + sizeof(pathArrayY)/sizeof(pathArrayY[0]));
 
@@ -88,7 +88,7 @@ TEST(arithmatic_test_2, ShouldPass)
 //  ArimthMatic test case 3
 TEST(arithmatic_test_3, ShouldPass)
 {
-  fusionad::control::lat_controller::stanley stanley_test_3;
+  fusionad::control::lat_controller::Stanley stanley_test_3;
   vector<float> pathX(pathArrayX, pathArrayX + sizeof(pathArrayX)/sizeof(pathArrayX[0]));
   vector<float> pathY(pathArrayY, pathArrayY + sizeof(pathArrayY)/sizeof(pathArrayY[0]));
 
@@ -119,7 +119,7 @@ TEST(arithmatic_test_3, ShouldPass)
 //  NaN test case 1
 TEST(NaN_test_case_1, ShouldPass)
 {
-  fusionad::control::lat_controller::stanley stanley_test_4;
+  fusionad::control::lat_controller::Stanley stanley_test_4;
   vector<float> pathX(pathArrayX, pathArrayX + sizeof(pathArrayX)/sizeof(pathArrayX[0]));
   vector<float> pathY(pathArrayY, pathArrayY + sizeof(pathArrayY)/sizeof(pathArrayY[0]));
 
@@ -150,7 +150,7 @@ TEST(NaN_test_case_1, ShouldPass)
 //  ArimthMatic test case 4
 TEST(arithmatic_test_4, ShouldPass)
 {
-  fusionad::control::lat_controller::stanley stanley_test_5;
+  fusionad::control::lat_controller::Stanley stanley_test_5;
   vector<float> pathX(pathArrayX, pathArrayX + sizeof(pathArrayX)/sizeof(pathArrayX[0]));
   vector<float> pathY(pathArrayY, pathArrayY + sizeof(pathArrayY)/sizeof(pathArrayY[0]));
 
@@ -176,6 +176,39 @@ TEST(arithmatic_test_4, ShouldPass)
 
   ASSERT_EQ(tc5_solution, computed_steering_5);
 }
+
+// TEST CASE 5: 0 Gain test for algorithm, refer to "unittest_cases.pdf" in the folder
+//  gain test case 1
+TEST(gain_test_1, ShouldPass)
+{
+  fusionad::control::lat_controller::Stanley stanley_test_5;
+  vector<float> pathX(pathArrayX, pathArrayX + sizeof(pathArrayX)/sizeof(pathArrayX[0]));
+  vector<float> pathY(pathArrayY, pathArrayY + sizeof(pathArrayY)/sizeof(pathArrayY[0]));
+
+  // Set the position of the vehicle at (93.33, 10.7)
+  Eigen::Vector2f veh_pos(93.33,10.7);
+
+  float veh_theta = 0.01;
+  float veh_velocity = 1.2;
+
+  int wpIndex = 549;
+
+  // Setting gain to 0
+  float k_hard = 0;
+
+  ASSERT_EQ(pathX.size() , pathY.size());
+
+  size_t path_size = pathX.size();
+
+  float computed_steering_5 = stanley_test_5.computeSteeringAngle(veh_pos, pathX, pathY,
+                                           veh_velocity, wpIndex,
+                                           veh_theta, k_hard, path_size);
+
+  float tc5_solution = 0.0035004;
+
+  ASSERT_EQ(tc5_solution, computed_steering_5);
+}
+
 
 
 int main(int argc, char **argv) {
