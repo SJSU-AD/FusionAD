@@ -25,19 +25,19 @@ import gps_parser
 from geodesy_conversion_ENU import GeodesyConverterENU
 
 class PathInterpolatorENU(GeodesyConverterENU):
-    def __init__(self, latitudesData, longitudesData, heightsData, centimetersPerPoint=None):
+    def __init__(self, latitudesData, longitudesData, heightsData, centimetersPerPoint=25):
         super(PathInterpolatorENU, self).__init__(latitudesData, longitudesData, heightsData)
         self.heightsData = heightsData
-        self.centimetersPerPoint = 25 if centimetersPerPoint==None else centimetersPerPoint
+        self.centimetersPerPoint = centimetersPerPoint
 
     def set_dist_between_points(self, centimetersPerPoint):
         """Set distance between points after interpolation"""
         self.centimetersPerPoint = centimetersPerPoint
     
-    def get_point_density_ENU(self, e1, n1, u1, e2, n2, u2, centimetersPerPoint):
-        pointDensity = super(PathInterpolatorENU, self).euclidian_distance_3d(e1, n1, u1, e2, n2, u2) / (centimetersPerPoint / 100.0)
-
-        return int(pointDensity)
+    def get_point_density_ENU(self, e1, n1, u1, e2, n2, u2):
+        pointDensity = super(PathInterpolatorENU, self).euclidian_distance_2d(e1, n1, e2, n2) / (self.centimetersPerPoint / 100.0)
+        
+        return pointDensity
 
     # Instead of different functions for positive and negative
     def interpolate_ENU(self, i, eData, nData, uData, numberOfCoarsePoints):
@@ -47,13 +47,17 @@ class PathInterpolatorENU(GeodesyConverterENU):
         finePointsN = []
         finePointsU = []
 
-        pointDensity = 10
-        # Vanilla case: for all points except final point
-        if i < numberOfCoarsePoints-1:
-            # Number of points between each interpolated point
-            # pointDensity = self.get_point_density_ENU(eData[i], eData[i], uData[i], 
-                                                    #    eData[i+1], nData[i+1], uData[i+1], self.centimetersPerPoint)
+        # OPTION 1: Fixed point density option
+        # pointDensity = 10
 
+        # Vanilla case: for all points except final point
+        if i <= numberOfCoarsePoints - 1:
+            # OPTION 2: Fixed distance option (variable point density)
+            # Number of points between each interpolated point
+            pointDensity = self.get_point_density_ENU(eData[i], nData[i], uData[i], 
+                                                       eData[i+1], nData[i+1], uData[i+1])
+            ##### pointDensity is type float right now #####
+            
             # Declare the first and second positions for interpolation
             e0 = eData[i]     
             e1 = eData[i+1]
@@ -62,24 +66,8 @@ class PathInterpolatorENU(GeodesyConverterENU):
             u0 = uData[i]     
             u1 = uData[i+1]
 
-            for n in range(pointDensity):
-                finePointsE.append( e0 + (e1-e0)*(n/pointDensity) )
-                finePointsN.append( n0 + (n1-n0)*(n/pointDensity) )
-                finePointsU.append( u0 + (u1-u0)*(n/pointDensity) )
-
-        # Corner case: for final point    
-        if i == numberOfCoarsePoints-1:
-            # pointDensity = self.get_point_density_ENU(eData[i-1], eData[i-1], uData[i-1], 
-            #                                            eData[i], nData[i], uData[i], self.centimetersPerPoint)
-
-            e0 = eData[i-1]
-            e1 = eData[i]
-            n0 = nData[i-1]
-            n1 = nData[i]
-            u0 = uData[i-1]     
-            u1 = uData[i]
-
-            for n in range(pointDensity):
+            # Interpolate each coordinate separately
+            for n in range(int(pointDensity)):
                 finePointsE.append( e0 + (e1-e0)*(n/pointDensity) )
                 finePointsN.append( n0 + (n1-n0)*(n/pointDensity) )
                 finePointsU.append( u0 + (u1-u0)*(n/pointDensity) )
@@ -109,18 +97,26 @@ class PathInterpolatorENU(GeodesyConverterENU):
         nInterpolatedPositions = []
         uInterpolatedPositions = []
 
+        if len(eData) != len(nData) or len(eData) != len(uData) or len(nData) != len(uData):
+            raise ValueError("Number of E, N, and U coordinates are not equal")
+
         numberOfCoarsePoints = len(eData)
 
-        for i in range(numberOfCoarsePoints):
+        for i in range(numberOfCoarsePoints - 1):
             finePointsE, finePointsN, finePointsU = self.interpolate_ENU(i, eData, nData, uData, numberOfCoarsePoints)
 
             eInterpolatedPositions.extend(finePointsE)
             nInterpolatedPositions.extend(finePointsN)
             uInterpolatedPositions.extend(finePointsU)
-        
+
+        eInterpolatedPositions.append(eData[-1])
+        nInterpolatedPositions.append(nData[-1])
+        uInterpolatedPositions.append(uData[-1])
+
         while not rospy.is_shutdown():
             path = Path()
         
+            # Add points to PoseStamped, then add PoseStamped to published message.
             for i in range(len(nInterpolatedPositions)):
                 # # Attempting to add points directly in one line without creating point object first
                 # path.poses.append(path.poses[i].pose.position.x = 0.0) # finePointsE[i]

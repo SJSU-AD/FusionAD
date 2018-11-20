@@ -1,6 +1,6 @@
 <launch>
   <node type="core_control" pkg="control" name="control_core" output="screen">
-	  <param name="control_gain" value="1"/>
+	  <param name="control_gain" value="0.5"/>
     <param name="debug" value="true"/>
   </node>
 
