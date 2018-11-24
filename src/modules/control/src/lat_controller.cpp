@@ -252,6 +252,7 @@ namespace lat_controller{
     //Apply Stanley kinematic control law
     float unfilteredSteeringAngle = 0;
 
+    // Check if gain is zero, only report heading delta if gain is zero.
     if(gain != 0)
     {
       unfilteredSteeringAngle = headingDelta + std::atan((gain * crossTrackError)/vehSpeed);
