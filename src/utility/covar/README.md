@@ -5,7 +5,7 @@ Ensure that gsl is installed:
 
 ## 1. Getting the package
 Do the following to add to the src of your ROS workspace (i.e. catkin_ws if you kept the dirname from ROS tutorial), *almost* as you would any other package - we're going to give this repo's dirname "covar" instead of "test_gsl".
-* `cd path/to/catkin_ws/src; git clone https://github.com/ntwong0/test_gsl.git covar`
+* `cd path/to/catkin_ws/src; git clone https://github.com/ntwong0/test_gsl.git -b ROSify covar`
 
 ## 2. Installation
 catkin_make as usual:
