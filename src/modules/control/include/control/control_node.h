@@ -53,6 +53,7 @@ class ControlNode
     ros::Timer control_cmd_timer;
 
     const float magnetic_declination_rad = M_PI_2;
+    const float imu_residual_offset = -0.3567612546;
 
     //Heading Estimator
     /*
