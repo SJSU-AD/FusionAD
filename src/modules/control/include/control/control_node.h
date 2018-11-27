@@ -69,6 +69,8 @@ class ControlNode
     std::vector<float> pathPointListY;
     std::vector<float>::size_type dynamicArraySize;
 
+    bool getClosesWaypoint(const nav_msgs::Path& current_path, const interface::Chassis_state& current_position, int& waypoint_index);
+
     void pathCallback(const nav_msgs::Path& trajectory_msg);
     void stateCallback(const interface::Chassis_state& veh_state_msg);
     void imuCallback(const sensor_msgs::Imu& inertial_msg);
