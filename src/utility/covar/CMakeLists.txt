@@ -157,6 +157,11 @@ target_link_libraries(${PROJECT_NAME}_node
    ${GSL_LIBRARIES}
 )
 
+add_dependencies(
+  covar_node
+  covar_generate_messages_cpp
+)
+
 #############
 ## Install ##
 #############
