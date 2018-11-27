@@ -25,11 +25,14 @@ NOTE: This script is to handle the raw wheel odometry values from the Signwise 6
 #include "std_msgs/Float64.h"
 #include "std_msgs/Int32.h"
 #include "math.h"
-//#include "Eigen/Dense"
+#include "Eigen/Dense"
 #include "nav_msgs/Odometry.h"
 #include "geometry_msgs/PoseWithCovariance.h"
 #include "geometry_msgs/TwistWithCovariance.h"
 #include "sensor_msgs/Imu.h"
+#include "stdio.h"
+#include <queue>
+#include <algorithm>
 //#include <tf2/LinearMath/Quaternion.h>
 
 namespace fusionad
@@ -93,10 +96,8 @@ class OdometryNode
         long previous_left_odometry_msg = 0;
 
         // pulses per rotation
-        const long pulses_per_rotation = 2400;
-        // pie
-        const float PI = 3.14159;
-
+        const long pulses_per_rotation = 1200;
+        
         // odometry_state_estimation() variables for dead-reckoning
         float vel_magnitude = 0;
         float x_velocity = 0;

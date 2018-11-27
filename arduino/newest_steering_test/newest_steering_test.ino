@@ -5,20 +5,29 @@
  * To run this code, use the following command
  * $rosrun rosserial_python serial_node.py /dev/ttyACM0
  * Check the USB port and correct for these        ^^^^ if needed
- *
+ * 
+ * Before use, let the Arduino sit for a minute to balance the Serial Bus buffer. 
  */
 
  
 #include <ros.h>
 #include <std_msgs/Float64.h>
+#include <std_msgs/String.h>
+#include <std_msgs/Int32.h>
 ros::NodeHandle nh;
 
 std_msgs::Float64 feedback;
 std_msgs::Float64 driving_feedback;
 std_msgs::Float64 steering_error_feedback;
+std_msgs::Float64 rosinfolog;
+////std_msgs::String roswarning;
+//std_msgs::Int32 roswarning;
+
 ros::Publisher steering_response("/control/steering_response", &feedback); // publish error instead
 ros::Publisher driving_response("/control/driving_response", &driving_feedback);
 ros::Publisher steering_error_response("/control/steering_error", &steering_error_feedback);
+ros::Publisher steering_log_response("/control/rosinfo", &rosinfolog);
+//ros::Publisher steering_warning_response("/control/warning", &roswarning);
 
 #include <PID_v1.h> // PID LIBRARY 
 
@@ -42,10 +51,12 @@ double right_output = 0;
 double left_output = 0;
 double wheel_angle = 0;
 double error = 0; 
-double upper_steering_limit = 462;
-double lower_steering_limit = 182;
+//double upper_steering_limit = 462;
+double upper_steering_limit = 470;
+//double lower_steering_limit = 182;
+//double lower_steering_limit = 174;
+double lower_steering_limit = 82;
 double driving_limit = 100;
-double steering_tolerance = 13;
 
 /* POTENTIOMETER VALUES!!!
    BOUNDS ARE 462 FULL LOCK RIGHT
@@ -76,7 +87,17 @@ void drivingcallback(const std_msgs::Float64& driving_msg)
 
 void steeringcallback(const std_msgs::Float64& steering_msg)
 {
-  steering_timestamp = millis();
+  /*
+  nh.loginfo("message received");
+  char log_msg[30];
+  char steering_msg_string[8];
+  dtostrf(steering_msg.data, 6, 2, steering_msg_string);
+  sprintf(log_msg, "steering_msg is %s", steering_msg_string);
+  nh.loginfo(log_msg);
+  */
+    rosinfolog.data = steering_msg.data;
+    steering_log_response.publish(&rosinfolog);
+    steering_timestamp = millis();
   
     if (steering_msg.data > upper_steering_limit)
     {
@@ -89,14 +110,19 @@ void steeringcallback(const std_msgs::Float64& steering_msg)
     else
     {
       steering_value = steering_msg.data;
-      if((abs(steering_value-(analogRead(0)) < steering_tolerance))) // need to rethink requirements of low lvl control on test platform
+      operation(steering_value);
+      double steering_tolerance = 5;
+      
+      if(abs(steering_value-(analogRead(0))) < steering_tolerance) // need to rethink requirements of low lvl control on test platform
       {
+        // problem could be here?
         no_operation();
       }
       else
       {
         operation(steering_value);
       }
+      
     }
 
     feedback.data = analogRead(0); // feedback.data is equal to the input of the linear actuator
@@ -112,13 +138,17 @@ ros::Subscriber<std_msgs::Float64> driving_sub("/control/driving_channel", &driv
 
 void setup() {
   // put your setup code here, to run once:
+  // set the baud rate at 115200 baud
+  nh.getHardware()->setBaud(115200);
+  
   nh.initNode(); // initialize ROS node
   nh.subscribe(steering_sub); // subscriber to ardu_adapter for steering
   nh.subscribe(driving_sub); // subscriber to ardu_adapter for driving
   nh.advertise(steering_response); // publisher to ardu_adapter for steering
   nh.advertise(driving_response); // publisher to ardu_adapter for driving
   nh.advertise(steering_error_response); // publisher for error for PID tuning
-  
+  nh.advertise(steering_log_response);
+//  nh.advertise(steering_warning_response);
   pinMode(R_EN, OUTPUT); // initializing enable pins on linear actuator
   pinMode(L_EN, OUTPUT);
 
@@ -139,6 +169,8 @@ void setup() {
 
   digitalWrite(Motor_R_EN, HIGH); // leave these as high to allow the motor control operation
   digitalWrite(Motor_L_EN, HIGH);
+
+  nh.loginfo("Startup Complete");
 }
 
 void loop() {
@@ -152,7 +184,7 @@ void loop() {
     no_operation();
   }
   
-  delay(20);
+  //delay(1);
 }
 
 void operation(double incoming_input)
@@ -256,6 +288,9 @@ void no_operation()
   left.SetMode(MANUAL);
   analogWrite(RPWM, 0);
   analogWrite(LPWM, 0);
+//  //roswarning.data = "no_operation";
+//  roswarning.data += 1;
+//  steering_warning_response.publish(&roswarning);
 }
 
 void driving_operation(double incoming_driving_input)
@@ -305,7 +340,7 @@ void reverse_drive(double driving_pwm)
   {
     digitalWrite(Motor_R_EN, HIGH);
     digitalWrite(Motor_L_EN, HIGH);
-    analogWrite(Motor_LPWM, abs(driving_pwm));
+    analogWrite(Motor_LPWM, 100);
     analogWrite(Motor_RPWM, 0);
   }
 }
@@ -319,6 +354,7 @@ void braking()
 
 void steering_limits(double steering_input_limit)
 {
+  
   if (steering_input_limit >= upper_steering_limit)
   {
     no_operation();
@@ -327,4 +363,5 @@ void steering_limits(double steering_input_limit)
   {
     no_operation();
   }
+  
 }

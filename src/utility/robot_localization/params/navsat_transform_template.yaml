@@ -1,5 +1,5 @@
 # Frequency of the main run loop
-frequency: 30
+frequency: 50
 
 # Delay time, in seconds, before we calculate the transform from the UTM frame to your world frame. This is especially
 # important if you have use_odometry_yaw set to true. Defaults to 0.
@@ -15,10 +15,10 @@ magnetic_declination_radians: 0
 
 # Your IMU's yaw, once the magentic_declination_radians value is added to it, should report 0 when facing east. If it
 # doesn't, enter the offset here. Defaults to 0.
-yaw_offset: 0.0
+yaw_offset: 0
 
 # If this is true, the altitude is set to 0 in the output odometry message. Defaults to false.
-zero_altitude: false
+zero_altitude: true
 
 # If this is true, the transform world_frame->utm transform is broadcast for use by other nodes. Defaults to false.
 broadcast_utm_transform: false

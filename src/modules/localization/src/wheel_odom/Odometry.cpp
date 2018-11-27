@@ -22,7 +22,7 @@ namespace odometry_node
         // create a timer at 50 Hz
         odometry_timer = odometrynode_nh.createTimer(ros::Duration(0.02), &OdometryNode::timerCallback, this);
         // main publisher for odometry
-        odometry_pub = odometrynode_nh.advertise<nav_msgs::Odometry>("nav_msgs/Odometry", 50);
+        odometry_pub = odometrynode_nh.advertise<nav_msgs::Odometry>("/localization/twist", 50);
         // subscribers for odometry
         odometry_left_sub = odometrynode_nh.subscribe("/localization/left_encoder_reading", 50, &OdometryNode::leftodometryCallback, this);
         odometry_right_sub = odometrynode_nh.subscribe("/localization/right_encoder_reading", 50, &OdometryNode::rightodometryCallback, this);
@@ -32,42 +32,62 @@ namespace odometry_node
 
     void OdometryNode::leftodometryCallback(const std_msgs::Int32& left_odometry_msg)
     {
-        left_angular_vel = ((2*PI*(left_odometry_msg.data-previous_left_odometry_msg))/(pulses_per_rotation*DT));
+        float previous_left_odometry_msg;
+        left_angular_vel = ((2*M_PI*(left_odometry_msg.data-previous_left_odometry_msg))/(pulses_per_rotation*DT));
         previous_left_odometry_msg = left_odometry_msg.data;
     }
 
     void OdometryNode::rightodometryCallback(const std_msgs::Int32& right_odometry_msg)
     {
-        right_angular_vel = ((2*PI*(right_odometry_msg.data-previous_right_odometry_msg))/(pulses_per_rotation*DT));
-        previous_right_odometry_msg = right_odometry_msg.data;
+        float previous_right_odometry_msg;
+        // accounting for backwards mounted encoder
+        right_angular_vel = ((2*M_PI*((-1)*right_odometry_msg.data-previous_right_odometry_msg))/(pulses_per_rotation*DT));
+        previous_right_odometry_msg = (-1)*right_odometry_msg.data;
     }
 
     void OdometryNode::steeringCallback(const std_msgs::Float64& steering_msg)
     {
-        steering_angle = steering_msg.data;
+        double steering_analog_intercept = 322;
+        double steering_analog_slope = 424.2424;
+        steering_angle = (steering_msg.data-steering_analog_intercept)/steering_analog_slope;
     }
 
     void OdometryNode::odometry_state_estimation()
     {
-        // bicycle model dead-reckoning
-        
+        //float vel_magnitude, x_velocity, y_velocity, x_vel_covariance, y_vel_covariance, yaw_estimate, previous_yaw;
+        std::deque<float> vel_deque;
+        // moving median of SAMPLE_SIZE samples
+        const int SAMPLE_SIZE = 10;
         // velocity magnitude estimate
-        vel_magnitude = (left_angular_vel+right_angular_vel)*WHEEL_RADIUS/2;
+        vel_magnitude = (left_angular_vel+right_angular_vel)*WHEEL_RADIUS;
         // yaw estimate from odometry and steering
         yaw_estimate = previous_yaw + (vel_magnitude/WHEELBASE)*tan(steering_angle)*DT;
         previous_yaw = yaw_estimate;
+        
+        vel_deque.push_back(vel_magnitude);
+        if(vel_deque.size() >= SAMPLE_SIZE)
+        {
+            // start doing the moving median filtering
+            //std::queue<float> temp_vel_queue(vel_queue);
+            float vel_array[SAMPLE_SIZE];
 
+            for(int i = 0; SAMPLE_SIZE-1; ++i)
+            {
+                vel_array[i] = vel_deque[i];
+            }
+
+            int n = sizeof(vel_array)/sizeof(vel_array[0]);
+            std::sort(vel_array, vel_array+n);
+            vel_magnitude = vel_array[SAMPLE_SIZE/2];
+
+            // pop the original queue
+            vel_deque.pop_front();
+        }
+        
         // velocity estimate in x and y
         x_velocity = vel_magnitude * cos(yaw_estimate);
         y_velocity = vel_magnitude * sin(yaw_estimate);
-        /*
-        // position estimates in x and y position
-        x_position = previous_x_position + x_velocity*DT;
-        previous_x_position = x_position;
-
-        y_position = previous_y_position + y_velocity*DT;
-        previous_y_position = y_position;
-        */
+        
         // twist messages
         velocity_estimate.twist.linear.x = x_velocity;
         velocity_estimate.twist.linear.y = y_velocity;
