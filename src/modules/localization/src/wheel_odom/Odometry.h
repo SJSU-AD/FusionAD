@@ -102,9 +102,6 @@ class OdometryNode
         float vel_magnitude = 0;
         float x_velocity = 0;
         float y_velocity = 0;
-        // covariances 
-        float x_vel_covariance = 0;
-        float y_vel_covariance = 0;
         /*
         float x_position = 0;
         float y_position = 0;
@@ -116,7 +113,6 @@ class OdometryNode
         long left_odometry_msg = 0;
         long right_odometry_msg = 0;
         float steering_msg = 0;
-        float yaw_msg = 0;
         
         // declare the callbacks
         void leftodometryCallback(const std_msgs::Int32& left_odometry_msg);

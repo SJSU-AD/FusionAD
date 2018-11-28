@@ -32,15 +32,12 @@ namespace odometry_node
 
     void OdometryNode::leftodometryCallback(const std_msgs::Int32& left_odometry_msg)
     {
-        float previous_left_odometry_msg;
         left_angular_vel = ((2*M_PI*(left_odometry_msg.data-previous_left_odometry_msg))/(pulses_per_rotation*DT));
         previous_left_odometry_msg = left_odometry_msg.data;
     }
 
     void OdometryNode::rightodometryCallback(const std_msgs::Int32& right_odometry_msg)
     {
-        float previous_right_odometry_msg;
-        // accounting for backwards mounted encoder
         right_angular_vel = ((2*M_PI*((-1)*right_odometry_msg.data-previous_right_odometry_msg))/(pulses_per_rotation*DT));
         previous_right_odometry_msg = (-1)*right_odometry_msg.data;
     }
@@ -54,16 +51,16 @@ namespace odometry_node
 
     void OdometryNode::odometry_state_estimation()
     {
-        //float vel_magnitude, x_velocity, y_velocity, x_vel_covariance, y_vel_covariance, yaw_estimate, previous_yaw;
+        
+        // bicycle model dead-reckoning
+        
+        // velocity magnitude estimate
+        vel_magnitude = (left_angular_vel+right_angular_vel)*WHEEL_RADIUS;
+
         std::deque<float> vel_deque;
         // moving median of SAMPLE_SIZE samples
         const int SAMPLE_SIZE = 10;
-        // velocity magnitude estimate
-        vel_magnitude = (left_angular_vel+right_angular_vel)*WHEEL_RADIUS;
-        // yaw estimate from odometry and steering
-        yaw_estimate = previous_yaw + (vel_magnitude/WHEELBASE)*tan(steering_angle)*DT;
-        previous_yaw = yaw_estimate;
-        
+
         vel_deque.push_back(vel_magnitude);
         if(vel_deque.size() >= SAMPLE_SIZE)
         {
@@ -83,7 +80,11 @@ namespace odometry_node
             // pop the original queue
             vel_deque.pop_front();
         }
-        
+
+        // yaw estimate from odometry and steering
+        yaw_estimate = previous_yaw + (vel_magnitude/WHEELBASE)*tan(steering_angle)*DT;
+        previous_yaw = yaw_estimate;
+
         // velocity estimate in x and y
         x_velocity = vel_magnitude * cos(yaw_estimate);
         y_velocity = vel_magnitude * sin(yaw_estimate);
@@ -92,6 +93,10 @@ namespace odometry_node
         velocity_estimate.twist.linear.x = x_velocity;
         velocity_estimate.twist.linear.y = y_velocity;
         //velocity_estimate.linear.z = 0;
+        // covariances 
+        float x_vel_covariance = 0.0021878;
+        float y_vel_covariance = 0.0021878;
+
         velocity_estimate.covariance[0] = x_vel_covariance;
         velocity_estimate.covariance[7] = y_vel_covariance;
     }
