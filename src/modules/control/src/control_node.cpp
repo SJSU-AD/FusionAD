@@ -176,7 +176,7 @@ namespace node
 
 
     // Declination and IMU transform to ENU
-    float adjusted_yaw = yaw + magnetic_declination_rad;
+    float adjusted_yaw = yaw + magnetic_declination_rad + imu_residual_offset;
 
     if(adjusted_yaw > M_PI)
     {

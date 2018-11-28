@@ -22,4 +22,8 @@ sudo cp *.a /usr/lib
 sudo apt-get install ros-kinetic-joy
 sudo apt-get install ros-kinetic-usb-cam
 sudo pip install utm
+<<<<<<< HEAD
 
+=======
+sudo apt-get install libgsl2 libgsl-dev libgsl-dbg gsl-bin
+>>>>>>> b90c2815d158d8d3b3af00809b6008b9177db78d
