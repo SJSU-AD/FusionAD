@@ -3,7 +3,7 @@ frequency: 30
 
 # Delay time, in seconds, before we calculate the transform from the UTM frame to your world frame. This is especially
 # important if you have use_odometry_yaw set to true. Defaults to 0.
-delay: 3.0
+delay: 0
 
 # PLEASE READ: Like all nodes in robot_localization, this node assumes that your IMU data is reported in the ENU frame.
 # Many IMUs report data in the NED frame, so you'll want to verify that your data is in the correct frame before using

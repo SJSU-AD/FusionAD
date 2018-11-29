@@ -151,6 +151,7 @@ add_library(segment_processor
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(segmenter_node src/segmentation/segmenter_node.cpp)
 add_executable(Odometry src/wheel_odom/Odometry.cpp)
+add_executable(Imu_Tf_Adapter src/imu_adapter/Imu_Tf_Adapter.cpp)
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
@@ -161,6 +162,7 @@ add_executable(Odometry src/wheel_odom/Odometry.cpp)
 ## same as for the library above
 ##add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(Odometry ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(Imu_Tf_Adapter ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(segmenter_node
@@ -172,6 +174,11 @@ target_link_libraries(segmenter_node
 target_link_libraries(Odometry
   ${catkin_LIBRARIES}
 )
+
+target_link_libraries(Imu_Tf_Adapter
+  ${catkin_LIBRARIES}
+)
+
 
 #############
 ## Install ##

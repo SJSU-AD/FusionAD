@@ -51,7 +51,7 @@ namespace odometry_node
 
     void OdometryNode::odometry_state_estimation()
     {
-        
+        //TODO: Need to change how deque is grabbing values
         // bicycle model dead-reckoning
         
         // velocity magnitude estimate
@@ -79,6 +79,8 @@ namespace odometry_node
 
             // pop the original queue
             vel_deque.pop_front();
+            vel_deque.pop_back();
+            vel_deque.push_back(vel_magnitude);
         }
 
         // yaw estimate from odometry and steering

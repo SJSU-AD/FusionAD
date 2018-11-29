@@ -128,7 +128,7 @@ odom0_relative: true
 #                false, false, false] 
 # odom1_differential: false
 # odom1_relative: true
-# odom1_queue_size: 2PUPU
+# odom1_queue_size: 2
 # odom1_pose_rejection_threshold: 2
 # odom1_twist_rejection_threshold: 0.2
 # odom1_nodelay: false
