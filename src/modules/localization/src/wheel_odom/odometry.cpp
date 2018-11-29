@@ -1,4 +1,4 @@
-#include "Odometry.h"
+#include "odometry.h"
 // TODO: Add odomReadMe.md
 //       Need to initialize yaw values from the TF_master node
 //       as the initial value of yaw_estimate
@@ -32,6 +32,7 @@ namespace odometry_node
 
     void OdometryNode::leftodometryCallback(const std_msgs::Int32& left_odometry_msg)
     {
+        // encoder counts are from the Arduinos (Signwise Quadrature Encoder)
         left_angular_vel = ((2*M_PI*(left_odometry_msg.data-previous_left_odometry_msg))/(pulses_per_rotation*DT));
         previous_left_odometry_msg = left_odometry_msg.data;
     }
@@ -44,6 +45,7 @@ namespace odometry_node
 
     void OdometryNode::steeringCallback(const std_msgs::Float64& steering_msg)
     {
+        // steering angle from the linear actuator potentiometer connected to an Arduino
         double steering_analog_intercept = 322;
         double steering_analog_slope = 424.2424;
         steering_angle = (steering_msg.data-steering_analog_intercept)/steering_analog_slope;
@@ -55,7 +57,7 @@ namespace odometry_node
         // bicycle model dead-reckoning
         
         // velocity magnitude estimate
-        vel_magnitude = (left_angular_vel+right_angular_vel)*WHEEL_RADIUS;
+        vel_magnitude = (left_angular_vel+right_angular_vel)*WHEEL_RADIUS/2;
 
         std::deque<float> vel_deque;
         // moving median of SAMPLE_SIZE samples
@@ -96,8 +98,8 @@ namespace odometry_node
         velocity_estimate.twist.linear.y = y_velocity;
         //velocity_estimate.linear.z = 0;
         // covariances 
-        float x_vel_covariance = 0.0021878;
-        float y_vel_covariance = 0.0021878;
+        float x_vel_covariance = 0.0021878/2;
+        float y_vel_covariance = 0.0021878/2;
 
         velocity_estimate.covariance[0] = x_vel_covariance;
         velocity_estimate.covariance[7] = y_vel_covariance;

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# TODO: SEE NOTE
+
 # Copyright (c) 2012, Tang Tiong Yew
 # All rights reserved.
 #
@@ -41,8 +41,8 @@ from razor_imu_9dof.cfg import imuConfig
 from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus, KeyValue
 
 degrees2rad = math.pi/180.0
-imu_yaw_calibration = 0 # [deg]
-mag_declination = 15 # [deg]
+imu_yaw_calibration = 0.0
+
 # Callback for dynamic reconfigure requests
 def reconfig_callback(config, level):
     global imu_yaw_calibration
@@ -57,7 +57,7 @@ rospy.init_node("razor_node")
 pub = rospy.Publisher('imu', Imu, queue_size=1)
 srv = Server(imuConfig, reconfig_callback)  # define dynamic_reconfigure callback
 diag_pub = rospy.Publisher('diagnostics', DiagnosticArray, queue_size=1)
-diag_pub_time = rospy.get_time()
+diag_pub_time = rospy.get_time();
 
 imuMsg = Imu()
 
@@ -225,28 +225,12 @@ while not rospy.is_shutdown():
     words = string.split(line,",")    # Fields split
     if len(words) > 2:
         #in AHRS firmware z axis points down, in ROS z axis points up (see REP 103)
-        '''NOTE: Make changes to the coordinate system here
-        '''
         yaw_deg = -float(words[0])
-        #yaw_deg = yaw_deg + imu_yaw_calibration
-        yaw_deg = yaw_deg + mag_declination
-        '''
+        yaw_deg = yaw_deg + imu_yaw_calibration
         if yaw_deg > 180.0:
             yaw_deg = yaw_deg - 360.0
         if yaw_deg < -180.0:
             yaw_deg = yaw_deg + 360.0
-        '''
-        if yaw_deg > 180.0:
-            yaw_deg = yaw_deg - 540.0
-        if yaw_deg < -180.0:
-            yaw_deg = yaw_deg + 720.0
-
-        ''' mapping to yaw = 0 at x-axis (east)
-        if yaw_deg > 180.0:
-            yaw_deg = yaw_deg - 180
-        elif yaw_deg < (-1)*180:
-            yaw_deg = 360 + yaw_deg
-        '''
         yaw = yaw_deg*degrees2rad
         #in AHRS firmware y axis points right, in ROS y axis points left (see REP 103)
         pitch = -float(words[1])*degrees2rad
@@ -255,8 +239,7 @@ while not rospy.is_shutdown():
         # Publish message
         # AHRS firmware accelerations are negated
         # This means y and z are correct for ROS, but x needs reversing
-        #imuMsg.linear_acceleration.x = -float(words[3]) * accel_factor
-        imuMsg.linear_acceleration.x = float(words[3]) * accel_factor
+        imuMsg.linear_acceleration.x = -float(words[3]) * accel_factor
         imuMsg.linear_acceleration.y = float(words[4]) * accel_factor
         imuMsg.linear_acceleration.z = float(words[5]) * accel_factor
 
