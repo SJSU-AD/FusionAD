@@ -1,4 +1,4 @@
-Header Header
+Header header
 
 bool debugLocalization                  #Debug Boolean
 

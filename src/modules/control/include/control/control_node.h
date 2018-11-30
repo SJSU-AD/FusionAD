@@ -24,18 +24,17 @@ namespace control
 {
 namespace node
 {
-class control_node
+class ControlNode
 {
   public:
-    control_node();
-    ~control_node();
+    ControlNode();
+    ~ControlNode();
     void initRosComm();
     bool getParameter();
-    bool goalReached;    
-    bool debug;
+    bool goalReached, debug, externalFailFlag;
     
   private:
-    fusionad::control::lat_controller::stanley lat_control;
+    fusionad::control::lat_controller::Stanley lat_control;
     ros::NodeHandle control_nh;
     ros::Publisher control_main_pub;
     ros::Publisher control_debug_pub;
@@ -46,17 +45,22 @@ class control_node
     ros::Subscriber mode_sub;
     typedef Eigen::Matrix<float, 4, 2> pathMatrix42f; 
     Eigen::Vector2f position;
-    bool pathInitialized, stateInitialized, imuInitialized, failFlag;
+    bool pathInitialized, stateInitialized, imuInitialized, internalFailFlag;
     bool autonomousDrivingFlag, obstacleDetected;
     double roll, pitch, yaw;
-    float controlGain, linear_velocity;
+    float controlGain, linear_velocity, vehicle_heading;
     int targetPointIndex;
     ros::Timer control_cmd_timer;
 
+    const float magnetic_declination_rad = M_PI_2;
+    const float imu_residual_offset = -0.3567612546;
+
     //Heading Estimator
+    /*
     float prev_pos[2] = {0, 0};
     Eigen::Vector2f orientation_pos_vector;
     float estimated_orientation;
+    */
 
     //TODO: Safety Mechanism bool
     //bool isWorking;
@@ -65,6 +69,8 @@ class control_node
     std::vector<float> pathPointListX;
     std::vector<float> pathPointListY;
     std::vector<float>::size_type dynamicArraySize;
+
+    bool getClosesWaypoint(const nav_msgs::Path& current_path, const interface::Chassis_state& current_position, int& waypoint_index);
 
     void pathCallback(const nav_msgs::Path& trajectory_msg);
     void stateCallback(const interface::Chassis_state& veh_state_msg);

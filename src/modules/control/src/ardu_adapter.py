@@ -15,12 +15,18 @@ The high_lvl_callback takes the message from the high level control and converts
 The callbacks take the message from the low level control and convert them into radians and percentage for steering and driving respectively
 Eventually this script will be used for low level control when we move away from PID
 '''
+'''
+TODO: Need to prevent steering oscillation due to slower subscriber rate than 50 Hz
+'''
+# declaring publishers for propulsion and steering
+steering_low_lvl_node_publisher = rospy.Publisher('/control/steering_channel', Float64, queue_size=10)
+driving_low_lvl_node_publisher = rospy.Publisher('/control/driving_channel', Float64, queue_size=10)
 
-
-high_lvl_steering_callback = 319
-steering_callback = 0
-high_lvl_driving_callback = 0
-driving_callback = 0
+# declaring constants
+desired_steering = 319
+steering_msg = 0
+desired_throttle = 0
+driving_msg = 0
 
 pi = 3.1415926535
 
@@ -34,76 +40,58 @@ max_driving_input = 100
 min_driving_output = 0
 max_driving_output = 255
 
-def callback_steer(low_steering_msg):
-    ''' 
-    Converts analog input from potentiometer to steering angle in radians
-    /control/steering_response is the topic name
-    '''
-    global steering_callback
-    steering_callback = (((low_steering_msg.data-potentiometer_offset)*steering_analog_slope)-steering_analog_intercept)*pi/180
-
-def callback_drive(low_driving_msg):
-    '''
-    PWM Value from the arduino
-    /control/driving_response is the topic name
-    '''
-    global driving_callback
-    driving_callback = (low_driving_msg.data-min_driving_output)*(max_driving_input-max_driving_input)/(max_driving_output-min_driving_output)+min_driving_input
-
 def high_lvl_callback(high_lvl_control_msg):
-    '''
-    High lvl control message for both desired driving and steering input
+    '''High lvl control message for both desired driving and steering input
     /control/controlcmd is the topic name
     '''
-    global high_lvl_driving_callback
-    if high_lvl_control_msg.throttle>=0:
-        high_lvl_driving_callback = (high_lvl_control_msg.throttle-min_driving_input)*(max_driving_output-min_driving_output)/(max_driving_input-min_driving_input)+min_driving_output
+    global steering_msg
+    steering_msg = high_lvl_control_msg.steeringAngle
+    global driving_msg
+    driving_msg = high_lvl_control_msg.throttle
+
+def timer_callback(event):
+    '''Handles the conversion between steering in radians from the high level control and analog value for the low level control
+    '''
+    global desired_throttle
+    if driving_msg >= 0:
+        desired_throttle = (driving_msg-min_driving_input)*(max_driving_output-min_driving_output)/(max_driving_input-min_driving_input)+min_driving_output
     else:
-        high_lvl_driving_callback = (-1)*(abs(high_lvl_control_msg.throttle)-min_driving_input)*(max_driving_output-min_driving_output)/(max_driving_input-min_driving_input)+min_driving_output
-    
+        desired_throttle = (-1)*(abs(driving_msg)-min_driving_input)*(max_driving_output-min_driving_output)/(max_driving_input-min_driving_input)+min_driving_output
     steering_angle = 0
 
-    if(abs(high_lvl_control_msg.steeringAngle) > steering_limit_radians): # establishing limits in radians for steering
-      steering_angle = steering_limit_radians*((-1)*abs(high_lvl_control_msg.steeringAngle)/high_lvl_control_msg.steeringAngle)
+    if(abs(steering_msg) > steering_limit_radians): # establishing limits in radians for steering
+        steering_angle = steering_limit_radians*(abs(steering_msg)/steering_msg)
     else:
-      steering_angle = high_lvl_control_msg.steeringAngle 
+        steering_angle = steering_msg 
 
-    global high_lvl_steering_callback
-    high_lvl_steering_callback = ((-1)*steering_angle*180/pi+steering_analog_intercept)/steering_analog_slope+potentiometer_offset
+    global desired_steering
+    desired_steering = ((-1)*steering_angle*180/pi+steering_analog_intercept)/steering_analog_slope+potentiometer_offset
+    
+    steering_low_lvl_node_publisher.publish(desired_steering)
+    driving_low_lvl_node_publisher.publish(desired_throttle)
 
-'''
-def driving_high_lvl_callback(high_driving_msg):
-    
-    #Desired PWM Value from the high lvl control
-    
-    high_lvl_driving_callback = (high_driving_msg.data-min_driving_input)*(max_driving_output-min_driving_output)/(max_driving_input-min_driving_input)+min_driving_output
-def steering_high_lvl_callback(high_steering_msg):
-    
-    #Converts steering angle required from high lvl control to analog input for the linear actuator
-    high_lvl_steering_callback = (high_steering_msg.data*180/pi + 36.15)/.1721
-'''
 
-def Control_Adapter_Arduino_node():
-    '''
-    Node to facilitate the publisher and subscriber relationship between the high lvl and low lvl control
+def Control_Adapter_Arduino_Node():
+    '''Node to facilitate the publisher and subscriber relationship between the high lvl and low lvl control
     '''
     rospy.init_node('Control_Adapter', anonymous = True)
 
-    steering_low_lvl_node_publisher = rospy.Publisher('/control/steering_channel', Float64, queue_size=10)
-    driving_low_lvl_node_publisher = rospy.Publisher('/control/driving_channel', Float64, queue_size=10)
-    high_lvl_subscriber = rospy.Subscriber("/control/controlcmd", Controlcmd, high_lvl_callback)
-    low_lvl_steering_subscriber = rospy.Subscriber("/control/steering_response", Float64, callback_steer)
-    low_lvl_driving_subscriber = rospy.Subscriber("/control/driving_response", Float64, callback_drive)
+    rospy.Subscriber("/control/controlcmd", Controlcmd, high_lvl_callback)
+    timer = rospy.Timer(rospy.Duration(0.02), timer_callback)
 
+    rospy.spin()
+    timer.shutdown()
+    '''
     rate = rospy.Rate(50)
 
     while not rospy.is_shutdown():
-        steering_low_lvl_node_publisher.publish(high_lvl_steering_callback)
-        driving_low_lvl_node_publisher.publish(high_lvl_driving_callback)
+        steering_low_lvl_node_publisher.publish(desired_steering)
+        driving_low_lvl_node_publisher.publish(desired_throttle)
         rate.sleep()
+    '''
 
 if __name__ == '__main__':
     try:
-        Control_Adapter_Arduino_node()
+        Control_Adapter_Arduino_Node()
     except rospy.ROSInterruptException:
         pass

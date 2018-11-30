@@ -9,7 +9,6 @@ import math
 
 from geodesy_conversion_ECEF import GeodesyConverterECEF
 
-
 class GeodesyConverterENU(GeodesyConverterECEF):
     def __init__(self, latitudesData, longitudesData, heightsData):
         ## TODO: Make ECEF_to_ENU_point() a @staticmethod to reduce unnecessary object instantiation

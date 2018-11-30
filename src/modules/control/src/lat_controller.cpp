@@ -4,29 +4,11 @@ namespace fusionad{
 namespace control{
 namespace lat_controller{
 
-  stanley::stanley()
+  Stanley::Stanley()
   {
   }
-  stanley::~stanley()
+  Stanley::~Stanley()
   {
-  }
-
-  float stanley::computeHeadingError(const float &vehHeading, const float &pathHeading)
-  {
-    //Follows the convention of left turn is positive 
-    float headingError = pathHeading - vehHeading;
-    
-    if(std::isfinite(headingError))
-    {
-      debug_info.headingError = headingError;
-      return headingError;
-    }
-    else
-    {
-      debug_info.isCalculationInvalid = true;
-      std::cout << "Heading Error Calculation Is Not Finite!" << std::endl;
-      return std::numeric_limits<float>::quiet_NaN();
-    }    
   }
   
   /*float stanley::estimatePathHeading(const std::vector<float> &pathX, const std::vector<float> &pathY, const int& index)
@@ -62,77 +44,55 @@ namespace lat_controller{
     }      
   }*/
 
-  float stanley::computePathHeading(const std::vector<float> &navX, const std::vector<float> &navY ,const int &targetIndex, const int &navSize)
+  float Stanley::computePathHeading(const std::vector<float> &navX, const std::vector<float> &navY ,const int &targetIndex, const int &navSize)
   {
-    //TODO: Complete path Heading interpolation
-    Eigen::Matrix4f designMatrix;
-    Eigen::Vector4f responseVector;
-    if((targetIndex > 0) && (targetIndex < (navSize - 2))) //One point before, two points forward
+    Eigen::Matrix3f designMatrix;
+    Eigen::Vector3f responseVector;
+     //Fit with Two point forward at beginning
+    if(targetIndex == 0)                              
     {
-      designMatrix <<   std::pow(navX[targetIndex-1],3) , std::pow(navX[targetIndex-1],2), navX[targetIndex-1], 1,
-                        std::pow(navX[targetIndex],3) ,   std::pow(navX[targetIndex],2),   navX[targetIndex],   1,
-                        std::pow(navX[targetIndex+1],3) , std::pow(navX[targetIndex+1],2), navX[targetIndex+1], 1,
-                        std::pow(navX[targetIndex+2],3) , std::pow(navX[targetIndex+2],2), navX[targetIndex+2], 1;
-    
-      responseVector << navY[targetIndex-1],
-                        navY[targetIndex],
-                        navY[targetIndex+1],
-                        navY[targetIndex+2];
-    }
-    else if(targetIndex == 0)                               //Three point forward at beginning
-    {
-      designMatrix <<   std::pow(navX[targetIndex],3) ,   std::pow(navX[targetIndex],2)  , navX[targetIndex],     1,
-                        std::pow(navX[targetIndex+1],3) , std::pow(navX[targetIndex+1],2), navX[targetIndex+1],   1,
-                        std::pow(navX[targetIndex+2],3) , std::pow(navX[targetIndex+2],2), navX[targetIndex+2],   1,
-                        std::pow(navX[targetIndex+3],3) , std::pow(navX[targetIndex+3],2), navX[targetIndex+3],   1;
+      designMatrix <<   std::pow(navX[targetIndex],2)  , navX[targetIndex],     1,
+                        std::pow(navX[targetIndex+1],2), navX[targetIndex+1],   1,
+                        std::pow(navX[targetIndex+2],2), navX[targetIndex+2],   1;                        
     
       responseVector << navY[targetIndex],
                         navY[targetIndex+1],
-                        navY[targetIndex+2],
-                        navY[targetIndex+3];
+                        navY[targetIndex+2];
     }
-    else if(targetIndex == (navSize - 2))                   //Two points before, one point forward
+    //Fit with Two points before
+    else if(targetIndex == (navSize - 1))                   
     {
-      designMatrix <<   std::pow(navX[targetIndex-2],3) , std::pow(navX[targetIndex-2],2)  , navX[targetIndex-2], 1,
-                        std::pow(navX[targetIndex-1],3) , std::pow(navX[targetIndex-1],2),   navX[targetIndex-1], 1,
-                        std::pow(navX[targetIndex],3) ,   std::pow(navX[targetIndex],2),     navX[targetIndex],   1,
-                        std::pow(navX[targetIndex+1],3) , std::pow(navX[targetIndex+1],2),   navX[targetIndex+1], 1;
+      designMatrix <<   std::pow(navX[targetIndex-2],2)  , navX[targetIndex-2], 1,
+                        std::pow(navX[targetIndex-1],2),   navX[targetIndex-1], 1,
+                        std::pow(navX[targetIndex],2),     navX[targetIndex],   1;
     
       responseVector << navY[targetIndex-2],
                         navY[targetIndex-1],
-                        navY[targetIndex],
-                        navY[targetIndex+1]; 
+                        navY[targetIndex]; 
     }
-    else if(targetIndex == (navSize - 1))
+    // Normal index fitting
+    else  
     {
-      designMatrix <<   std::pow(navX[targetIndex-3],3) , std::pow(navX[targetIndex-3],2)  , navX[targetIndex-3],   1,
-                        std::pow(navX[targetIndex-2],3) , std::pow(navX[targetIndex-2],2),   navX[targetIndex-2],   1,
-                        std::pow(navX[targetIndex-1],3) , std::pow(navX[targetIndex-1],2),   navX[targetIndex-1],   1,
-                        std::pow(navX[targetIndex],3) ,   std::pow(navX[targetIndex],2),     navX[targetIndex],     1;
+      designMatrix <<   std::pow(navX[targetIndex-1],2), navX[targetIndex-1], 1,
+                        std::pow(navX[targetIndex],2),   navX[targetIndex],   1,
+                        std::pow(navX[targetIndex+1],2), navX[targetIndex+1], 1;
     
-      responseVector << navY[targetIndex-3],
-                        navY[targetIndex-2],
-                        navY[targetIndex-1],
-                        navY[targetIndex];       
-    }
-    else
-    {
-      debug_info.isCalculationInvalid = true;
-      std::cout << "Path Heading fit not work!" << std::endl;
-      return std::numeric_limits<float>::quiet_NaN();      
+      responseVector << navY[targetIndex-1],
+                        navY[targetIndex],
+                        navY[targetIndex+1];                               
     }
 
-    Eigen::ColPivHouseholderQR<Eigen::Matrix4f> dec(designMatrix);
-    Eigen::Vector4f x = dec.solve(responseVector);  
-    Eigen::Vector3f pathYawCoeff;
-    pathYawCoeff << x(0)*3,
-                    x(1)*2,
-                    x(2);     
+    Eigen::ColPivHouseholderQR<Eigen::Matrix3f> dec(designMatrix);
+    Eigen::Vector3f x = dec.solve(responseVector);  
+    Eigen::Vector2f pathYawCoeff;
+
+    // Taking the derivative of the function
+    pathYawCoeff << x(0)*2,
+                    x(1);     
               
     //Calculate pathSlope at index value;
-    pathSlope = pathYawCoeff(0)*pow(navX[targetIndex],2) +
-                pathYawCoeff(1)*navX[targetIndex] +
-                pathYawCoeff(2);     
+    pathSlope = pathYawCoeff(0) * navX[targetIndex] +
+                pathYawCoeff(1);   
 
     float nextXpos = navX[targetIndex + 1];
     float nextYpos = navY[targetIndex + 1];
@@ -151,20 +111,10 @@ namespace lat_controller{
     float heading_dx = nextXpos - targetXpos;
     float heading_dy = nextYslope - targetYpos;
 
-    float untouched_theta = atan2(heading_dy, heading_dx);
-    float pathHeadingTheta = untouched_theta;
-    /*if((abs(untouched_theta)/untouched_theta) < 0)
-    {
-      //Because ATAN2 has a range of (-pi, +pi)
-      //If the atan2 return ngative, put in the phase shift
-      pathHeadingTheta = ((2)*M_PI) - abs(untouched_theta); 
-    }
-    else
-    {
-      //if the value is positive, leave it as is
-      pathHeadingTheta = untouched_theta;
-    }*/
+    float pathHeadingTheta = atan2(heading_dy, heading_dx);
 
+
+    /**************************NaN Check*****************************/
     if(std::isfinite(pathHeadingTheta))
     {
       debug_info.pathHeading = pathHeadingTheta;
@@ -172,8 +122,8 @@ namespace lat_controller{
     }
     else
     {
-      debug_info.isCalculationInvalid = true;
-      std::cout << "Path Heading Calculation Is Not Finite!" << std::endl;
+      debug_info.pathHeadingCalcInvalid = true;
+      ROS_FATAL("Path Heading Calculation Is Not Finite!");
       return std::numeric_limits<float>::quiet_NaN();
     }  
   }
@@ -249,11 +199,13 @@ namespace lat_controller{
     }  
   }
   */
-  float stanley::computeCrossTrackError(const float &routeTheta, const float &dx, const float &dy)
+  float Stanley::computeCrossTrackError(const float &routeTheta, const float &dx, const float &dy)
   {
-    float cosTheta = std::cos(routeTheta);
-    float sinTheta = std::sin(routeTheta);
-    float lateralError = (-1) * ((cosTheta * dy) - (sinTheta * dx));    
+    // See computeCTE.m for proof  @Menson_Li
+    float lateralError = ((std::sin(routeTheta) * dx) - (std::cos(routeTheta) * dy));    
+    
+    /**************************NaN Check*****************************/
+
     if(std::isfinite(lateralError))
     {
       debug_info.CTE = lateralError;
@@ -261,14 +213,14 @@ namespace lat_controller{
     }
     else
     {
-      debug_info.isCalculationInvalid = true;
-      std::cout << "Lateral Error Calculation Is Not Finite!" << std::endl;
+      debug_info.crossTrackErrorCalcInvalid = true;
+      ROS_FATAL("Lateral Error Calculation Is Not Finite!");
       return std::numeric_limits<float>::quiet_NaN();
     }    
   }
 
   //A positive steering angle denotes the vehicle to turn its steering wheel CCW (left)
-  float stanley::computeSteeringAngle(const Eigen::Vector2f &vehPos, const std::vector<float> &routeX, const std::vector<float> &routeY,
+  float Stanley::computeSteeringAngle(const Eigen::Vector2f &vehPos, const std::vector<float> &routeX, const std::vector<float> &routeY,
                                       const float &vehSpeed, const int &wpIndex, const float& vehTheta, const float &gain,const int &pathSize)
   {
     //obtain the path heading
@@ -282,9 +234,48 @@ namespace lat_controller{
     //Compute Cross track error (lateral error of the veh to the path)
     float crossTrackError = computeCrossTrackError(pathTheta, tracking_dx, tracking_dy);
     //Find heading difference between vehicle orientation and the path
-    float headingDelta = computeHeadingError(vehTheta , pathTheta);
-    //Apply stanley kinematic control law
-    float steeringAngle = headingDelta + std::atan((gain * crossTrackError)/vehSpeed);
+    //Follows the convention of left turn is positive 
+    float headingDelta = pathTheta - vehTheta;
+
+    
+    /**************************NaN Check*****************************/
+    if(std::isfinite(headingDelta))
+    {
+      debug_info.headingError = headingDelta;
+    }
+    else
+    {
+      debug_info.headingErrorCalcInvalid = true;
+      ROS_FATAL("Heading Error Calculation Is Not Finite!");
+    }    
+    
+    //Apply Stanley kinematic control law
+    float unfilteredSteeringAngle = 0;
+
+    // Check if gain is zero, only report heading delta if gain is zero.
+    if(gain != 0)
+    {
+      unfilteredSteeringAngle = headingDelta + std::atan((gain * crossTrackError)/vehSpeed);
+    }
+    else
+    {
+      unfilteredSteeringAngle = headingDelta;
+    }
+
+    float steeringAngle = 0;
+
+    // Saturation function for limiting steering output
+    if(std::abs(unfilteredSteeringAngle) > steering_limit)
+    {
+      steeringAngle = (std::abs(unfilteredSteeringAngle)/unfilteredSteeringAngle) * steering_limit;
+    }
+    else
+    {
+      steeringAngle = unfilteredSteeringAngle;
+    }
+
+    /**************************NaN Check*****************************/
+
     if(std::isfinite(steeringAngle))
     {
       debug_info.steeringAngle = steeringAngle;
@@ -292,9 +283,9 @@ namespace lat_controller{
     }
     else
     {
-      debug_info.isCalculationInvalid = true;
-      std::cout << "Steering Angle Calculation Is Not Finite!" << std::endl;
-      return std::numeric_limits<float>::quiet_NaN();
+      debug_info.steeringAngleCalcInvalid = true;
+      ROS_FATAL("Steering Angle Calculation Is Not Finite! Returning -69 as steering angle.");
+      return -69;
     }
   }
 }
