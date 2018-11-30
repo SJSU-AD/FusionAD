@@ -56,7 +56,8 @@ namespace node
         }
 
         //imu_quaternion.setRPY(roll, pitch, yaw);
-        tf::Quaternion new_imu_quaternion = tf::createQuaternionFromRPY(roll, pitch, vehicle_heading);
+        //flipping the pitch axis
+        tf::Quaternion new_imu_quaternion = tf::createQuaternionFromRPY(roll, (-1)*pitch, vehicle_heading);
 
         adaptMsg.orientation.x = new_imu_quaternion[0];
         adaptMsg.orientation.y = new_imu_quaternion[1];

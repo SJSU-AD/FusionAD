@@ -24,6 +24,7 @@ NOTE: This script is to handle the raw wheel odometry values from the Signwise 6
 //#include "interface/Tf_rotate.h"
 #include "std_msgs/Float64.h"
 #include "std_msgs/Int32.h"
+#include "std_msgs/Int16.h"
 #include "math.h"
 #include "Eigen/Dense"
 #include "nav_msgs/Odometry.h"
@@ -39,13 +40,13 @@ namespace fusionad
 {
 namespace localization
 {
-namespace odometry_node
+namespace wheel_odometry_node
 {
-class OdometryNode
+class WheelOdometryNode
 {
     public:
-        OdometryNode();
-        ~OdometryNode();
+        WheelOdometryNode();
+        ~WheelOdometryNode();
         void initRosComm();
         
     private:
@@ -113,19 +114,22 @@ class OdometryNode
         long left_odometry_msg = 0;
         long right_odometry_msg = 0;
         float steering_msg = 0;
+
+        // initializing a deque for a running median
+        std::deque<float> vel_deque;
         
         // declare the callbacks
         void leftodometryCallback(const std_msgs::Int32& left_odometry_msg);
         void rightodometryCallback(const std_msgs::Int32& right_odometry_msg);
-        void steeringCallback(const std_msgs::Float64& steering_msg);
+        void steeringCallback(const std_msgs::Int16& steering_msg);
         //void yawCallback(const std_msgs::Float64& imu_msg);
         void odometry_state_estimation();
         //void robot_localization_matrices();
         void timerCallback(const ros::TimerEvent& event);
         //void imuCallback(const sensor_msgs::Float64& imu_msg);
 
-}; // OdometryNode
-} // odometry_node
+}; // WheelOdometryNode
+} // wheel_odometry_node
 } // localization
 } // fusionad
 #endif

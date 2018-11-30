@@ -11,22 +11,27 @@
 
  
 #include <ros.h>
-#include <std_msgs/Float64.h>
+//#include <std_msgs/Float64.h>
 #include <std_msgs/String.h>
-#include <std_msgs/Int32.h>
+//#include <std_msgs/Int32.h>
+#include <std_msgs/Int16.h>
 ros::NodeHandle nh;
 
-std_msgs::Float64 feedback;
-std_msgs::Float64 driving_feedback;
-std_msgs::Float64 steering_error_feedback;
-std_msgs::Float64 rosinfolog;
+std_msgs::Int16 feedback;
+std_msgs::Int16 driving_feedback;
+std_msgs::Int16 steering_error_feedback;
+
+// std_msgs::Float64 feedback;
+// std_msgs::Float64 driving_feedback;
+// std_msgs::Float64 steering_error_feedback;
+//std_msgs::Float64 rosinfolog;
 ////std_msgs::String roswarning;
 //std_msgs::Int32 roswarning;
 
 ros::Publisher steering_response("/control/steering_response", &feedback); // publish error instead
 ros::Publisher driving_response("/control/driving_response", &driving_feedback);
 ros::Publisher steering_error_response("/control/steering_error", &steering_error_feedback);
-ros::Publisher steering_log_response("/control/rosinfo", &rosinfolog);
+//ros::Publisher steering_log_response("/control/rosinfo", &rosinfolog);
 //ros::Publisher steering_warning_response("/control/warning", &roswarning);
 
 #include <PID_v1.h> // PID LIBRARY 
@@ -49,7 +54,6 @@ double setpoint = 319;
 double input = 0;
 double right_output = 0;
 double left_output = 0;
-double wheel_angle = 0;
 double error = 0; 
 //double upper_steering_limit = 462;
 double upper_steering_limit = 470;
@@ -57,6 +61,7 @@ double upper_steering_limit = 470;
 //double lower_steering_limit = 174;
 double lower_steering_limit = 82;
 double driving_limit = 100;
+
 
 /* POTENTIOMETER VALUES!!!
    BOUNDS ARE 462 FULL LOCK RIGHT
@@ -79,13 +84,13 @@ unsigned long loop_timestamp = 0;
 unsigned long time_out = 200;
 
 
-void drivingcallback(const std_msgs::Float64& driving_msg)
+void drivingcallback(const std_msgs::Int16& driving_msg)
 {
   driving_operation(driving_value);
   driving_value = driving_msg.data;
 }
 
-void steeringcallback(const std_msgs::Float64& steering_msg)
+void steeringcallback(const std_msgs::Int16& steering_msg)
 {
   /*
   nh.loginfo("message received");
@@ -95,8 +100,8 @@ void steeringcallback(const std_msgs::Float64& steering_msg)
   sprintf(log_msg, "steering_msg is %s", steering_msg_string);
   nh.loginfo(log_msg);
   */
-    rosinfolog.data = steering_msg.data;
-    steering_log_response.publish(&rosinfolog);
+    // rosinfolog.data = steering_msg.data;
+    // steering_log_response.publish(&rosinfolog);
     steering_timestamp = millis();
   
     if (steering_msg.data > upper_steering_limit)
@@ -111,7 +116,7 @@ void steeringcallback(const std_msgs::Float64& steering_msg)
     {
       steering_value = steering_msg.data;
       operation(steering_value);
-      double steering_tolerance = 5;
+      unsigned int steering_tolerance = 5;
       
       if(abs(steering_value-(analogRead(0))) < steering_tolerance) // need to rethink requirements of low lvl control on test platform
       {
@@ -133,8 +138,8 @@ void steeringcallback(const std_msgs::Float64& steering_msg)
     steering_error_response.publish(&steering_error_feedback);    
 }
 
-ros::Subscriber<std_msgs::Float64> steering_sub("/control/steering_channel", &steeringcallback); //subscriber initialization
-ros::Subscriber<std_msgs::Float64> driving_sub("/control/driving_channel", &drivingcallback); 
+ros::Subscriber<std_msgs::Int16> steering_sub("/control/steering_channel", &steeringcallback); //subscriber initialization
+ros::Subscriber<std_msgs::Int16> driving_sub("/control/driving_channel", &drivingcallback); 
 
 void setup() {
   // put your setup code here, to run once:
@@ -147,7 +152,7 @@ void setup() {
   nh.advertise(steering_response); // publisher to ardu_adapter for steering
   nh.advertise(driving_response); // publisher to ardu_adapter for driving
   nh.advertise(steering_error_response); // publisher for error for PID tuning
-  nh.advertise(steering_log_response);
+  //nh.advertise(steering_log_response);
 //  nh.advertise(steering_warning_response);
   pinMode(R_EN, OUTPUT); // initializing enable pins on linear actuator
   pinMode(L_EN, OUTPUT);
@@ -329,14 +334,14 @@ void forward_drive(double driving_pwm)
 
 void reverse_drive(double driving_pwm)
 {
-  if (abs(driving_pwm <= driving_limit))
+  if (abs(driving_pwm) <= driving_limit)
   {
     digitalWrite(Motor_R_EN, HIGH);
     digitalWrite(Motor_L_EN, HIGH);
     analogWrite(Motor_LPWM, abs(driving_pwm));
     analogWrite(Motor_RPWM, 0);
   }
-  else if (abs(driving_pwm>driving_limit))
+  else if (abs(driving_pwm)>driving_limit)
   {
     digitalWrite(Motor_R_EN, HIGH);
     digitalWrite(Motor_L_EN, HIGH);

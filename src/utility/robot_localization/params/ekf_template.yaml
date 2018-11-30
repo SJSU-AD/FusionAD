@@ -61,9 +61,9 @@ publish_tf: true
 #     3b. MAKE SURE something else is generating the odom->base_link transform. Note that this can even be another state
 #         estimation node from robot_localization! However, that instance should *not* fuse the global data.
 map_frame: map              # Defaults to "map" if unspecified
-odom_frame: odom            # Defaults to "odom" if unspecified
+odom_frame: gps           # Defaults to "odom" if unspecified
 base_link_frame: base_imu_link  # Defaults to "base_link" if unspecified
-world_frame: odom           # Defaults to the value of odom_frame if unspecified
+world_frame: gps          # Defaults to the value of odom_frame if unspecified
 
 # The filter accepts an arbitrary number of inputs from each input message type (nav_msgs/Odometry,
 # geometry_msgs/PoseWithCovarianceStamped, geometry_msgs/TwistWithCovarianceStamped,
@@ -71,7 +71,7 @@ world_frame: odom           # Defaults to the value of odom_frame if unspecified
 # odom1, twist0, twist1, imu0, imu1, imu2, etc. The value should be the topic name. These parameters obviously have no
 # default values, and must be specified.
 odom0: /odometry/gps
-
+#odom0: /localization/state
 # Each sensor reading updates some or all of the filter's state. These options give you greater control over which
 # values from each measurement are fed to the filter. For example, if you have an odometry message as input, but only
 # want to use its Z position value, then set the entire vector to false, except for the third entry. The order of the
@@ -87,7 +87,7 @@ odom0_config: [true,  true,  false,
 
 # If you have high-frequency data or are running with a low frequency parameter value, then you may want to increase
 # the size of the subscription queue so that more measurements are fused.
-odom0_queue_size: 2
+odom0_queue_size: 10
 
 # [ADVANCED] Large messages in ROS can exhibit strange behavior when they arrive at a high frequency. This is a result
 # of Nagle's algorithm. This option tells the ROS subscriber to use the tcpNoDelay option, which disables Nagle's
@@ -163,7 +163,7 @@ imu0_config: [false, false, false,
               true,  true,  true] 
 imu0_nodelay: false
 imu0_differential: false
-imu0_relative: false
+imu0_relative: true
 imu0_queue_size: 5
 imu0_pose_rejection_threshold: 0.8                 # Note the difference in parameter names
 imu0_twist_rejection_threshold: 0.8                #

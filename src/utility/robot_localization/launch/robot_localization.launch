@@ -1,11 +1,15 @@
 <launch>
-  <!--
+  
+  <!--  Transforms  -->
+  <node type="imu_tf_adapter" pkg="localization" name="imu_tf_adapter" output="screen">
+    </node>
+  
   <include file="$(find robot_localization)/launch/ekf_template.launch" />
   <include file="$(find robot_localization)/launch/navsat_transform_template.launch" />
-  -->
-  <node type="Imu_Tf_Adapter" pkg="localization" name="Imu_Tf_Adapter" output="screen">
+  
+  <!--
+  <node type="imu_tf_adapter" pkg="localization" name="imu_tf_adapter" output="screen">
     </node>
-
   <rosparam command="load" file="$(find robot_localization)/params/dual_ekf_navsat_example.yaml" />
 
   <node pkg="robot_localization" type="ekf_localization_node" name="ekf_se_odom" clear_params="true"/>
@@ -17,5 +21,5 @@
   <node pkg="robot_localization" type="navsat_transform_node" name="navsat_transform" clear_params="true">
     <remap from="odometry/filtered" to="odometry/filtered_map"/>
   </node>
-  
+  -->
 </launch>

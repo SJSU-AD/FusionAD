@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import rospy
-from std_msgs.msg import Float64
+#from std_msgs.msg import Float64
+from std_msgs.msg import Int16
 from interface.msg import Controlcmd
 '''
 NOTE: Please be in ~/FusionAD to run this code with the following commands:
@@ -19,8 +20,8 @@ Eventually this script will be used for low level control when we move away from
 TODO: Need to prevent steering oscillation due to slower subscriber rate than 50 Hz
 '''
 # declaring publishers for propulsion and steering
-steering_low_lvl_node_publisher = rospy.Publisher('/control/steering_channel', Float64, queue_size=10)
-driving_low_lvl_node_publisher = rospy.Publisher('/control/driving_channel', Float64, queue_size=10)
+steering_low_lvl_node_publisher = rospy.Publisher('/control/steering_channel', Int16, queue_size=10)
+driving_low_lvl_node_publisher = rospy.Publisher('/control/driving_channel', Int16, queue_size=10)
 
 # declaring constants
 desired_steering = 319
@@ -95,8 +96,9 @@ def Control_Adapter_Arduino_Node():
     # rospy.spin()
     # timer.shutdown()
     # '''
-    rate = rospy.Rate(50)
-    
+    #rate = rospy.Rate(50)
+    rate = rospy.Rate(25)
+
     while not rospy.is_shutdown():
         steering_low_lvl_node_publisher.publish(desired_steering)
         driving_low_lvl_node_publisher.publish(desired_throttle)

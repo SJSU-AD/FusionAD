@@ -2,6 +2,7 @@
 #include <std_msgs/Int32.h>
 ros::NodeHandle nh;
 std_msgs::Int32 right_odometry_feedback;
+// NOTE: CURRENT CODE ON THIS IS NOT UPLOADED TO THE ARDUINO AT THE MOMENT
 // library for high performance reads and writes by jrraines
 // see http://www.arduino.cc/cgi-bin/yabb2/YaBB.pl?num=1267553811/0
 // and http://code.google.com/p/digitalwritefast/
