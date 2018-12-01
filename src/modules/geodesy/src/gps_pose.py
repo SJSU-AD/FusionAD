@@ -45,6 +45,7 @@ class GPSDataConverter(object):
         self.latitude  = 0.0
         self.longitude = 0.0
         self.altitude  = 0.0
+        self.gpsCovar = []
 
         # For velocity caluclation
         self.foundFirstCoord = False
@@ -66,7 +67,11 @@ class GPSDataConverter(object):
         self.latitude  = gpsMsg.latitude
         self.longitude = gpsMsg.longitude
         self.altitude  = gpsMsg.altitude
+        self.gpsCovar = gpsMsg.position_covariance
+
         rospy.logdebug("Received latitude: %f, longitude: %f, altitude: %f", self.latitude, self.longitude, self.altitude)
+        gpsCovarMsg = ", ".join([str(covar) for covar in self.gpsCovar])
+        rospy.logdebug("Received GPS Covariance: [%s]", gpsCovarMsg)
 
         e, n, u = self.toENUConverter.geodetic_to_ENU_point(self.latitude, self.longitude, self.altitude, lat0=self.lat0, lon0=self.lon0, h0=self.h0)
         rospy.logdebug("Converted values: east = %f, north = %f, up = %f", e, n, u)
@@ -164,7 +169,7 @@ class GPSDataConverter(object):
         rospy.spin()
 
 def main():
-    rospy.init_node("gps_pose_converter_node", anonymous=False)
+    rospy.init_node("gps_pose_converter_node", anonymous=False, log_level=rospy.DEBUG)
     
     convertGPSData = GPSDataConverter()
 
