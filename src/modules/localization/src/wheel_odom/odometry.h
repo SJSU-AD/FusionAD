@@ -24,25 +24,29 @@ NOTE: This script is to handle the raw wheel odometry values from the Signwise 6
 //#include "interface/Tf_rotate.h"
 #include "std_msgs/Float64.h"
 #include "std_msgs/Int32.h"
+#include "std_msgs/Int16.h"
 #include "math.h"
-//#include "Eigen/Dense"
+#include "Eigen/Dense"
 #include "nav_msgs/Odometry.h"
 #include "geometry_msgs/PoseWithCovariance.h"
 #include "geometry_msgs/TwistWithCovariance.h"
 #include "sensor_msgs/Imu.h"
+#include "stdio.h"
+#include <queue>
+#include <algorithm>
 //#include <tf2/LinearMath/Quaternion.h>
 
 namespace fusionad
 {
 namespace localization
 {
-namespace odometry_node
+namespace wheel_odometry_node
 {
-class OdometryNode
+class WheelOdometryNode
 {
     public:
-        OdometryNode();
-        ~OdometryNode();
+        WheelOdometryNode();
+        ~WheelOdometryNode();
         void initRosComm();
         
     private:
@@ -93,17 +97,12 @@ class OdometryNode
         long previous_left_odometry_msg = 0;
 
         // pulses per rotation
-        const long pulses_per_rotation = 2400;
-        // pie
-        const float PI = 3.14159;
-
+        const long pulses_per_rotation = 1200;
+        
         // odometry_state_estimation() variables for dead-reckoning
         float vel_magnitude = 0;
         float x_velocity = 0;
         float y_velocity = 0;
-        // covariances 
-        float x_vel_covariance = 0;
-        float y_vel_covariance = 0;
         /*
         float x_position = 0;
         float y_position = 0;
@@ -115,20 +114,22 @@ class OdometryNode
         long left_odometry_msg = 0;
         long right_odometry_msg = 0;
         float steering_msg = 0;
-        float yaw_msg = 0;
+
+        // initializing a deque for a running median
+        std::deque<float> vel_deque;
         
         // declare the callbacks
         void leftodometryCallback(const std_msgs::Int32& left_odometry_msg);
         void rightodometryCallback(const std_msgs::Int32& right_odometry_msg);
-        void steeringCallback(const std_msgs::Float64& steering_msg);
+        void steeringCallback(const std_msgs::Int16& steering_msg);
         //void yawCallback(const std_msgs::Float64& imu_msg);
         void odometry_state_estimation();
         //void robot_localization_matrices();
         void timerCallback(const ros::TimerEvent& event);
         //void imuCallback(const sensor_msgs::Float64& imu_msg);
 
-}; // OdometryNode
-} // odometry_node
+}; // WheelOdometryNode
+} // wheel_odometry_node
 } // localization
 } // fusionad
 #endif

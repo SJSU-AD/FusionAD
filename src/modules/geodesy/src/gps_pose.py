@@ -74,8 +74,8 @@ class GPSDataConverter(object):
         h.stamp     = rospy.Time.now()
         currentTime = rospy.get_time()
 
-        currentChassisState.Header.seq = self.seq
-        currentChassisState.Header.stamp = h.stamp
+        currentChassisState.header.seq = self.seq
+        currentChassisState.header.stamp = h.stamp
 
         # Set position in publish message
         currentChassisState.Position.pose.position.x = e
