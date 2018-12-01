@@ -78,6 +78,7 @@ namespace wheel_odometry_node
             std::sort(vel_array, vel_array+n);
             float median_vel = vel_array[SAMPLE_SIZE/2];
 
+            vel_magnitude = median_vel;
             // pop the original queue
             vel_deque.pop_front();
             // NOTE: moving median logic
@@ -90,12 +91,9 @@ namespace wheel_odometry_node
         previous_yaw = yaw_estimate;
 
         // velocity estimate in x and y
-        // x_velocity = vel_magnitude * cos(yaw_estimate);
-        // y_velocity = vel_magnitude * sin(yaw_estimate);
-        
-        x_velocity = median_vel * cos(yaw_estimate);
-        y_velocity = median_vel * sin(yaw_estimate);
-        
+        x_velocity = vel_magnitude * cos(yaw_estimate);
+        y_velocity = vel_magnitude * sin(yaw_estimate);        
+
         // twist messages
         velocity_estimate.twist.linear.x = x_velocity;
         velocity_estimate.twist.linear.y = y_velocity;
@@ -115,7 +113,7 @@ namespace wheel_odometry_node
         odometry_pub.publish(full_odom_message);
     }
     
-} // odometry_node
+} // wheel_odometry_node
 } // localization
 } // fusionad
 
