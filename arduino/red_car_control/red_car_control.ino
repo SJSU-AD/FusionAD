@@ -9,7 +9,10 @@
  * Before use, let the Arduino sit for a minute to balance the Serial Bus buffer. 
  */
 
- 
+ /*
+  NOTE: PID library requires doubles as inputs, which means the global variables are set 
+  as doubles rather than a smaller data type. 
+ */
 #include <ros.h>
 //#include <std_msgs/Float64.h>
 #include <std_msgs/String.h>

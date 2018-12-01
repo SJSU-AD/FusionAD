@@ -68,7 +68,7 @@ def vel_timer_callback(event):
     previous_left_encoder_count = left_encoder_count
     previous_right_encoder_count = right_encoder_count
     # velocity estimate
-    vel_magnitude = (left_pos+right_pos)*WHEEL_RADIUS/DT
+    vel_magnitude = (left_pos+right_pos)*WHEEL_RADIUS/DT/2
     velocity_estimate_publisher.publish(vel_magnitude)
 
 def Velocity_Estimation_Node():

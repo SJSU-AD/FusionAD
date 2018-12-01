@@ -59,14 +59,14 @@ namespace wheel_odometry_node
         
         // velocity magnitude estimate
         vel_magnitude = (left_angular_vel+right_angular_vel)*WHEEL_RADIUS/2;
-        // moving median of SAMPLE_SIZE samples
+        // median of SAMPLE_SIZE samples
         const int SAMPLE_SIZE = 10;
 
         vel_deque.push_back(vel_magnitude);
         if(vel_deque.size() >= SAMPLE_SIZE)
         {
-            // start doing the moving median filtering
-            //std::queue<float> temp_vel_queue(vel_queue);
+            // start doing the median filtering
+
             float vel_array[SAMPLE_SIZE];
 
             for(int i = 0; i < SAMPLE_SIZE; ++i)
@@ -76,21 +76,25 @@ namespace wheel_odometry_node
 
             int n = sizeof(vel_array)/sizeof(vel_array[0]);
             std::sort(vel_array, vel_array+n);
-            vel_magnitude = vel_array[SAMPLE_SIZE/2];
+            float median_vel = vel_array[SAMPLE_SIZE/2];
 
             // pop the original queue
             vel_deque.pop_front();
-            vel_deque.pop_back();
-            vel_deque.push_back(vel_magnitude);
+            // NOTE: moving median logic
+            // vel_deque.pop_back();
+            // vel_deque.push_back(median_vel);
+            // 
         }
-
-        // yaw estimate from odometry and steering
+        // // yaw estimate from odometry and steering
         yaw_estimate = previous_yaw + (vel_magnitude/WHEELBASE)*tan(steering_angle)*DT;
         previous_yaw = yaw_estimate;
 
         // velocity estimate in x and y
-        x_velocity = vel_magnitude * cos(yaw_estimate);
-        y_velocity = vel_magnitude * sin(yaw_estimate);
+        // x_velocity = vel_magnitude * cos(yaw_estimate);
+        // y_velocity = vel_magnitude * sin(yaw_estimate);
+        
+        x_velocity = median_vel * cos(yaw_estimate);
+        y_velocity = median_vel * sin(yaw_estimate);
         
         // twist messages
         velocity_estimate.twist.linear.x = x_velocity;
