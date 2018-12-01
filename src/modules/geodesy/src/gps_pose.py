@@ -70,8 +70,7 @@ class GPSDataConverter(object):
         self.gpsCovar = gpsMsg.position_covariance
 
         rospy.logdebug("Received latitude: %f, longitude: %f, altitude: %f", self.latitude, self.longitude, self.altitude)
-        gpsCovarMsg = ", ".join([str(covar) for covar in self.gpsCovar])
-        rospy.logdebug("Received GPS Covariance: [%s]", gpsCovarMsg)
+        rospy.logdebug("Received GPS Covariance: [%s]", ", ".join([str(covar) for covar in self.gpsCovar]))
 
         e, n, u = self.toENUConverter.geodetic_to_ENU_point(self.latitude, self.longitude, self.altitude, lat0=self.lat0, lon0=self.lon0, h0=self.h0)
         rospy.logdebug("Converted values: east = %f, north = %f, up = %f", e, n, u)
@@ -118,7 +117,7 @@ class GPSDataConverter(object):
         ###################################
         ##### Create Odometry Message #####
         ###################################
-        currentOdomState = self.create_odom_msg(h.stamp, e, n, u, xVelocity, yVelocity, zVelocity)
+        currentOdomState = self.create_odom_msg(h.stamp, e, n, u, xVelocity, yVelocity, zVelocity, gpsMsg.position_covariance)
 
         self.statePublisher.publish(currentChassisState)
         self.odomPublisher.publish(currentOdomState)
@@ -146,7 +145,7 @@ class GPSDataConverter(object):
 
         return currentChassisState
         
-    def create_odom_msg(self, headerStamp, x, y, z, xVel, yVel, zVel):
+    def create_odom_msg(self, headerStamp, x, y, z, xVel, yVel, zVel, gpsCovarMsg):
         """Create Odometry message"""
         currentOdomState = Odometry()
 
@@ -163,6 +162,9 @@ class GPSDataConverter(object):
         currentOdomState.twist.twist.linear.y = yVel
         currentOdomState.twist.twist.linear.z = zVel
 
+        currentOdomState.pose.covariance[0] = gpsCovarMsg[0]
+        currentOdomState.pose.covariance[7] = gpsCovarMsg[4]
+
         return currentOdomState
 
     def GPS_data_converter(self):
@@ -172,7 +174,7 @@ class GPSDataConverter(object):
         rospy.spin()
 
 def main():
-    rospy.init_node("gps_pose_converter_node", anonymous=False, log_level=rospy.DEBUG)
+    rospy.init_node("gps_pose_converter_node", anonymous=False, log_level=rospy.INFO)
     
     convertGPSData = GPSDataConverter()
 
