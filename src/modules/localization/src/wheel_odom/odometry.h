@@ -25,6 +25,7 @@ NOTE: This script is to handle the raw wheel odometry values from the Signwise 6
 #include "std_msgs/Float64.h"
 #include "std_msgs/Int32.h"
 #include "std_msgs/Int16.h"
+#include "std_msgs/Float32.h"
 #include "math.h"
 #include "Eigen/Dense"
 #include "nav_msgs/Odometry.h"
@@ -68,18 +69,14 @@ class WheelOdometryNode
         ros::Subscriber odometry_left_sub;
         ros::Subscriber odometry_right_sub;
         ros::Subscriber odometry_steering_sub;
-        //ros::Subscriber odometry_imu_sub;
+        ros::Subscriber odometry_imu_sub;
 
         // Kalman Filter Preparation
         // Odometry messages
-        //nav_msgs::Odometry odometry_position_estimate;
-        //geometry_msgs::PoseWithCovariance position_estimate;
         nav_msgs::Odometry full_odom_message;
         geometry_msgs::TwistWithCovariance velocity_estimate;
-        //sensor_msgs::Imu imu_estimate
-        //sensor_msgs::NavSatFix gps_position_estimate;
+        // Imu message to extract yaw
         // use the Tf_rotate for its custom message
-        //interface::Tf_rotate tf_rotation;
         // wheelbase in meters
         const float WHEELBASE = 0.7112;
         // wheel radius in meters
@@ -109,11 +106,15 @@ class WheelOdometryNode
         */
         float yaw_estimate = 0;
         float previous_yaw = 0;
-
+        float yaw_estimate_imu = 0;
         // initialize subscriber messages
         long left_odometry_msg = 0;
         long right_odometry_msg = 0;
         float steering_msg = 0;
+
+        float yaw_msg = 0;
+        float yaw_msg_storage[100];
+        unsigned int yaw_msg_count = 0;
 
         // initializing a deque for a running median
         std::deque<float> vel_deque;
@@ -122,11 +123,11 @@ class WheelOdometryNode
         void leftodometryCallback(const std_msgs::Int32& left_odometry_msg);
         void rightodometryCallback(const std_msgs::Int32& right_odometry_msg);
         void steeringCallback(const std_msgs::Int16& steering_msg);
-        //void yawCallback(const std_msgs::Float64& imu_msg);
+        void imuCallback(const std_msgs::Float32& yaw_msg);
         void odometry_state_estimation();
         //void robot_localization_matrices();
         void timerCallback(const ros::TimerEvent& event);
-        //void imuCallback(const sensor_msgs::Float64& imu_msg);
+        
 
 }; // WheelOdometryNode
 } // wheel_odometry_node

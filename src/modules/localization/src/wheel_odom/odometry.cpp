@@ -3,6 +3,8 @@
 //       Need to initialize yaw values from the TF_master node
 //       as the initial value of yaw_estimate
 //       incorporate counter for getting IMU values for initializing yaw estimate
+//       The assumption is that we will not start driving until a certain period of time after the 
+//       car has been started (100 msec) and will collect at least 10 samples during this time. 
 namespace fusionad
 {
 namespace localization
@@ -27,7 +29,7 @@ namespace wheel_odometry_node
         odometry_left_sub = odometrynode_nh.subscribe("/localization/left_encoder_reading", 50, &WheelOdometryNode::leftodometryCallback, this);
         odometry_right_sub = odometrynode_nh.subscribe("/localization/right_encoder_reading", 50, &WheelOdometryNode::rightodometryCallback, this);
         odometry_steering_sub = odometrynode_nh.subscribe("/control/steering_response", 50, &WheelOdometryNode::steeringCallback, this);
-        //odometry_imu_sub = odometrynode_nh.subscribe("/geodesy/tf", 50, &WheelOdometryNode::);
+        odometry_imu_sub = odometrynode_nh.subscribe("/rotated_yaw", 50, &WheelOdometryNode::imuCallback, this);
     }
 
     void WheelOdometryNode::leftodometryCallback(const std_msgs::Int32& left_odometry_msg)
@@ -50,6 +52,12 @@ namespace wheel_odometry_node
         double steering_analog_intercept = 322;
         double steering_analog_slope = 424.2424;
         steering_angle = (steering_msg.data-steering_analog_intercept)/steering_analog_slope;
+    }
+
+    void WheelOdometryNode::imuCallback(const std_msgs::Float32& yaw_msg)
+    {
+        // getting yaw estimate from the imu_tf_adapter node, which rotates the yaw to adhere to ROS standards
+        yaw_estimate_imu = yaw_msg.data;
     }
 
     void WheelOdometryNode::odometry_state_estimation()
@@ -78,6 +86,7 @@ namespace wheel_odometry_node
             std::sort(vel_array, vel_array+n);
             float median_vel = vel_array[SAMPLE_SIZE/2];
 
+            vel_magnitude = median_vel;
             // pop the original queue
             vel_deque.pop_front();
             // NOTE: moving median logic
@@ -85,16 +94,29 @@ namespace wheel_odometry_node
             // vel_deque.push_back(median_vel);
             // 
         }
-        // // yaw estimate from odometry and steering
+        // yaw estimate from odometry and steering
+        
+        const int IMU_SAMPLE_SIZE = 100;
+        yaw_msg_storage[yaw_msg_count] = yaw_estimate_imu;
+        yaw_msg_count += 1;
+
+        if (yaw_msg_count == 100)
+        {
+            float yaw_msg_sum = 0;
+            for (int n = 0; n < yaw_msg_count; ++n)
+            {
+                yaw_msg_sum += yaw_msg_storage[n];
+            }
+            previous_yaw = yaw_msg_sum/yaw_msg_count;
+        }
+
         yaw_estimate = previous_yaw + (vel_magnitude/WHEELBASE)*tan(steering_angle)*DT;
         previous_yaw = yaw_estimate;
+        
 
         // velocity estimate in x and y
-        // x_velocity = vel_magnitude * cos(yaw_estimate);
-        // y_velocity = vel_magnitude * sin(yaw_estimate);
-        
-        x_velocity = median_vel * cos(yaw_estimate);
-        y_velocity = median_vel * sin(yaw_estimate);
+        x_velocity = vel_magnitude * cos(yaw_estimate);
+        y_velocity = vel_magnitude * sin(yaw_estimate);
         
         // twist messages
         velocity_estimate.twist.linear.x = x_velocity;

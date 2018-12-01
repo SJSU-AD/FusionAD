@@ -16,11 +16,8 @@ namespace node
 
     void ImuAdapterNode::initRosComm()
     {
-        //imu_timer = imuadapter_nh.createTimer(ros::Duration(0.02), &ImuAdapterNode::timerCallback, this);
-
-
         imu_pub = imuadapter_nh.advertise<sensor_msgs::Imu>("/rotated_imu", 50);
-        //imu_yaw_pub = imuadapter_nh.advertise<std_msgs::Float64>("/rotatedImu", 50);
+        imu_yaw_pub = imuadapter_nh.advertise<std_msgs::Float32>("/rotated_yaw", 50);
         //imu_original_pub = imuadapter_nh.advertise<std_msgs::Float64>("/originalImu", 50);
         imu_sub = imuadapter_nh.subscribe("/imu", 50, &ImuAdapterNode::imuCallback, this);
     }
@@ -55,8 +52,7 @@ namespace node
             vehicle_heading = adjusted_yaw;
         }
 
-        //imu_quaternion.setRPY(roll, pitch, yaw);
-        //flipping the pitch axis
+        // pitch multiplied by (-1) to adhere to ROS frame standards
         tf::Quaternion new_imu_quaternion = tf::createQuaternionFromRPY(roll, (-1)*pitch, vehicle_heading);
 
         adaptMsg.orientation.x = new_imu_quaternion[0];
@@ -64,9 +60,9 @@ namespace node
         adaptMsg.orientation.z = new_imu_quaternion[2];
         adaptMsg.orientation.w = new_imu_quaternion[3];
         
+        float odomyawMsg = vehicle_heading;
+        imu_yaw_pub.publish(odomyawMsg);
         imu_pub.publish(adaptMsg);
-        //imu_yaw_pub.publish(vehicle_heading);
-        //imu_original_pub.publish(yaw);
     }
 }// node
 }// localization
