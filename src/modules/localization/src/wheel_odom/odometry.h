@@ -71,10 +71,12 @@ class WheelOdometryNode
         ros::Subscriber odometry_steering_sub;
         ros::Subscriber odometry_imu_sub;
 
+                
         // Kalman Filter Preparation
         // Odometry messages
         nav_msgs::Odometry full_odom_message;
         geometry_msgs::TwistWithCovariance velocity_estimate;
+        
         // Imu message to extract yaw
         // use the Tf_rotate for its custom message
         // wheelbase in meters
@@ -106,25 +108,34 @@ class WheelOdometryNode
         */
         float yaw_estimate = 0;
         float previous_yaw = 0;
-        float yaw_estimate_imu = 0;
+
         // initialize subscriber messages
         long left_odometry_msg = 0;
         long right_odometry_msg = 0;
         float steering_msg = 0;
 
         float yaw_msg = 0;
+        // number of messages to store into yaw_msg_storage
+        const int yaw_msg_threshold = 100;
+        // array to store yaw messages
         float yaw_msg_storage[100];
         unsigned int yaw_msg_count = 0;
 
         // initializing a deque for a running median
         std::deque<float> vel_deque;
         
+        // declare support functions
+        // performs a calibration for the yaw estimate
+        void imu_calibration();
+        // calculates the current velocity state of the vehicle
+        void odometry_state_estimation();
+        // does the median filter calculation for the wheel odometry
+        void wheel_odom_median_filter();
         // declare the callbacks
         void leftodometryCallback(const std_msgs::Int32& left_odometry_msg);
         void rightodometryCallback(const std_msgs::Int32& right_odometry_msg);
         void steeringCallback(const std_msgs::Int16& steering_msg);
         void imuCallback(const std_msgs::Float32& yaw_msg);
-        void odometry_state_estimation();
         //void robot_localization_matrices();
         void timerCallback(const ros::TimerEvent& event);
         

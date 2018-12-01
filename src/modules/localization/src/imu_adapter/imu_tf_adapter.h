@@ -43,7 +43,7 @@ class ImuAdapterNode
         // initialize the imu message through sensor_msgs
         sensor_msgs::Imu imuMsg;
         sensor_msgs::Imu adaptMsg;
-
+        
         // declare the callbacks
         void imuCallback(const sensor_msgs::Imu& imuMsg);
         void timerCallback(const ros::TimerEvent& event);

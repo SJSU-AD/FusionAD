@@ -16,17 +16,20 @@ namespace node
 
     void ImuAdapterNode::initRosComm()
     {
-        imu_pub = imuadapter_nh.advertise<sensor_msgs::Imu>("/rotated_imu", 50);
-        imu_yaw_pub = imuadapter_nh.advertise<std_msgs::Float32>("/rotated_yaw", 50);
+        imu_pub = imuadapter_nh.advertise<sensor_msgs::Imu>("/localization/rotated_imu", 50);
+        imu_yaw_pub = imuadapter_nh.advertise<std_msgs::Float32>("/localization/rotated_yaw", 50);
         //imu_original_pub = imuadapter_nh.advertise<std_msgs::Float64>("/originalImu", 50);
         imu_sub = imuadapter_nh.subscribe("/imu", 50, &ImuAdapterNode::imuCallback, this);
     }
 
     void ImuAdapterNode::imuCallback(const sensor_msgs::Imu& imuMsg)
     {
+        // NOTE: rotates the yaw and the pitch such that the razor_9_dof_imu messages adheres to the ROS-105 standards
+        //       where yaw = 0 when pointing east. 
+
         double roll = 0, pitch = 0, yaw = 0, vehicle_heading = 0;
-        float magnetic_declination_rad = 0.2618;
-        float yaw_offset = M_PI/2;
+        const float imu_residual_offset = -0.3567612546;
+        const float yaw_offset = M_PI_2;
 
         adaptMsg = imuMsg;
         tf::Quaternion imu_quaternion(imuMsg.orientation.x,
@@ -36,8 +39,8 @@ namespace node
         tf::Matrix3x3 temporary_rot_matrix(imu_quaternion);
         temporary_rot_matrix.getRPY(roll, pitch, yaw);
 
-        //float adjusted_yaw = yaw + magnetic_declination_rad + yaw_offset;
-        float adjusted_yaw = yaw + magnetic_declination_rad;
+        float adjusted_yaw = yaw + yaw_offset + imu_residual_offset;
+        //float adjusted_yaw = yaw + magnetic_declination_rad;
 
         if(adjusted_yaw > M_PI)
         {
@@ -52,7 +55,7 @@ namespace node
             vehicle_heading = adjusted_yaw;
         }
 
-        // pitch multiplied by (-1) to adhere to ROS frame standards
+        // pitch multiplied by (-1) to adhere to ROS-105 frame standards
         tf::Quaternion new_imu_quaternion = tf::createQuaternionFromRPY(roll, (-1)*pitch, vehicle_heading);
 
         adaptMsg.orientation.x = new_imu_quaternion[0];
@@ -60,8 +63,10 @@ namespace node
         adaptMsg.orientation.z = new_imu_quaternion[2];
         adaptMsg.orientation.w = new_imu_quaternion[3];
         
-        float odomyawMsg = vehicle_heading;
-        imu_yaw_pub.publish(odomyawMsg);
+        std_msgs::Float32 odom_yaw_msg;
+        odom_yaw_msg.data = vehicle_heading;
+        
+        imu_yaw_pub.publish(odom_yaw_msg);
         imu_pub.publish(adaptMsg);
     }
 }// node
