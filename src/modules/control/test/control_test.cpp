@@ -26,19 +26,22 @@ float pathArrayY[1001] = {0,0.131138903,0.260075491,0.386823689,0.511397423,0.63
 //  ArimthMatic test case 1
 TEST(arithmatic_test_1, ShouldPass)
 {
-  fusionad::control::lat_controller::Stanley stanley_test_1;
+  fusionad::control::lat_controller::Stanley stanley_test_1{0.04};
   vector<float> pathX(pathArrayX, pathArrayX + sizeof(pathArrayX)/sizeof(pathArrayX[0]));
   vector<float> pathY(pathArrayY, pathArrayY + sizeof(pathArrayY)/sizeof(pathArrayY[0]));
 
   // Set the position of the vehical at (-1, -1)
   Eigen::Vector2f veh_pos(-1,-1);
 
+  stanley_test_1.previous_crossTrackError = 0.05;
+
   float veh_theta = 1.5708;
   float veh_velocity = 1.2;
 
   int wpIndex = 0;
 
-  float k_hard = 7;
+  float k_hard = 1;
+  float k_d = 0.3;
 
   //ASSERT_EQ(pathX.size() , pathY.size());
 
@@ -46,9 +49,9 @@ TEST(arithmatic_test_1, ShouldPass)
 
   float computed_steering_1 = stanley_test_1.computeSteeringAngle(veh_pos, pathX, pathY,
                                            veh_velocity, wpIndex,
-                                           veh_theta, k_hard, path_size);
+                                           veh_theta, k_hard, k_d, path_size);
 
-  float tc1_solution = -0.11307;
+  float tc1_solution = -0.1609;
 
   ASSERT_NEAR(tc1_solution, computed_steering_1, std::abs(tc1_solution)*0.02);
 }
@@ -57,9 +60,11 @@ TEST(arithmatic_test_1, ShouldPass)
 //  ArimthMatic test case 2
 TEST(arithmatic_test_2, ShouldPass)
 {
-  fusionad::control::lat_controller::Stanley stanley_test_2;
+  fusionad::control::lat_controller::Stanley stanley_test_2{0.04};
   vector<float> pathX(pathArrayX, pathArrayX + sizeof(pathArrayX)/sizeof(pathArrayX[0]));
   vector<float> pathY(pathArrayY, pathArrayY + sizeof(pathArrayY)/sizeof(pathArrayY[0]));
+
+  stanley_test_2.previous_crossTrackError = -0.01;
 
   // Set the position of the vehical at (10.2, 4.5)
   Eigen::Vector2f veh_pos(10.2,4.5);
@@ -69,7 +74,8 @@ TEST(arithmatic_test_2, ShouldPass)
 
   int wpIndex = 60;
 
-  float k_hard = 7;
+  float k_hard = 1;
+  float k_d = 0.3;
 
   //ASSERT_EQ(pathX.size() , pathY.size());
 
@@ -77,9 +83,9 @@ TEST(arithmatic_test_2, ShouldPass)
 
   float computed_steering_2 = stanley_test_2.computeSteeringAngle(veh_pos, pathX, pathY,
                                            veh_velocity, wpIndex,
-                                           veh_theta, k_hard, path_size);
+                                           veh_theta, k_hard, k_d, path_size);
 
-  float tc2_solution = -0.29211;
+  float tc2_solution = -0.2952;
 
   ASSERT_NEAR(tc2_solution, computed_steering_2, std::abs(tc2_solution)*0.02);
 }
@@ -88,9 +94,11 @@ TEST(arithmatic_test_2, ShouldPass)
 //  ArimthMatic test case 3
 TEST(arithmatic_test_3, ShouldPass)
 {
-  fusionad::control::lat_controller::Stanley stanley_test_3;
+  fusionad::control::lat_controller::Stanley stanley_test_3{0.04};
   vector<float> pathX(pathArrayX, pathArrayX + sizeof(pathArrayX)/sizeof(pathArrayX[0]));
   vector<float> pathY(pathArrayY, pathArrayY + sizeof(pathArrayY)/sizeof(pathArrayY[0]));
+
+  stanley_test_3.previous_crossTrackError = -0.05;
 
   // Set the position of the vehical at (86, 10.2)
   Eigen::Vector2f veh_pos(87.3,8.5);
@@ -100,7 +108,8 @@ TEST(arithmatic_test_3, ShouldPass)
 
   int wpIndex = 514;
 
-  float k_hard = 7;
+  float k_hard = 1;
+  float k_d = 0.3;
 
   //ASSERT_EQ(pathX.size() , pathY.size());
 
@@ -108,9 +117,9 @@ TEST(arithmatic_test_3, ShouldPass)
 
   float computed_steering_3 = stanley_test_3.computeSteeringAngle(veh_pos, pathX, pathY,
                                            veh_velocity, wpIndex,
-                                           veh_theta, k_hard, path_size);
+                                           veh_theta, k_hard, k_d, path_size);
 
-  float tc3_solution = -0.36652;
+  float tc3_solution = -0.3059;
 
   ASSERT_NEAR(tc3_solution, computed_steering_3,std::abs(tc3_solution)*0.02);
 }
@@ -119,9 +128,11 @@ TEST(arithmatic_test_3, ShouldPass)
 //  NaN test case 1
 TEST(NaN_test_case_1, ShouldPass)
 {
-  fusionad::control::lat_controller::Stanley stanley_test_4;
+  fusionad::control::lat_controller::Stanley stanley_test_4{0.04};
   vector<float> pathX(pathArrayX, pathArrayX + sizeof(pathArrayX)/sizeof(pathArrayX[0]));
   vector<float> pathY(pathArrayY, pathArrayY + sizeof(pathArrayY)/sizeof(pathArrayY[0]));
+
+  stanley_test_4.previous_crossTrackError = -0.05;
 
   // Set the position of the vehical at (86, 10.2)
   Eigen::Vector2f veh_pos(86,10.2);
@@ -131,7 +142,8 @@ TEST(NaN_test_case_1, ShouldPass)
 
   int wpIndex = 515;
 
-  float k_hard = 7;
+  float k_hard = 1;
+  float k_d = 0.3;
 
   //ASSERT_EQ(pathX.size() , pathY.size());
 
@@ -139,7 +151,7 @@ TEST(NaN_test_case_1, ShouldPass)
 
   float computed_steering_4 = stanley_test_4.computeSteeringAngle(veh_pos, pathX, pathY,
                                            veh_velocity, wpIndex,
-                                           veh_theta, k_hard, path_size);
+                                           veh_theta, k_hard, k_d, path_size);
 
   float tc4_solution = -69;
 
@@ -150,19 +162,22 @@ TEST(NaN_test_case_1, ShouldPass)
 //  ArimthMatic test case 4
 TEST(arithmatic_test_4, ShouldPass)
 {
-  fusionad::control::lat_controller::Stanley stanley_test_5;
+  fusionad::control::lat_controller::Stanley stanley_test_5{0.04};
   vector<float> pathX(pathArrayX, pathArrayX + sizeof(pathArrayX)/sizeof(pathArrayX[0]));
   vector<float> pathY(pathArrayY, pathArrayY + sizeof(pathArrayY)/sizeof(pathArrayY[0]));
 
   // Set the position of the vehical at (93.33, 10.7)
   Eigen::Vector2f veh_pos(93.33,10.7);
 
+  stanley_test_5.previous_crossTrackError = -0.01;
+
   float veh_theta = 0.01;
   float veh_velocity = 1.2;
 
   int wpIndex = 549;
 
-  float k_hard = 7;
+  float k_hard = 1;
+  float k_d = 0.3;
 
   //ASSERT_EQ(pathX.size() , pathY.size());
 
@@ -170,9 +185,9 @@ TEST(arithmatic_test_4, ShouldPass)
 
   float computed_steering_5 = stanley_test_5.computeSteeringAngle(veh_pos, pathX, pathY,
                                            veh_velocity, wpIndex,
-                                           veh_theta, k_hard, path_size);
+                                           veh_theta, k_hard, k_d, path_size);
 
-  float tc5_solution = -0.2671;
+  float tc5_solution = -0.26426;
 
   ASSERT_NEAR(tc5_solution, computed_steering_5, std::abs(tc5_solution)*0.02);
 }
@@ -181,9 +196,11 @@ TEST(arithmatic_test_4, ShouldPass)
 //  gain test case 1
 TEST(gain_test_1, ShouldPass)
 {
-  fusionad::control::lat_controller::Stanley stanley_test_6;
+  fusionad::control::lat_controller::Stanley stanley_test_6{0.04};
   vector<float> pathX(pathArrayX, pathArrayX + sizeof(pathArrayX)/sizeof(pathArrayX[0]));
   vector<float> pathY(pathArrayY, pathArrayY + sizeof(pathArrayY)/sizeof(pathArrayY[0]));
+
+  stanley_test_6.previous_crossTrackError = -0.05;
 
   // Set the position of the vehicle at (93.33, 10.7)
   Eigen::Vector2f veh_pos(93.33,10.7);
@@ -195,6 +212,7 @@ TEST(gain_test_1, ShouldPass)
 
   // Setting gain to 0
   float k_hard = 0;
+  float k_d = 0.3;
 
   //ASSERT_EQ(pathX.size() , pathY.size());
 
@@ -202,7 +220,7 @@ TEST(gain_test_1, ShouldPass)
 
   float computed_steering_6 = stanley_test_6.computeSteeringAngle(veh_pos, pathX, pathY,
                                            veh_velocity, wpIndex,
-                                           veh_theta, k_hard, path_size);
+                                           veh_theta, k_hard, k_d, path_size);
 
   float tc6_solution = 0.0035004;
 

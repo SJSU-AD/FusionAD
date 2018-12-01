@@ -26,7 +26,7 @@ class Stanley
     // Steering Limit is set to 21 deg
     float steering_limit = 0.36652;
     float previous_crossTrackError = 0;
-    float control_interval;    
+    float control_interval;
     float computeSteeringAngle(const Eigen::Vector2f &vehPos,const std::vector<float> &routeX,
                                 const std::vector<float> &routeY,const float &vehSpeed,
                                 const int &wpIndex, const float &vehTheta,const float &p_gain,
