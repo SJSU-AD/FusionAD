@@ -14,6 +14,7 @@ import rospy
 from sensor_msgs.msg import NavSatFix
 from geometry_msgs.msg import Point, Pose, PoseStamped
 from std_msgs.msg import Header
+from nav_msgs.msg import Odometry
 
 import gps_parser
 from interface.msg import Chassis_state
@@ -31,13 +32,15 @@ class GPSDataConverter(object):
     ---------
     Topic: /localization/state
         Msg: Chassis_state.msg
+    Topic: /gps/geodesy
+        Msg: nav_msgs/Odometry.msg
     """
     
     def __init__(self):
         self.statePublisher = rospy.Publisher("/localization/state", Chassis_state, queue_size=1000)
-        rospy.loginfo("Instantiated publisher")
+        self.odomPublisher = rospy.Publisher("/gps/geodesy", Odometry, queue_size=1000)
+        rospy.loginfo("Instantiated gps_pose publishers")
         # self.rate = rospy.Rate(1)
-        self.seq = 0
 
         self.latitude  = 0.0
         self.longitude = 0.0
@@ -68,19 +71,13 @@ class GPSDataConverter(object):
         e, n, u = self.toENUConverter.geodetic_to_ENU_point(self.latitude, self.longitude, self.altitude, lat0=self.lat0, lon0=self.lon0, h0=self.h0)
         rospy.logdebug("Converted values: east = %f, north = %f, up = %f", e, n, u)
 
-        currentChassisState = Chassis_state()
+        ############################
+        ##### Message Creation #####
+        ############################
 
         h = Header()
         h.stamp     = rospy.Time.now()
         currentTime = rospy.get_time()
-
-        currentChassisState.header.seq = self.seq
-        currentChassisState.header.stamp = h.stamp
-
-        # Set position in publish message
-        currentChassisState.Position.pose.position.x = e
-        currentChassisState.Position.pose.position.y = n
-        currentChassisState.Position.pose.position.z = u
 
         # Set velocity in publish message
         if not self.foundFirstCoord:
@@ -97,22 +94,69 @@ class GPSDataConverter(object):
         rospy.logdebug("Current U = %f, previous U = %f", u, self.prevU)
         rospy.logdebug("Time delta = %f", timeDelta)
 
-        currentChassisState.Speed.twist.linear.x = (e - self.prevE) / timeDelta
-        currentChassisState.Speed.twist.linear.y = (n - self.prevN) / timeDelta
-        currentChassisState.Speed.twist.linear.z = (u - self.prevU) / timeDelta
+        xVelocity = (e - self.prevE) / timeDelta
+        yVelocity = (n - self.prevN) / timeDelta
+        zVelocity = (u - self.prevU) / timeDelta
+
+        ########################################
+        ##### Create Chassis_state Message #####
+        ########################################
+        currentChassisState = self.create_chassis_state_msg(h.stamp, e, n, u, xVelocity, yVelocity, zVelocity)
 
         self.prevE = e
         self.prevN = n
         self.prevU = u
-        self.prevTime = currentTime
+
+        ###################################
+        ##### Create Odometry Message #####
+        ###################################
+        currentOdomState = self.create_odom_msg(h.stamp, e, n, u, xVelocity, yVelocity, zVelocity)
 
         self.statePublisher.publish(currentChassisState)
+        self.odomPublisher.publish(currentOdomState)
 
-        rospy.loginfo("Published Chassis state message")
-        self.seq += 1
+        rospy.loginfo("Published Chassis_state message")
+        rospy.loginfo("Published Odom message")
 
         # TODO: Overwrite latitudesData[0], longitudesData[0], heightsData[0] with actual initial position?
     
+    def create_chassis_state_msg(self, headerStamp, x, y, z, xVel, yVel, zVel):
+        """Compose Chassis_state message"""
+        currentChassisState = Chassis_state()
+
+        currentChassisState.header.stamp = headerStamp
+
+        # Set position in publish message
+        currentChassisState.Position.pose.position.x = x
+        currentChassisState.Position.pose.position.y = y
+        currentChassisState.Position.pose.position.z = z
+
+        # Set velocity in publish message
+        currentChassisState.Speed.twist.linear.x = xVel
+        currentChassisState.Speed.twist.linear.y = yVel
+        currentChassisState.Speed.twist.linear.z = zVel
+
+        return currentChassisState
+        
+    def create_odom_msg(self, headerStamp, x, y, z, xVel, yVel, zVel):
+        """Create Odometry message"""
+        currentOdomState = Odometry()
+
+        currentOdomState.header.stamp = headerStamp
+
+        currentOdomState.child_frame_id = "gps"
+
+        # Set position in publish message
+        currentOdomState.pose.pose.position.x = x
+        currentOdomState.pose.pose.position.y = y
+        currentOdomState.pose.pose.position.z = z
+
+        currentOdomState.twist.twist.linear.x = xVel
+        currentOdomState.twist.twist.linear.y = yVel
+        currentOdomState.twist.twist.linear.z = zVel
+
+        return currentOdomState
+
     def GPS_data_converter(self):
         """Take GPS data, convert to ENU, and republish"""
         rospy.Subscriber("/gps/fix", NavSatFix, self.GPS_to_ENU_callback, queue_size=1000)
