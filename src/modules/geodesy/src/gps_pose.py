@@ -91,8 +91,11 @@ class GPSDataConverter(object):
             self.prevU = u
             self.prevTime = float("nan")
             self.foundFirstCoord = True
+
+        rospy.logdebug("Current time: %f, Previous time: %f", currentTime, self.prevTime)
         
         timeDelta = currentTime - self.prevTime
+        self.prevTime = currentTime
 
         rospy.logdebug("Current E = %f, previous E = %f", e, self.prevE)
         rospy.logdebug("Current N = %f, previous N = %f", n, self.prevN)
