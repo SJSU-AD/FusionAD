@@ -4,45 +4,13 @@ namespace fusionad{
 namespace control{
 namespace lat_controller{
 
-  Stanley::Stanley()
+  Stanley::Stanley(float loop_time):control_interval(loop_time)
   {
+    //control_interval = loop_time;
   }
   Stanley::~Stanley()
   {
   }
-  
-  /*float stanley::estimatePathHeading(const std::vector<float> &pathX, const std::vector<float> &pathY, const int& index)
-  {
-    //Linear interpolate the vector
-    float heading_dx = pathX[index + 1] - pathX[index];
-    float heading_dy = pathY[index + 1] - pathY[index];
-
-    float untouched_theta = atan2(heading_dy, heading_dx);
-    float pathHeadingTheta;
-    if((abs(untouched_theta)/untouched_theta) < 0)
-    {
-      //Because ATAN2 has a range of (-pi, +pi)
-      //If the atan2 return ngative, put in the phase shift
-      pathHeadingTheta = (2*M_PI) - abs(untouched_theta); 
-    }
-    else
-    {
-      //if the value is positive, leave it as is
-      pathHeadingTheta = untouched_theta;
-    }
-
-    if(std::isfinite(pathHeadingTheta))
-    {
-      debug_info.est_pathHeading = pathHeadingTheta;
-      return pathHeadingTheta;
-    }
-    else
-    {
-      debug_info.isCalculationInvalid = true;
-      std::cout << "Path Heading Calculation Is Not Finite!" << std::endl;
-      return std::numeric_limits<float>::quiet_NaN();
-    }      
-  }*/
 
   float Stanley::computePathHeading(const std::vector<float> &navX, const std::vector<float> &navY ,const int &targetIndex, const int &navSize)
   {
@@ -128,77 +96,6 @@ namespace lat_controller{
     }  
   }
 
-  /*float stanley::computePathHeading(const pathMatrix42f &trajectory, const int &targetIndex)
-  {
-    //TODO: Complete path Heading interpolation
-    Eigen::Matrix4f designMatrix;
-    Eigen::Vector4f responseVector;
-    designMatrix << pow(trajectory(0,0),3) , pow(trajectory(0,0),2), trajectory(0,0), 1,
-                    pow(trajectory(1,0),3) , pow(trajectory(1,0),2), trajectory(1,0), 1,
-                    pow(trajectory(2,0),3) , pow(trajectory(2,0),2), trajectory(2,0), 1,
-                    pow(trajectory(3,0),3) , pow(trajectory(3,0),2), trajectory(3,0), 1;
-    
-    responseVector << trajectory(0,1),
-                      trajectory(1,1),
-                      trajectory(2,1),
-                      trajectory(3,1);
-
-    Eigen::ColPivHouseholderQR<Eigen::Matrix4f> dec(designMatrix);
-    pathYawCoeff = dec.solve(responseVector);  
-
-    pathYawCoeff << pathYawCoeff(0)*3,
-                    pathYawCoeff(1)*2,
-                    pathYawCoeff(2);     
-               
-    //Calculate pathSlope at index value;
-    float pathSlope = pathYawCoeff(0)*pow(trajectory(targetIndex,0),2) +
-                       pathYawCoeff(1)*trajectory(targetIndex,0) +
-                       pathYawCoeff(2);
-
-    float nextXpos = trajectory(targetIndex+1,0);
-    float nextYpos = trajectory(targetIndex+1,1);
-
-    float targetXpos = trajectory(targetIndex,0);
-    float targetYpos = trajectory(targetIndex,1);
-
-    //Now estimate the direction of the path to generate heading.
-    //Find the linear representation of the slope
-    float b = targetYpos - (pathSlope * targetXpos);
-    
-    //Find the next Y point of the slope to get the linear interpolated vector
-    float nextYslope = (pathSlope*nextXpos) + b;
-
-    //Linear interpolate the vector
-    float heading_dx = nextXpos - targetXpos;
-    float heading_dy = nextYslope - targetYpos;
-
-    float untouched_theta = atan2(heading_dy, heading_dx);
-    float pathHeadingTheta;
-    if((abs(untouched_theta)/untouched_theta) < 0)
-    {
-      //Because ATAN2 has a range of (-pi, +pi)
-      //If the atan2 return ngative, put in the phase shift
-      pathHeadingTheta = (2*M_PI) - abs(untouched_theta); 
-    }
-    else
-    {
-      //if the value is positive, leave it as is
-      pathHeadingTheta = untouched_theta;
-    }
-
-    if(std::isfinite(pathHeadingTheta))
-    {
-      debug_info.pathHeading = pathHeadingTheta;
-      return pathHeadingTheta;
-    }
-    else
-    {
-      debug_info.isCalculationInvalid = true;
-      std::cout << "Path Heading Calculation Is Not Finite!" << std::endl;
-      return std::numeric_limits<float>::quiet_NaN();
-    }  
-  }
-  */
   float Stanley::computeCrossTrackError(const float &routeTheta, const float &dx, const float &dy)
   {
     // See computeCTE.m for proof  @Menson_Li
@@ -221,7 +118,8 @@ namespace lat_controller{
 
   //A positive steering angle denotes the vehicle to turn its steering wheel CCW (left)
   float Stanley::computeSteeringAngle(const Eigen::Vector2f &vehPos, const std::vector<float> &routeX, const std::vector<float> &routeY,
-                                      const float &vehSpeed, const int &wpIndex, const float& vehTheta, const float &gain,const int &pathSize)
+                                      const float &vehSpeed, const int &wpIndex, const float& vehTheta, const float &p_gain, const float &d_gain
+                                      ,const int &pathSize)
   {
     //obtain the path heading
     //float unusedpathTheta = estimatePathHeading(routeX, routeY, wpIndex);
@@ -250,23 +148,44 @@ namespace lat_controller{
     }    
     
     //Apply Stanley kinematic control law
-<<<<<<< HEAD
-    float unfilteredSteeringAngle = headingDelta + std::atan((gain * crossTrackError)/vehSpeed);
-=======
     float unfilteredSteeringAngle = 0;
 
-    // Check if gain is zero, only report heading delta if gain is zero.
-    if(gain != 0)
+    if(std::isfinite(control_interval))
     {
-      unfilteredSteeringAngle = headingDelta + std::atan((gain * crossTrackError)/vehSpeed);
+      debug_info.control_loop_period = control_interval;
+    }
+    else
+    {
+      ROS_FATAL("Control Loop Period Is Not Finite!");
+    } 
+
+
+    float crossTrackError_dot = (crossTrackError-previous_crossTrackError) / control_interval;
+
+    if(std::isfinite(crossTrackError_dot))
+    {
+      debug_info.CTE_dot = crossTrackError_dot;
+    }
+    else
+    {
+      debug_info.headingErrorCalcInvalid = true;
+      ROS_FATAL("CTE derivative Calculation Is Not Finite!");
+    }
+
+    // Check if gain is zero, only report heading delta if gain is zero.
+    if((p_gain != 0) && (d_gain != 0))
+    {
+      unfilteredSteeringAngle = headingDelta + 
+                                std::atan(((p_gain*crossTrackError) + (d_gain * crossTrackError_dot))/ vehSpeed);
     }
     else
     {
       unfilteredSteeringAngle = headingDelta;
     }
->>>>>>> b90c2815d158d8d3b3af00809b6008b9177db78d
 
     float steeringAngle = 0;
+
+    previous_crossTrackError = crossTrackError;
 
     // Saturation function for limiting steering output
     if(std::abs(unfilteredSteeringAngle) > steering_limit)
