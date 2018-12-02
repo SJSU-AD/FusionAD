@@ -3,6 +3,8 @@
 //       Need to initialize yaw values from the TF_master node
 //       as the initial value of yaw_estimate
 //       incorporate counter for getting IMU values for initializing yaw estimate
+//       The assumption is that we will not start driving until a certain period of time after the 
+//       car has been started (100 msec) and will collect at least 10 samples during this time. 
 namespace fusionad
 {
 namespace localization
@@ -22,12 +24,12 @@ namespace wheel_odometry_node
         // create a timer at 50 Hz
         odometry_timer = odometrynode_nh.createTimer(ros::Duration(0.02), &WheelOdometryNode::timerCallback, this);
         // main publisher for odometry
-        odometry_pub = odometrynode_nh.advertise<nav_msgs::Odometry>("/localization/twist", 50);
+        odometry_pub = odometrynode_nh.advertise<nav_msgs::Odometry>("/localization/wheel_odom_twist", 50);
         // subscribers for odometry
         odometry_left_sub = odometrynode_nh.subscribe("/localization/left_encoder_reading", 50, &WheelOdometryNode::leftodometryCallback, this);
         odometry_right_sub = odometrynode_nh.subscribe("/localization/right_encoder_reading", 50, &WheelOdometryNode::rightodometryCallback, this);
         odometry_steering_sub = odometrynode_nh.subscribe("/control/steering_response", 50, &WheelOdometryNode::steeringCallback, this);
-        //odometry_imu_sub = odometrynode_nh.subscribe("/geodesy/tf", 50, &WheelOdometryNode::);
+        odometry_imu_sub = odometrynode_nh.subscribe("/localization/rotated_yaw", 50, &WheelOdometryNode::imuCallback, this);
     }
 
     void WheelOdometryNode::leftodometryCallback(const std_msgs::Int32& left_odometry_msg)
@@ -52,14 +54,37 @@ namespace wheel_odometry_node
         steering_angle = (steering_msg.data-steering_analog_intercept)/steering_analog_slope;
     }
 
-    void WheelOdometryNode::odometry_state_estimation()
+    void WheelOdometryNode::imuCallback(const std_msgs::Float32& yaw_msg)
     {
-        //TODO: Need to change how deque is grabbing values
-        // bicycle model dead-reckoning
-        
-        // velocity magnitude estimate
-        vel_magnitude = (left_angular_vel+right_angular_vel)*WHEEL_RADIUS/2;
-        // median of SAMPLE_SIZE samples
+        // getting yaw estimate from the imu_tf_adapter node, which rotates the yaw to adhere to ROS standards
+        if (yaw_msg_count <= yaw_msg_threshold)
+        {
+            yaw_msg_storage[yaw_msg_count] = yaw_msg.data;
+            yaw_msg_count += 1;
+            imu_calibration();
+        }
+    }
+
+    void WheelOdometryNode::imu_calibration()
+    {
+        // function to calibrate the initialized yaw value
+        // collects 100 samples of yaw messages and averages them
+        // if the threshold (100 samples) is met, then calculate the average of the values
+        if (yaw_msg_count == yaw_msg_threshold)
+        {
+            float yaw_msg_sum = 0;
+            for (int n = 0; n < yaw_msg_threshold; n++)
+            {
+                yaw_msg_sum += yaw_msg_storage[n];
+            }
+            previous_yaw = yaw_msg_sum/yaw_msg_threshold;
+            ROS_INFO("Yaw Calibration Completed!");
+        }
+    }
+
+    void WheelOdometryNode::wheel_odom_median_filter()
+    {
+        // function to perform median filtering to the velocity message data
         const int SAMPLE_SIZE = 10;
 
         vel_deque.push_back(vel_magnitude);
@@ -69,31 +94,49 @@ namespace wheel_odometry_node
 
             float vel_array[SAMPLE_SIZE];
 
-            for(int i = 0; i < SAMPLE_SIZE; ++i)
+            for(int i = 0; i < SAMPLE_SIZE; i++)
             {
                 vel_array[i] = vel_deque[i];
             }
 
             int n = sizeof(vel_array)/sizeof(vel_array[0]);
             std::sort(vel_array, vel_array+n);
+
             float median_vel = vel_array[SAMPLE_SIZE/2];
 
             vel_magnitude = median_vel;
+            
+            //vel_magnitude = vel_array[SAMPLE_SIZE/2];
+            
             // pop the original queue
             vel_deque.pop_front();
             // NOTE: moving median logic
             // vel_deque.pop_back();
-            // vel_deque.push_back(median_vel);
+            // vel_deque.push_back(vel_magnitude);
             // 
         }
-        // // yaw estimate from odometry and steering
+    }
+
+    
+    void WheelOdometryNode::odometry_state_estimation()
+    {
+        //TODO: Need to change how deque is grabbing values
+        // bicycle model dead-reckoning
+        
+        // velocity magnitude estimate
+        vel_magnitude = (left_angular_vel+right_angular_vel)*WHEEL_RADIUS/2;
+        // calculating median of the velocities
+        wheel_odom_median_filter();
+        
+        // yaw estimate from odometry and steering
         yaw_estimate = previous_yaw + (vel_magnitude/WHEELBASE)*tan(steering_angle)*DT;
         previous_yaw = yaw_estimate;
+        
 
         // velocity estimate in x and y
         x_velocity = vel_magnitude * cos(yaw_estimate);
-        y_velocity = vel_magnitude * sin(yaw_estimate);        
-
+        y_velocity = vel_magnitude * sin(yaw_estimate);
+        
         // twist messages
         velocity_estimate.twist.linear.x = x_velocity;
         velocity_estimate.twist.linear.y = y_velocity;
@@ -110,6 +153,8 @@ namespace wheel_odometry_node
     {
         odometry_state_estimation();
         full_odom_message.twist = velocity_estimate;
+        // declaring the header frame of the wheel_odom message
+        full_odom_message.header.frame_id = "odom";
         odometry_pub.publish(full_odom_message);
     }
     
