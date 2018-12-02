@@ -24,13 +24,9 @@ class TestGeodesy(unittest.TestCase):
         geodesyTester = Geodesy()
         self.assertAlmostEqual(geodesyTester.euclidian_distance_2d(0, 0, 3, 4), 5, places=7)
     
-    
-
-    
-
 def main():
-    import rosunit
-    rosunit.unitrun(PKG, 'test_geodesy', TestGeodesy)
+    import rostest
+    rostest.run(PKG, 'test_geodesy', TestGeodesy)
 
 if __name__ == '__main__':
     main()
