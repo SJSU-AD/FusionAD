@@ -3,7 +3,7 @@ frequency: 30
 
 # Delay time, in seconds, before we calculate the transform from the UTM frame to your world frame. This is especially
 # important if you have use_odometry_yaw set to true. Defaults to 0.
-delay: 3.0
+delay: 0
 
 # PLEASE READ: Like all nodes in robot_localization, this node assumes that your IMU data is reported in the ENU frame.
 # Many IMUs report data in the NED frame, so you'll want to verify that your data is in the correct frame before using
@@ -15,10 +15,10 @@ magnetic_declination_radians: 0
 
 # Your IMU's yaw, once the magentic_declination_radians value is added to it, should report 0 when facing east. If it
 # doesn't, enter the offset here. Defaults to 0.
-yaw_offset: 0.0
+yaw_offset: 0
 
 # If this is true, the altitude is set to 0 in the output odometry message. Defaults to false.
-zero_altitude: false
+zero_altitude: true
 
 # If this is true, the transform world_frame->utm transform is broadcast for use by other nodes. Defaults to false.
 broadcast_utm_transform: false
@@ -29,12 +29,12 @@ broadcast_utm_transform_as_parent_frame: false
 
 # If this is true, all received odometry data is converted back to a lat/lon and published as a NavSatFix message as
 # /gps/filtered. Defaults to false.
-publish_filtered_gps: false
+publish_filtered_gps: true
 
 # If this is true, the node ignores the IMU data and gets its heading from the odometry source (typically the
 # /odometry/filtered topic coming from one of robot_localization's state estimation nodes). BE CAREFUL when using this!
 # The yaw value in your odometry source *must* be world-referenced, e.g., you cannot use your odometry source for yaw
-# if your yaw data is based purely on integrated velocities. Defaults to false.
+# if your yaw data is based purIt does not seem like it, or at least I wouldn't know how to do it. It would require modifying the ros_serial.py package that comes with Arduino. ely on integrated velocities. Defaults to false.
 use_odometry_yaw: false
 
 # If true, will retrieve the datum from the 'datum' parameter below, if available. If no 'datum' parameter exists,
