@@ -16,7 +16,7 @@ sys.path.append(os.path.join(rospack.get_path('geodesy'), 'src/'))
 from geodesy import Geodesy
 
 PKG = "geodesy"
-NAME = 'test_geodesy'
+NAME = "test_geodesy"
 
 class TestGeodesy(unittest.TestCase):
     """Validate calculations from geodesy.py"""
