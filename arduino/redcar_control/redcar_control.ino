@@ -8,11 +8,11 @@
 
 double left_setpoint = 0; // declare ALL the variables
 double right_setpoint = 0;
-double setpoint = 319;
+double setpoint = 183;
 double input = 0;
 double right_output = 0;
 double left_output = 0;
-double incoming = 319;
+double incoming = 183;
 double incoming_input = 0;
 double wheel_angle = 0;
 double error = 0;
