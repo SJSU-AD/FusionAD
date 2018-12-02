@@ -3,6 +3,7 @@
 
 #include "ros/ros.h"
 #include "std_msgs/Float64.h"
+#include "std_msgs/Float32.h"
 #include "std_msgs/Int32.h"
 #include "math.h"
 #include "Eigen/Dense"
@@ -35,7 +36,6 @@ class ImuAdapterNode
         // initialize publisher
         ros::Publisher imu_pub;
         ros::Publisher imu_yaw_pub;
-        ros::Publisher imu_original_pub;
 
         // initialize subscriber
         ros::Subscriber imu_sub;
@@ -43,11 +43,7 @@ class ImuAdapterNode
         // initialize the imu message through sensor_msgs
         sensor_msgs::Imu imuMsg;
         sensor_msgs::Imu adaptMsg;
-        //tf::Quaternion q_rot;
         
-        //double roll,pitch,yaw;
-        //double vehicle_heading;
-
         // declare the callbacks
         void imuCallback(const sensor_msgs::Imu& imuMsg);
         void timerCallback(const ros::TimerEvent& event);
