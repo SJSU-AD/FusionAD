@@ -25,6 +25,7 @@ catkin_add_nosetests(test/test_geodesy.py)
 if(CATKIN_ENABLE_TESTING)
   find_package(rostest REQUIRED)
   add_rostest(test/test_geodesy.py)
+  add_rostest(test/test_gps_parser.py)
 endif()
 
 ## System dependencies are found with CMake's conventions

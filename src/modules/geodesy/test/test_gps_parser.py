@@ -13,7 +13,7 @@ import sys
 import unittest
 sys.path.append(os.path.join(rospack.get_path('geodesy'), 'src/'))
 
-from geodesy import gps_parser
+import gps_parser
 
 PKG = "geodesy"
 NAME = "test_gps_parser"
