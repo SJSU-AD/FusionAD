@@ -1,4 +1,7 @@
 <launch>
   <test test-name="test_geodesy" pkg="geodesy" type="test_geodesy.py" />
-  <test test-name="test_gps_parser" pkg="geodesy" type="test_gps_parser.py" />
+  
+  
+  <!-- Does not work with rostest. Need to use unittest command to test -->
+  <!-- <test test-name="test_gps_parser" pkg="geodesy" type="test_gps_parser.py" /> -->
 </launch>
