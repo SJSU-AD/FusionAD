@@ -1,11 +1,17 @@
 <launch>
   
   <!--  Transforms  -->
-  <node type="imu_tf_adapter" pkg="localization" name="imu_tf_adapter" output="screen">
-    </node>
+  <node type="odometry" pkg="localization" name="odometry" output="screen">
+  </node>
+
+  <node type="imu_tf_adapter" pkg="localization" name="imu_adapter" output="screen">
+  </node>
+
+  <node type="gps_pose.py" pkg="geodesy" name="gps_pose_converter" output="screen">
+      <param name="~file_path" value="$(find geodesy)/geodesy_data/gps_coarse_points/student_union_straight.txt" />
+  </node>
   
   <include file="$(find robot_localization)/launch/ekf_template.launch" />
-  <include file="$(find robot_localization)/launch/navsat_transform_template.launch" />
   
   <!--
   <node type="imu_tf_adapter" pkg="localization" name="imu_tf_adapter" output="screen">

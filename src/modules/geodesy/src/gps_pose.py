@@ -151,7 +151,7 @@ class GPSDataConverter(object):
 
         currentOdomState.header.stamp = headerStamp
 
-        currentOdomState.child_frame_id = "gps"
+        currentOdomState.header.frame_id = "odom"
 
         # Set position in publish message
         currentOdomState.pose.pose.position.x = x

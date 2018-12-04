@@ -76,6 +76,7 @@ class WheelOdometryNode
         // Odometry messages
         nav_msgs::Odometry full_odom_message;
         geometry_msgs::TwistWithCovariance velocity_estimate;
+        //geometry_msgs::PoseWithCovariance position_estimate;
         
         // Imu message to extract yaw
         // use the Tf_rotate for its custom message
@@ -102,10 +103,12 @@ class WheelOdometryNode
         float vel_magnitude = 0;
         float x_velocity = 0;
         float y_velocity = 0;
-        /*
+        
         float x_position = 0;
         float y_position = 0;
-        */
+        float previous_x_position = 0;
+        float previous_y_position = 0;
+        
         float yaw_estimate = 0;
         float previous_yaw = 0;
 

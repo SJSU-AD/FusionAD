@@ -82,6 +82,13 @@ namespace wheel_odometry_node
         }
     }
 
+    // void WheelOdometryNode::pose_calibration()
+    // {
+    //     // function to calibrate the initialized x and y pose
+    //     // collects 100 samples of GPS messages and averages them
+    //     // ikf the threshold (100 samples) is met, then calculate the average of the values
+    // }
+
     void WheelOdometryNode::wheel_odom_median_filter()
     {
         // function to perform median filtering to the velocity message data
@@ -117,10 +124,8 @@ namespace wheel_odometry_node
         }
     }
 
-    
     void WheelOdometryNode::odometry_state_estimation()
     {
-        //TODO: Need to change how deque is grabbing values
         // bicycle model dead-reckoning
         
         // velocity magnitude estimate
@@ -132,16 +137,36 @@ namespace wheel_odometry_node
         yaw_estimate = previous_yaw + (vel_magnitude/WHEELBASE)*tan(steering_angle)*DT;
         previous_yaw = yaw_estimate;
         
-
         // velocity estimate in x and y
         x_velocity = vel_magnitude * cos(yaw_estimate);
         y_velocity = vel_magnitude * sin(yaw_estimate);
         
+        /*
+        // position estimate in x and y
+        x_position = previous_x_position + x_velocity*DT;
+        y_position = previous_y_position + y_velocity*DT;
+
+        // getting the previous x and y positions
+        previous_x_position = x_position;
+        previous_y_position = y_position;
+
+        // position messages
+        position_estimate.pose.pose.position.x = x_position;
+        position_estimate.pose.pose.position.y = y_position;
+
+        // position covariances
+        float x_pose_covariance = 0;
+        float y_pose_covariance = 0;
+
+        position_estimate.covariance[0] = x_pose_covariance;
+        position_estimate.covariance[7] = y_pose_covariance;
+        */
+
         // twist messages
         velocity_estimate.twist.linear.x = x_velocity;
         velocity_estimate.twist.linear.y = y_velocity;
-        //velocity_estimate.linear.z = 0;
-        // covariances 
+        
+        // velocity covariances 
         float x_vel_covariance = 0.0021878/2;
         float y_vel_covariance = 0.0021878/2;
 
@@ -153,8 +178,11 @@ namespace wheel_odometry_node
     {
         odometry_state_estimation();
         full_odom_message.twist = velocity_estimate;
+
         // declaring the header frame of the wheel_odom message
         full_odom_message.header.frame_id = "odom";
+        // timestamping the message
+        full_odom_message.header.stamp = ros::Time::now();
         odometry_pub.publish(full_odom_message);
     }
     
