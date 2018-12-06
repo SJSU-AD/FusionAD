@@ -1,10 +1,5 @@
 #include "odometry.h"
-// TODO: Add odomReadMe.md
-//       Need to initialize yaw values from the TF_master node
-//       as the initial value of yaw_estimate
-//       incorporate counter for getting IMU values for initializing yaw estimate
-//       The assumption is that we will not start driving until a certain period of time after the 
-//       car has been started (100 msec) and will collect at least 10 samples during this time. 
+
 namespace fusionad
 {
 namespace localization
@@ -59,6 +54,7 @@ namespace wheel_odometry_node
         // getting yaw estimate from the imu_tf_adapter node, which rotates the yaw to adhere to ROS standards
         if (yaw_msg_count <= yaw_msg_threshold)
         {
+            ROS_INFO("Collecting Yaw Samples");
             yaw_msg_storage[yaw_msg_count] = yaw_msg.data;
             yaw_msg_count += 1;
             imu_calibration();
@@ -82,6 +78,7 @@ namespace wheel_odometry_node
         }
     }
 
+    //TODO: Possibly add position dead-reckoning from wheel odometry
     // void WheelOdometryNode::pose_calibration()
     // {
     //     // function to calibrate the initialized x and y pose
@@ -129,46 +126,47 @@ namespace wheel_odometry_node
         // bicycle model dead-reckoning
         
         // velocity magnitude estimate
-        vel_magnitude = (left_angular_vel+right_angular_vel)*WHEEL_RADIUS/2;
+        vel_magnitude = (left_angular_vel+right_angular_vel)*WHEEL_RADIUS/2; // [m/s]
         // calculating median of the velocities
         wheel_odom_median_filter();
         
         // yaw estimate from odometry and steering
-        yaw_estimate = previous_yaw + (vel_magnitude/WHEELBASE)*tan(steering_angle)*DT;
+        yaw_estimate = previous_yaw + (vel_magnitude/WHEELBASE)*tan(steering_angle)*DT; // [rad]
         previous_yaw = yaw_estimate;
         
         // velocity estimate in x and y
-        x_velocity = vel_magnitude * cos(yaw_estimate);
-        y_velocity = vel_magnitude * sin(yaw_estimate);
+        x_velocity = vel_magnitude * cos(yaw_estimate); // [m/s]
+        y_velocity = vel_magnitude * sin(yaw_estimate); // [m/s]
         
         /*
+        TODO: Possibly add position dead-reckoning from wheel odometry
         // position estimate in x and y
-        x_position = previous_x_position + x_velocity*DT;
-        y_position = previous_y_position + y_velocity*DT;
+        x_position = previous_x_position + x_velocity*DT; // [m]
+        y_position = previous_y_position + y_velocity*DT; // [m]
 
         // getting the previous x and y positions
-        previous_x_position = x_position;
-        previous_y_position = y_position;
+        previous_x_position = x_position; // [m]
+        previous_y_position = y_position; // [m]
 
         // position messages
         position_estimate.pose.pose.position.x = x_position;
         position_estimate.pose.pose.position.y = y_position;
 
         // position covariances
-        float x_pose_covariance = 0;
-        float y_pose_covariance = 0;
+        float x_pose_covariance = 0; // [m^2]
+        float y_pose_covariance = 0; // [m^2]
 
         position_estimate.covariance[0] = x_pose_covariance;
         position_estimate.covariance[7] = y_pose_covariance;
         */
 
         // twist messages
-        velocity_estimate.twist.linear.x = x_velocity;
-        velocity_estimate.twist.linear.y = y_velocity;
+        velocity_estimate.twist.linear.x = x_velocity; // [m/s]
+        velocity_estimate.twist.linear.y = y_velocity; // [m/s]
         
         // velocity covariances 
-        float x_vel_covariance = 0.0021878/2;
-        float y_vel_covariance = 0.0021878/2;
+        float x_vel_covariance = 0.0021878/2; // [m^2/s^2]
+        float y_vel_covariance = 0.0021878/2; // [m^2/s^2]
 
         velocity_estimate.covariance[0] = x_vel_covariance;
         velocity_estimate.covariance[7] = y_vel_covariance;
