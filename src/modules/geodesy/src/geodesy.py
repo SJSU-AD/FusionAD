@@ -13,6 +13,7 @@ class Geodesy(object):
     
     TODO: Add class docstrings, __str__, and __repr__ methods
     TODO: Consider moving set_dist_between_points() method and centimetersPerPoint variable to this class 
+    TODO: Make constants read-only
     """
     a = 6378137.0         # equatorial radius of earth. Also the WGS-84 Earth semimajor axis in meters
     # polar radius of earth. Also the derived Earth semiminor axis in meters
