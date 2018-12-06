@@ -38,7 +38,7 @@ class GPSDataConverter(object):
     
     def __init__(self):
         self.statePublisher = rospy.Publisher("/localization/state", Chassis_state, queue_size=1000)
-        self.odomPublisher = rospy.Publisher("/gps/geodesy", Odometry, queue_size=1000)
+        self.odomPublisher = rospy.Publisher("/gps/geodesy_odom", Odometry, queue_size=1000)
         rospy.loginfo("Instantiated gps_pose publishers")
         # self.rate = rospy.Rate(1)
 
@@ -151,7 +151,7 @@ class GPSDataConverter(object):
 
         currentOdomState.header.stamp = headerStamp
 
-        currentOdomState.child_frame_id = "gps"
+        currentOdomState.header.frame_id = "odom"
 
         # Set position in publish message
         currentOdomState.pose.pose.position.x = x

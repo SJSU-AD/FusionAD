@@ -1,21 +1,21 @@
 #ifndef ODOMETRY_H
 #define ODOMETRY_H
-// TODO: RENAME FILES TO Odometry_Node
+//TODO: Possibly add x and y-position dead reckoning to wheel odometry code
 /*
 Takes wheel odometry from Arduino encoders and translates to vehicle velocity
-The IMU messages are already taken care of in the razor_9_dof_imu package
-just need to subscribe to this specific topic
+Uses an initialized orientation estimate from the IMU by collecting 100 samples
+and then averaging them out before vehicle operation
 '''
 NOTE: This script is to handle the raw wheel odometry values from the Signwise 600 P/R rotary encoder.
       It also takes in various inputs from topics such as steering, and yaw from the IMU to dead-reckon 
       position and velocity in the X and Y frame.
 
-      TOPIC INPUTS: /localization/right_encoder_reading
-                    /localization/left_encoder_reading
-                    /control/steering_response
-                    /geodesy/tf
+      TOPIC SUBSCRIBERS: /localization/right_encoder_reading
+                         /localization/left_encoder_reading
+                         /control/steering_response
+                         /localization/rotated_yaw
 
-      TOPIC OUTPUTS: /localization/odom_state_estimate
+      TOPIC PUBLISHER:   /localization/wheel_odom_twist
 
 '''
 */
@@ -76,6 +76,7 @@ class WheelOdometryNode
         // Odometry messages
         nav_msgs::Odometry full_odom_message;
         geometry_msgs::TwistWithCovariance velocity_estimate;
+        //geometry_msgs::PoseWithCovariance position_estimate;
         
         // Imu message to extract yaw
         // use the Tf_rotate for its custom message
@@ -102,10 +103,12 @@ class WheelOdometryNode
         float vel_magnitude = 0;
         float x_velocity = 0;
         float y_velocity = 0;
-        /*
+        
         float x_position = 0;
         float y_position = 0;
-        */
+        float previous_x_position = 0;
+        float previous_y_position = 0;
+        
         float yaw_estimate = 0;
         float previous_yaw = 0;
 

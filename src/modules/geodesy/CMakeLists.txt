@@ -18,6 +18,16 @@ find_package(catkin REQUIRED COMPONENTS
 find_package(Eigen3 REQUIRED)
 include_directories(${EIGEN3_INCLUDE_DIR})
 
+# rosunit with unittest
+catkin_add_nosetests(test/test_geodesy.py)
+
+# rostest with unittest
+if(CATKIN_ENABLE_TESTING)
+  find_package(rostest REQUIRED)
+  add_rostest(test/test_geodesy.py)
+  add_rostest(test/test_gps_parser.py)
+endif()
+
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
