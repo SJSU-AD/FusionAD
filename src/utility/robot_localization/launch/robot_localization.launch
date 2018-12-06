@@ -1,8 +1,8 @@
 <launch>
   
   <!--  Transforms  -->
-  <node type="odometry" pkg="localization" name="odometry" output="screen">
-  </node>
+  <!--node type="odometry" pkg="localization" name="odometry" output="screen">
+  </node-->
 
   <node type="imu_tf_adapter" pkg="localization" name="imu_adapter" output="screen">
   </node>
