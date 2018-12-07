@@ -19,7 +19,6 @@ def main():
     inputLatitudes, inputLongitudes, inputHeights = gps_parser.read_file_coarse_points(filePath, chosenHeight)
     
     conversionType = rospy.get_param("~conversion_type")
-    cmPerPoint = float(rospy.get_param("~cm_per_point"))
 
     if conversionType == "ECEF":
         interpolatorECEF = PathInterpolatorECEF(inputLatitudes, inputLatitudes, inputHeights)
@@ -30,7 +29,7 @@ def main():
         except rospy.ROSInterruptException:
             pass
     elif conversionType == "ENU":
-        interpolatorENU = PathInterpolatorENU(inputLatitudes, inputLongitudes, inputHeights, centimetersPerPoint=cmPerPoint)
+        interpolatorENU = PathInterpolatorENU(inputLatitudes, inputLongitudes, inputHeights, centimetersPerPoint=10)
         
         try:
             rospy.loginfo("ENU Conversion publishing...")
