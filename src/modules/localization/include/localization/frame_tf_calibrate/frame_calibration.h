@@ -19,11 +19,22 @@ class FrameCalibrationNode
         void initRosComm();
 
     private:
+
+        // Booleans to know when calibration is finished
+        bool yaw_is_calibrated = false;
+        bool geodesy_is_calibrated = false;
+
+        // Counters to keep track of # of samples
+        unsigned int yaw_samples_counter = 0;
+        unsigned int geodesy_samples_counter = 0;
+
+        // Variables to store samples
+        float yaw_accumulation = 0; 
+        float geodesy_x_accumulation = 0;
+        float geodesy_y_accumulation = 0;
+
         // initializing nodehandle
         ros::NodeHandle frameCalibrationNode_nh;
-
-        // initializing the timer
-        ros::Timer calibration_timer;
 
         // initialize publishers
         // publisher for calibrated x and y positions
@@ -39,35 +50,14 @@ class FrameCalibrationNode
 
         // messages after transform
         nav_msgs::Odometry geodesy_tf_msg;
-
         nav_msgs::Odometry calibrated_odom_msg;
         
         // message threshold for calibration
         const int MSG_THRESHOLD = 100;
-        // initializing array with 100 elements
-        float msg_storage[99];
         
-        float calibrated_yaw;
-        float yaw_msg_storage[99];
-        unsigned int yaw_msg_count = 0;
-        bool yaw_msg_calibration_status = false;
-        
-        float calibrated_x_pos = 0;
-        float calibrated_y_pos = 0;
-        
-        float geodesy_x_msg_storage[99];
-        float geodesy_y_msg_storage[99]; 
-        unsigned int geodesy_msg_count = 0;
-        bool geodesy_msg_calibration_status = false;
-
-        // void geodesy_x_calibration();
-        // void geodesy_y_calibration();
-
-        float message_calibration(unsigned int& msg_count, float msg_storage[99]);
         // declaring callbacks
         void geodesyCallback(const nav_msgs::Odometry& geodesy_msg);
         void yawCallback(const std_msgs::Float32& yaw_msg);
-        void timerCallback(const ros::TimerEvent& event);
 
 };
 }// frame_calibration_node
