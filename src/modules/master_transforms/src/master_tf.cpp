@@ -126,11 +126,11 @@ namespace master_tf_node
                 tf::StampedTransform(
                     tf::Transform(tf::Quaternion(lidar_quat_msg[0], lidar_quat_msg[1], lidar_quat_msg[2], lidar_quat_msg[3]), 
                         tf::Vector3(0.37465*std::cos(rot_yaw), 0.37465*std::sin(rot_yaw), 0)),
-                            ros::Time::now(),"odom", "lidar_link"));
+                            ros::Time::now(), "odom", "/camera_init"));
             // lidar_broadcaster.sendTransform(
             //     tf::StampedTransform(
             //         tf::Transform(tf::Quaternion(0,0,0,1), tf::Vector3(0.37465, 0.0, 0)),
-            //             ros::Time::now(),"odom", "lidar_link"));
+            //             ros::Time::now(),"odom", "/camera_init"));
         }
     }
 }
