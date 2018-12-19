@@ -3,7 +3,13 @@
 
 #include "ros/ros.h"
 #include "nav_msgs/Odometry.h"
+#include "sensor_msgs/Imu.h"
 #include "std_msgs/Float32.h"
+// #include "tf2_ros/buffer.h"
+// #include "tf2_ros/transform_listener.h"
+#include "geometry_msgs/PoseStamped.h"
+#include "tf/transform_broadcaster.h"
+#include "tf/transform_listener.h"
 
 namespace fusionad
 {
@@ -44,21 +50,36 @@ class FrameCalibrationNode
         // publisher for calibrated yaw orientation
         ros::Publisher calibrated_yaw_pub;
 
+        // publish transformed measurements
+        ros::Publisher geodesy_tf_pub;
+        ros::Publisher lidar_tf_pub;
+
         // initialize subscribers
         ros::Subscriber geodesy_sub;
         ros::Subscriber yaw_sub;
+        ros::Subscriber lidar_sub;
 
         // messages after transform
         nav_msgs::Odometry geodesy_tf_msg;
-        nav_msgs::Odometry calibrated_odom_msg;
+        sensor_msgs::Imu imu_tf_msg;
+        nav_msgs::Odometry lidar_tf_msg;
+        
+        tf::TransformListener geodesy_listener;
+        tf::TransformListener lidar_listener;
+        
+        // tf2_ros messages for tf2 listener
+        // buffers as described in http://docs.ros.org/kinetic/api/tf2_ros/html/c++/classtf2__ros_1_1Buffer.html
+        // tf2_ros::Buffer geodesy_buffer;
+        // tf2_ros::Buffer imu_buffer;
+        // tf2_ros::Buffer lidar_buffer;
         
         // message threshold for calibration
         const int MSG_THRESHOLD = 100;
-        
+
         // declaring callbacks
         void geodesyCallback(const nav_msgs::Odometry& geodesy_msg);
         void yawCallback(const std_msgs::Float32& yaw_msg);
-
+        void lidarCallback(const nav_msgs::Odometry& lidar_msg);
 };
 }// frame_calibration_node
 }// localization

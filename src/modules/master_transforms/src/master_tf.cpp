@@ -1,8 +1,7 @@
 #include "master_tf.h"
 
 /*
-TODO: include appropriate values for transforms
-      include logic for the lidar tf broadcaster 
+TODO: figure out whether we should use tf library or tf2 library
 */
 namespace fusionad
 {
@@ -24,15 +23,17 @@ namespace master_tf_node
         master_tf_timer = masterTfNode_nh.createTimer(ros::Duration(0.02), &MasterTfNode::timerCallback, this);
 
         // initializing the subscribers
+        uncalibrated_yaw_sub = masterTfNode_nh.subscribe("/localization/rotated_yaw", 50, &MasterTfNode::rotatedYawCallback, this);
         calibrated_x_sub = masterTfNode_nh.subscribe("/localization/calibrated_x_pose", 10, &MasterTfNode::xPoseCallback, this);
         calibrated_y_sub = masterTfNode_nh.subscribe("/localization/calibrated_y_pose", 10, &MasterTfNode::yPoseCallback, this);
         calibrated_yaw_sub = masterTfNode_nh.subscribe("/localization/calibrated_yaw", 10, &MasterTfNode::yawCallback, this);
-        calibration_status_sub = masterTfNode_nh.subscribe("/localization/calibration_status", 10, &MasterTfNode::calibrationStatusCallback, this);
     }
 
     void MasterTfNode::xPoseCallback(const std_msgs::Float32& cal_x_msg)
     {
+        // if the callback has been triggered (calibration has been completed), make the bool true
         calibrated_x_pose = cal_x_msg.data;
+        calibration_complete = true;
     }
 
     void MasterTfNode::yPoseCallback(const std_msgs::Float32& cal_y_msg)
@@ -45,9 +46,9 @@ namespace master_tf_node
         calibrated_yaw = cal_yaw_msg.data;
     }
 
-    void MasterTfNode::calibrationStatusCallback(const std_msgs::Bool& cal_status_msg)
+    void MasterTfNode::rotatedYawCallback(const std_msgs::Float32& rot_yaw_msg)
     {
-        calibration_status = cal_status_msg.data;
+        rot_yaw = rot_yaw_msg.data;
     }
 
     void MasterTfNode::timerCallback(const ros::TimerEvent& event)
@@ -59,6 +60,7 @@ namespace master_tf_node
         Wheelbase: -27.5" = -0.6985 [m]
         */
 
+        /*
         // set up the tf2 message for gps according to dimensions above
         gps_tf.header.stamp = ros::Time::now();
         gps_tf.header.frame_id = "odom";
@@ -68,18 +70,37 @@ namespace master_tf_node
         // broadcast the gps tf2 message
         gps_tf_broadcaster.sendTransform(gps_tf);
         
-        // set up the tf2 message for imu according to dimensions above
-        imu_tf.header.stamp = ros::Time::now();
-        imu_tf.header.frame_id = "base_link";
-        imu_tf.child_frame_id = "base_imu_link";
-        imu_tf.transform.translation.x = 0.127;
+        tf::TransformBroadcaster geodesy_broadcaster;
+        */
 
-        // broadcast the imu tf2 message 
-        imu_tf_broadcaster.sendTransform(imu_tf);
+        // tf::Quaternion geodesy_quat_msg;
+        // geodesy_quat_msg.setRPY(0, 0, rot_yaw);
+
+        // Assembling and broadcasting the geodesy_broadcaster message 
+        // geodesy_broadcaster.sendTransform(
+        //     tf::StampedTransform(
+        //         tf::Transform(tf::Quaternion(geodesy_quat_msg[0], geodesy_quat_msg[1], geodesy_quat_msg[2], geodesy_quat_msg[3]), tf::Vector3(0.8763, 0.0, 0)),
+        //             ros::Time::now(),"odom", "gps"));
+
+        geodesy_broadcaster.sendTransform(
+            tf::StampedTransform(
+                tf::Transform(tf::Quaternion(0, 0, 0, 1), tf::Vector3(0.8763*std::cos(rot_yaw), 0.8763*std::sin(rot_yaw), 0)),
+                    ros::Time::now(),"odom", "gps"));
+
+        // TODO: Figure out a way to do the linear transformation for IMU
+        // // set up the tf2 message for imu according to dimensions above
+        // imu_tf.header.stamp = ros::Time::now();
+        // imu_tf.header.frame_id = "base_link";
+        // imu_tf.child_frame_id = "base_imu_link";
+        // imu_tf.transform.translation.x = 0.127;
+
+        // // broadcast the imu tf2 message 
+        // imu_tf_broadcaster.sendTransform(imu_tf);
 
         // if the calibration has been completed, start creating the lidar tf2 message
-        if (calibration_status == true)
+        if (calibration_complete == true)
         {
+            /*
             lidar_tf.header.stamp = ros::Time::now();
             lidar_tf.header.frame_id = "odom";
             lidar_tf.child_frame_id = "base_lidar_link";
@@ -94,6 +115,22 @@ namespace master_tf_node
 
             // broadcast the lidar tf2 message
             lidar_tf_broadcaster.sendTransform(lidar_tf);
+            */
+            
+
+            // (roll, pitch, yaw)
+            tf::Quaternion lidar_quat_msg;
+            lidar_quat_msg.setRPY(0, 0, calibrated_yaw);
+            
+            lidar_broadcaster.sendTransform(
+                tf::StampedTransform(
+                    tf::Transform(tf::Quaternion(lidar_quat_msg[0], lidar_quat_msg[1], lidar_quat_msg[2], lidar_quat_msg[3]), 
+                        tf::Vector3(0.37465*std::cos(rot_yaw), 0.37465*std::sin(rot_yaw), 0)),
+                            ros::Time::now(),"odom", "lidar_link"));
+            // lidar_broadcaster.sendTransform(
+            //     tf::StampedTransform(
+            //         tf::Transform(tf::Quaternion(0,0,0,1), tf::Vector3(0.37465, 0.0, 0)),
+            //             ros::Time::now(),"odom", "lidar_link"));
         }
     }
 }
