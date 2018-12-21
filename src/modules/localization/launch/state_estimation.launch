@@ -1,0 +1,16 @@
+<launch>
+    <!-- Get the velocity estimate for high level control -->
+    <include file="$(find localization)/launch/wheel_odom.launch" />
+
+    <node type="frame_calibration" pkg="localization" name="frame_calibration" output="screen">
+    </node>
+    
+    <node type="master_tf" pkg="master_transforms" name="master_tf" output="screen">
+    </node>
+
+    <node type="imu_tf_adapter" pkg="localization" name="imu_tf_adapter" output="screen">
+    </node>
+
+    <include file="$(find robot_localization)/launch/ekf_template.launch" />
+
+</launch>

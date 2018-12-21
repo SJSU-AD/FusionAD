@@ -35,14 +35,6 @@ class MasterTfNode
         ros::Subscriber calibrated_y_sub;
         ros::Subscriber calibrated_yaw_sub;
         ros::Subscriber uncalibrated_yaw_sub;
-
-        // tf2_ros::TransformBroadcaster gps_tf_broadcaster;
-        // tf2_ros::TransformBroadcaster imu_tf_broadcaster;
-        // tf2_ros::TransformBroadcaster lidar_tf_broadcaster;
-
-        // geometry_msgs::TransformStamped gps_tf;
-        // geometry_msgs::TransformStamped imu_tf;
-        // geometry_msgs::TransformStamped lidar_tf;
         
         tf::TransformBroadcaster geodesy_broadcaster;
         tf::TransformBroadcaster lidar_broadcaster;
