@@ -34,19 +34,19 @@ class TestGeodesy(unittest.TestCase):
     ##### Read/Write Access #####
     #############################
     def test_read_access_a(self):
-        pass
+        self.assertAlmostEqual(self.geodesyTester.a, 6378137.0, places=5)
 
     def test_read_access_b(self):
-        pass
+        self.assertAlmostEqual(self.geodesyTester.b, 6356752.314245, places=7)
 
     def test_read_access_e(self):
-        pass
+        self.assertAlmostEqual(self.geodesyTester.e, 0.08181788116, places=11)
 
     def test_read_access_f(self):
-        pass
+        self.assertAlmostEqual(self.geodesyTester.f, (self.geodesyTester.a - self.geodesyTester.b) / self.geodesyTester.a, places=7)
 
     def test_read_access_eSquared(self):
-        pass
+        self.assertAlmostEqual(self.geodesyTester.eSquared, self.geodesyTester.f * (2 - self.geodesyTester.f), places=7)
     
     def test_write_access_a(self):
         pass
