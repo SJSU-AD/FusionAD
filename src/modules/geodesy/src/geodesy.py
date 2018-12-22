@@ -21,7 +21,7 @@ class Geodesy(object):
         self._b = 6356752.314245    # polar radius of earth. Also the derived Earth semiminor axis in meters
         self._e = 0.08181788116     # eccentricity of the earth
         self._f = (self.a - self.b) / self.a       # flattening coefficient. Also (1 / 298.257223563)
-        self.eSquared = self.f * (2 - self.f)      # square of eccentricity
+        self._eSquared = self.f * (2 - self.f)      # square of eccentricity
 
     @property
     def a(self):
@@ -38,6 +38,10 @@ class Geodesy(object):
     @property
     def f(self):
         return self._f
+
+    @property
+    def eSquared(self):
+        return self._eSquared
 
     def euclidian_distance_3d(self, x1, y1, z1, x2, y2, z2):
         """3-D euclidian distance between two points. Intended use in meters"""
