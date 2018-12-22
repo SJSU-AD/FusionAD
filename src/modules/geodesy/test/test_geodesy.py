@@ -29,7 +29,6 @@ class TestGeodesy(unittest.TestCase):
     def tearDown(self):
         unittest.TestCase.tearDown(self)
     
-    # TODO: Implement type safety in accordance to issue #133
     #############################
     ##### Read/Write Access #####
     #############################

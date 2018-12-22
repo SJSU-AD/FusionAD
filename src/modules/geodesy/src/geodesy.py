@@ -12,8 +12,7 @@ class Geodesy(object):
     """All Geodesy related calculations
     
     TODO: Add class docstrings, __str__, and __repr__ methods
-    TODO: Consider moving set_dist_between_points() method and centimetersPerPoint variable to this class 
-    TODO: Make constants read-only
+    TODO: Consider moving set_dist_between_points() method and centimetersPerPoint variable to this class
     """
 
     def __init__(self):
