@@ -29,39 +29,43 @@ class TestGeodesy(unittest.TestCase):
     def tearDown(self):
         unittest.TestCase.tearDown(self)
     
-    # TODO: Implement type safety in accordance to issue #133
     #############################
     ##### Read/Write Access #####
     #############################
     def test_read_access_a(self):
-        pass
+        self.assertAlmostEqual(self.geodesyTester.a, 6378137.0, places=5)
 
     def test_read_access_b(self):
-        pass
+        self.assertAlmostEqual(self.geodesyTester.b, 6356752.314245, places=7)
 
     def test_read_access_e(self):
-        pass
+        self.assertAlmostEqual(self.geodesyTester.e, 0.08181788116, places=11)
 
     def test_read_access_f(self):
-        pass
+        self.assertAlmostEqual(self.geodesyTester.f, (self.geodesyTester.a - self.geodesyTester.b) / self.geodesyTester.a, places=7)
 
     def test_read_access_eSquared(self):
-        pass
+        self.assertAlmostEqual(self.geodesyTester.eSquared, self.geodesyTester.f * (2 - self.geodesyTester.f), places=7)
     
     def test_write_access_a(self):
-        pass
+        with self.assertRaises(AttributeError):
+            self.geodesyTester.a = 1
 
     def test_write_access_b(self):
-        pass
+        with self.assertRaises(AttributeError):
+            self.geodesyTester.b = 1
 
     def test_write_access_e(self):
-        pass
+        with self.assertRaises(AttributeError):
+            self.geodesyTester.e = 1
 
     def test_write_access_f(self):
-        pass
+        with self.assertRaises(AttributeError):
+            self.geodesyTester.f = 1
 
     def test_write_access_eSquared(self):
-        pass
+        with self.assertRaises(AttributeError):
+            self.geodesyTester.eSquared = 1
     
     #######################################################
     ##### euclidian_distance_2d(self, x1, y1, x2, y2) #####
