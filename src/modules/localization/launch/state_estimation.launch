@@ -11,6 +11,9 @@
     <node type="imu_tf_adapter" pkg="localization" name="imu_tf_adapter" output="screen">
     </node>
 
+    <node type="odom_to_chassis_state.py" pkg="localization" name="odom_converter_node" output="screen">
+    </node>
+
     <include file="$(find robot_localization)/launch/ekf_template.launch" />
 
 </launch>

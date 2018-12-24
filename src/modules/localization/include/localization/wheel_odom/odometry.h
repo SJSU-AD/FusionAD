@@ -21,7 +21,6 @@ NOTE: This script is to handle the raw wheel odometry values from the Signwise 6
 */
 
 #include "ros/ros.h"
-//#include "interface/Tf_rotate.h"
 #include "std_msgs/Float64.h"
 #include "std_msgs/Int32.h"
 #include "std_msgs/Int16.h"
@@ -35,7 +34,6 @@ NOTE: This script is to handle the raw wheel odometry values from the Signwise 6
 #include "stdio.h"
 #include <queue>
 #include <algorithm>
-//#include <tf2/LinearMath/Quaternion.h>
 
 namespace fusionad
 {
@@ -54,32 +52,27 @@ class WheelOdometryNode
         // initialize the nodehandle
         ros::NodeHandle odometrynode_nh;
 
-        // quaternion rotation initialization
-        /*reference
-        http://wiki.ros.org/tf2/Tutorials/Quaternions
-        */
-        //tf::Quaternion q_rot;
-
         // initialize timer
         ros::Timer odometry_timer;
         // initialize publisher
         ros::Publisher odometry_pub;
 
         // initialize subscriber
-        ros::Subscriber odometry_left_sub;
-        ros::Subscriber odometry_right_sub;
-        ros::Subscriber odometry_steering_sub;
+        ros::Subscriber left_encoder_sub;
+        ros::Subscriber right_encoder_sub;
+        // ros::Subscriber odometry_steering_sub;
         ros::Subscriber odometry_imu_sub;
-
+        // ros::Subscriber pose_calibration_sub;
+        ros::Subscriber ekf_odom_sub;
+        // ros::Subscriber yaw_calibration_sub;
                 
         // Kalman Filter Preparation
         // Odometry messages
         nav_msgs::Odometry full_odom_message;
         geometry_msgs::TwistWithCovariance velocity_estimate;
-        //geometry_msgs::PoseWithCovariance position_estimate;
+        geometry_msgs::PoseWithCovariance position_estimate;
         
         // Imu message to extract yaw
-        // use the Tf_rotate for its custom message
         // wheelbase in meters
         const float WHEELBASE = 0.7112;
         // wheel radius in meters
@@ -90,11 +83,11 @@ class WheelOdometryNode
         float left_angular_vel = 0;
         // right angular velocity
         float right_angular_vel = 0;
-        // steering angle (need to change this to float)
+        // steering angle
         float steering_angle = 0;
         // previous odometry values
-        long previous_right_odometry_msg = 0;
-        long previous_left_odometry_msg = 0;
+        long previous_right_encoder_msg = 0;
+        long previous_left_encoder_msg = 0;
 
         // pulses per rotation
         const long pulses_per_rotation = 1200;
@@ -117,29 +110,33 @@ class WheelOdometryNode
         long right_odometry_msg = 0;
         float steering_msg = 0;
 
-        float yaw_msg = 0;
+        bool calibration_completed = false;
+
+        // float yaw_msg = 0;
         // number of messages to store into yaw_msg_storage
-        const int yaw_msg_threshold = 100;
+        // const int yaw_msg_threshold = 100;
         // array to store yaw messages
-        float yaw_msg_storage[100];
-        unsigned int yaw_msg_count = 0;
+        // float yaw_msg_storage[100];
+        // unsigned int yaw_msg_count = 0;
 
         // initializing a deque for a running median
         std::deque<float> vel_deque;
         
         // declare support functions
         // performs a calibration for the yaw estimate
-        void imu_calibration();
+        // void imu_calibration();
         // calculates the current velocity state of the vehicle
         void odometry_state_estimation();
         // does the median filter calculation for the wheel odometry
         void wheel_odom_median_filter();
         // declare the callbacks
-        void leftodometryCallback(const std_msgs::Int32& left_odometry_msg);
-        void rightodometryCallback(const std_msgs::Int32& right_odometry_msg);
-        void steeringCallback(const std_msgs::Int16& steering_msg);
+        void leftEncoderCallback(const std_msgs::Int32& left_encoder_msg);
+        void rightEncoderCallback(const std_msgs::Int32& right_encoder_msg);
+        // void steeringCallback(const std_msgs::Int16& steering_msg);
+        void ekfCallback(const nav_msgs::Odometry& ekf_odom_msg);
+        // void calibratedPoseCallback(const geometry_msgs::Point& calibrated_pose_msg);
+        // void calibratedYawCallback(const std_msgs::Float32& calibrated_yaw_msg);
         void imuCallback(const std_msgs::Float32& yaw_msg);
-        //void robot_localization_matrices();
         void timerCallback(const ros::TimerEvent& event);
         
 

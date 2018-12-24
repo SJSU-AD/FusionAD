@@ -6,6 +6,7 @@
 #include "sensor_msgs/Imu.h"
 #include "std_msgs/Float32.h"
 #include "geometry_msgs/PoseStamped.h"
+#include "geometry_msgs/Point.h"
 #include "tf/transform_broadcaster.h"
 #include "tf/transform_listener.h"
 
@@ -37,13 +38,15 @@ class FrameCalibrationNode
         float geodesy_x_accumulation = 0;
         float geodesy_y_accumulation = 0;
 
+        float geodesy_calibrated_x_value = 0;
+        float geodesy_calibrated_y_value = 0;
+
         // initializing nodehandle
         ros::NodeHandle frameCalibrationNode_nh;
 
         // initialize publishers
         // publisher for calibrated x and y positions
-        ros::Publisher calibrated_x_pose_pub;
-        ros::Publisher calibrated_y_pose_pub;
+        ros::Publisher calibrated_pose_pub;
 
         // publisher for calibrated yaw orientation
         ros::Publisher calibrated_yaw_pub;

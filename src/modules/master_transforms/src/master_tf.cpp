@@ -29,28 +29,23 @@ namespace master_tf_node
         master_tf_timer = masterTfNode_nh.createTimer(ros::Duration(0.02), &MasterTfNode::timerCallback, this);
 
         // initializing the subscribers
-        uncalibrated_yaw_sub = masterTfNode_nh.subscribe("/localization/rotated_yaw", 50, &MasterTfNode::rotatedYawCallback, this);
-        calibrated_x_sub = masterTfNode_nh.subscribe("/localization/calibrated_x_pose", 10, &MasterTfNode::xPoseCallback, this);
-        calibrated_y_sub = masterTfNode_nh.subscribe("/localization/calibrated_y_pose", 10, &MasterTfNode::yPoseCallback, this);
+        rotated_yaw_sub = masterTfNode_nh.subscribe("/localization/rotated_yaw", 50, &MasterTfNode::rotatedYawCallback, this);
         calibrated_yaw_sub = masterTfNode_nh.subscribe("/localization/calibrated_yaw", 10, &MasterTfNode::yawCallback, this);
-    }
-
-    void MasterTfNode::xPoseCallback(const std_msgs::Float32& cal_x_msg)
-    {
-        // if the callback has been triggered (calibration has been completed), make the bool true
-        calibrated_x_pose = cal_x_msg.data;
-        calibration_complete = true;
-    }
-
-    void MasterTfNode::yPoseCallback(const std_msgs::Float32& cal_y_msg)
-    {
-        calibrated_y_pose = cal_y_msg.data;
+        // calibrated_pose_sub = masterTfNode_nh.subscribe("/localization/calibrated_pose", 10, &MasterTfNode::poseCallback, this);
     }
 
     void MasterTfNode::yawCallback(const std_msgs::Float32& cal_yaw_msg)
     {
         calibrated_yaw = cal_yaw_msg.data;
+        calibration_complete = true;
     }
+
+    // void MasterTfNode::poseCallback(const geometry_msgs::Point& cal_pose_msg)
+    // {
+    //     calibrated_x_pose = cal_pose_msg.x;
+    //     calibrated_y_pose = cal_pose_msg.y;
+    //     calibration_complete = true;
+    // }
 
     void MasterTfNode::rotatedYawCallback(const std_msgs::Float32& rot_yaw_msg)
     {
@@ -79,13 +74,13 @@ namespace master_tf_node
             // (roll, pitch, yaw)
             tf::Quaternion lidar_quat_msg;
             lidar_quat_msg.setRPY(0, 0, calibrated_yaw);
-            
+
             // build the lidar transform message and broadcast it 
             lidar_broadcaster.sendTransform(
                 tf::StampedTransform(
                     tf::Transform(tf::Quaternion(lidar_quat_msg[0], lidar_quat_msg[1], lidar_quat_msg[2], lidar_quat_msg[3]), 
                         tf::Vector3(0.37465*std::cos(rot_yaw), 0.37465*std::sin(rot_yaw), 0)),
-                            ros::Time::now(), "odom", "map"));
+                            ros::Time::now(), "odom", "/camera_init"));
         }
     }
 }

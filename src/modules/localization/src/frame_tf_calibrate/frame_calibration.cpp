@@ -1,8 +1,6 @@
 #include "localization/frame_tf_calibrate/frame_calibration.h"
 /*
-TODO: Need to test the current logic
-      Create static transform node (separate from this one) to broadcast transforms
-      Change the frame ids
+TODO: Need to monitor geodesy covariances
 */
 
 /*
@@ -33,15 +31,13 @@ namespace frame_calibration_node
     void FrameCalibrationNode::initRosComm()
     {
         // publisher for gps position calibration
-        calibrated_x_pose_pub = frameCalibrationNode_nh.advertise<std_msgs::Float32>("/localization/calibrated_x_pose", 10);
-        calibrated_y_pose_pub = frameCalibrationNode_nh.advertise<std_msgs::Float32>("/localization/calibrated_y_pose", 10);
-        
+        calibrated_pose_pub = frameCalibrationNode_nh.advertise<geometry_msgs::Point>("/localization/calibrated_pose", 10);
+
         // publisher for orientation calibration (yaw)
         calibrated_yaw_pub = frameCalibrationNode_nh.advertise<std_msgs::Float32>("/localization/calibrated_yaw", 10);
 
         // publisher for transformed messages
         geodesy_tf_pub = frameCalibrationNode_nh.advertise<nav_msgs::Odometry>("/localization/geodesy_tf", 10);
-        //imu_tf_pub = frameCalibrationNode_nh.advertise<sensor_msgs::Imu>("/localization/imu_tf", 10);
         lidar_tf_pub = frameCalibrationNode_nh.advertise<nav_msgs::Odometry>("/localization/lidar_tf", 10);
 
         // subscriber for gps position calibration
@@ -69,7 +65,8 @@ namespace frame_calibration_node
             yaw_samples_counter++;
 
             // Calculate average of samples once threshold is hit
-            if(yaw_samples_counter >= MSG_THRESHOLD){
+            if(yaw_samples_counter >= MSG_THRESHOLD)
+            {
 
                 // Store and calculate calibrated data
                 std_msgs::Float32 calibrated_yaw;
@@ -98,104 +95,114 @@ namespace frame_calibration_node
         temp_geodesy_tf_point.point.x = geodesy_msg.pose.pose.position.x;
         temp_geodesy_tf_point.point.y = geodesy_msg.pose.pose.position.y;
 
-        try
+        // threshold standard deviation for publishing geodesy 
+        float THRESHOLD_POSE_STD_DEV = 0.15; // [m]
+
+        if(std::sqrt(geodesy_tf_msg.pose.covariance[0]) <= THRESHOLD_POSE_STD_DEV)
         {
-            // creating a pointstamped message to place the results into
-            geometry_msgs::PointStamped geodesy_tf_point;
+            try
+            {
+                // creating a pointstamped message to place the results into
+                geometry_msgs::PointStamped geodesy_tf_point;
 
-            geodesy_listener.transformPoint("odom", temp_geodesy_tf_point, geodesy_tf_point);
-            
-            // stuff the message into the geodesy_tf_msg for publishing
-            geodesy_tf_msg.pose.pose.position.x = geodesy_tf_point.point.x;
-            geodesy_tf_msg.pose.pose.position.y = geodesy_tf_point.point.y;
-            geodesy_tf_msg.header.frame_id = geodesy_tf_point.header.frame_id;
-            geodesy_tf_msg.header.stamp = ros::Time::now();
-
-            geodesy_tf_pub.publish(geodesy_tf_msg);
-
-            ROS_INFO("gps: (%.2f, %.2f) -----> odom: (%.2f, %.2f) at time %.2f",
-            temp_geodesy_tf_point.point.x, temp_geodesy_tf_point.point.y,
-            geodesy_tf_point.point.x, geodesy_tf_point.point.y, geodesy_tf_point.header.stamp.toSec());
-        }
-        catch(tf::TransformException& geodesy_exception)
-        {
-            ROS_ERROR("Received an exception when trying to transform a point from \"gps\" to \"odom\": %s",
-            geodesy_exception.what());
-        }
-
-        // Perform while geodesy is not calibrated
-        if(!geodesy_is_calibrated)
-        {
-            ROS_INFO_ONCE("Collecting Geodesy Samples");
-
-            // Collect x sample and add to previous samples
-            geodesy_x_accumulation += geodesy_tf_msg.pose.pose.position.x;
-
-            // Collect y sample and add to previous samples
-            geodesy_y_accumulation += geodesy_tf_msg.pose.pose.position.y;
-
-            // Increment geodesy samples counter
-            geodesy_samples_counter++;
-
-            // Calculate average of samples once threshold is hit
-            if(geodesy_samples_counter >= MSG_THRESHOLD){
+                geodesy_listener.transformPoint("odom", temp_geodesy_tf_point, geodesy_tf_point);
                 
-                // Declare floats to store averaged data
-                std_msgs::Float32 geodesy_calibrated_x;
-                std_msgs::Float32 geodesy_calibrated_y;
+                // stuff the message into the geodesy_tf_msg for publishing
+                geodesy_tf_msg.pose.pose.position.x = geodesy_tf_point.point.x;
+                geodesy_tf_msg.pose.pose.position.y = geodesy_tf_point.point.y;
+                geodesy_tf_msg.header.frame_id = geodesy_tf_point.header.frame_id;
+                geodesy_tf_msg.header.stamp = ros::Time::now();
 
-                // Take average of x and y position samples
-                geodesy_calibrated_x.data = geodesy_x_accumulation / geodesy_samples_counter;
-                geodesy_calibrated_y.data = geodesy_y_accumulation / geodesy_samples_counter;
+                geodesy_tf_pub.publish(geodesy_tf_msg);
 
-                // Publish averaged samples
-                calibrated_x_pose_pub.publish(geodesy_calibrated_x);
-                calibrated_y_pose_pub.publish(geodesy_calibrated_y);
-
-                // Calibration is complete
-                ROS_INFO("Geodesy Position Calibration Completed");
-                geodesy_is_calibrated = true;
+                ROS_INFO("gps: (%.2f, %.2f) -----> odom: (%.2f, %.2f) at time %.2f",
+                temp_geodesy_tf_point.point.x, temp_geodesy_tf_point.point.y,
+                geodesy_tf_point.point.x, geodesy_tf_point.point.y, geodesy_tf_point.header.stamp.toSec());
             }
-        }        
+            catch(tf::TransformException& geodesy_exception)
+            {
+                ROS_ERROR("Received an exception when trying to transform a point from \"gps\" to \"odom\": %s",
+                geodesy_exception.what());
+            }
+
+            // Perform while geodesy is not calibrated
+            if(!geodesy_is_calibrated)
+            {
+                ROS_INFO_ONCE("Collecting Geodesy Samples");
+
+                // Collect x sample and add to previous samples
+                geodesy_x_accumulation += geodesy_tf_msg.pose.pose.position.x;
+
+                // Collect y sample and add to previous samples
+                geodesy_y_accumulation += geodesy_tf_msg.pose.pose.position.y;
+
+                // Increment geodesy samples counter
+                geodesy_samples_counter++;
+
+                // Calculate average of samples once threshold is hit
+                if(geodesy_samples_counter >= MSG_THRESHOLD)
+                {    
+                    // Declare floats to store averaged data
+                    geometry_msgs::Point geodesy_pose_calibrated;
+
+                    // Take average of x and y position samples
+                    geodesy_pose_calibrated.x = geodesy_x_accumulation / geodesy_samples_counter;
+                    geodesy_pose_calibrated.y = geodesy_y_accumulation / geodesy_samples_counter;
+
+                    // Publish averaged samples
+                    calibrated_pose_pub.publish(geodesy_pose_calibrated);
+                    // Calibration is complete
+                    geodesy_calibrated_x_value = geodesy_pose_calibrated.x;
+                    geodesy_calibrated_y_value = geodesy_pose_calibrated.y;
+                    ROS_INFO("Geodesy Position Calibration Completed");
+                    geodesy_is_calibrated = true;
+                }
+            }  
+        }      
     }
 
     void FrameCalibrationNode::lidarCallback(const nav_msgs::Odometry& lidar_msg)
     {
-        geometry_msgs::PointStamped lidar_tf_point;
-
-        lidar_tf_msg.pose.covariance[0] = lidar_msg.pose.covariance[0];
-        lidar_tf_msg.pose.covariance[7] = lidar_msg.pose.covariance[7];
-
-        // creating a temporary geometry PoseStamped message to facilitate homogeneous transform
-        geometry_msgs::PointStamped temp_lidar_tf_point;
-        temp_lidar_tf_point.header.frame_id = "map";
-        temp_lidar_tf_point.header.stamp = ros::Time();
-        temp_lidar_tf_point.point.x = lidar_msg.pose.pose.position.x;
-        temp_lidar_tf_point.point.y = lidar_msg.pose.pose.position.y;
-
-        try
+        if(geodesy_is_calibrated)
         {
-            // creating a pointstamped message to place the results into
             geometry_msgs::PointStamped lidar_tf_point;
 
-            lidar_listener.transformPoint("odom", temp_lidar_tf_point, lidar_tf_point);
-            
-            // stuff the message into the lidar_tf_msg for publishing
-            lidar_tf_msg.pose.pose.position.x = lidar_tf_point.point.x;
-            lidar_tf_msg.pose.pose.position.y = lidar_tf_point.point.y;
-            lidar_tf_msg.header.frame_id = lidar_tf_point.header.frame_id;
-            lidar_tf_msg.header.stamp = ros::Time::now();
+            lidar_tf_msg.pose.covariance[0] = lidar_msg.pose.covariance[0];
+            lidar_tf_msg.pose.covariance[7] = lidar_msg.pose.covariance[7];
 
-            lidar_tf_pub.publish(lidar_tf_msg);
+            // creating a temporary geometry PoseStamped message to facilitate homogeneous transform
+            geometry_msgs::PointStamped temp_lidar_tf_point;
+            temp_lidar_tf_point.header.frame_id = "/camera_init";
+            temp_lidar_tf_point.header.stamp = ros::Time();
 
-            ROS_INFO("map: (%.2f, %.2f) -----> odom: (%.2f, %.2f) at time %.2f",
-            temp_lidar_tf_point.point.x, temp_lidar_tf_point.point.y,
-            lidar_tf_point.point.x, lidar_tf_point.point.y, lidar_tf_point.header.stamp.toSec());
-        }
-        catch(tf::TransformException& lidar_exception)
-        {
-            ROS_ERROR("Received an exception when trying to transform a point from \"map\" to \"odom\": %s",
-            lidar_exception.what());
+            // manually doing the rotation (loam reads in ZX-plane and we want XY-plane)
+            temp_lidar_tf_point.point.x = lidar_msg.pose.pose.position.z;
+            temp_lidar_tf_point.point.y = (-1)*lidar_msg.pose.pose.position.x;
+
+            try
+            {
+                // creating a pointstamped message to place the results into
+                geometry_msgs::PointStamped lidar_tf_point;
+
+                lidar_listener.transformPoint("odom", temp_lidar_tf_point, lidar_tf_point);
+                
+                // stuff the message into the lidar_tf_msg for publishing
+                lidar_tf_msg.pose.pose.position.x = lidar_tf_point.point.x + geodesy_calibrated_x_value;
+                lidar_tf_msg.pose.pose.position.y = lidar_tf_point.point.y + geodesy_calibrated_y_value;
+                lidar_tf_msg.header.frame_id = lidar_tf_point.header.frame_id;
+                lidar_tf_msg.header.stamp = ros::Time::now();
+
+                lidar_tf_pub.publish(lidar_tf_msg);
+
+                ROS_INFO("/camera_init: (%.2f, %.2f) -----> odom: (%.2f, %.2f) at time %.2f",
+                temp_lidar_tf_point.point.x, temp_lidar_tf_point.point.y,
+                lidar_tf_point.point.x, lidar_tf_point.point.y, lidar_tf_point.header.stamp.toSec());
+            }
+            catch(tf::TransformException& lidar_exception)
+            {
+                ROS_ERROR("Received an exception when trying to transform a point from \"/camera_init\" to \"odom\": %s",
+                lidar_exception.what());
+            }
         }
     }
 }// frame_calibration_node

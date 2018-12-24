@@ -2,10 +2,12 @@
 #define MASTER_TF_H
 
 #include "ros/ros.h"
+#include "math.h"
 #include "nav_msgs/Odometry.h"
 #include "std_msgs/Float32.h"
 #include "std_msgs/Bool.h"
 #include "tf2_ros/transform_broadcaster.h"
+#include "geometry_msgs/Point.h"
 #include "geometry_msgs/TransformStamped.h"
 #include "tf/transform_broadcaster.h"
 #include "tf2/LinearMath/Quaternion.h"
@@ -31,10 +33,9 @@ class MasterTfNode
         ros::Timer master_tf_timer;
 
         // initialize the subscribers
-        ros::Subscriber calibrated_x_sub;
-        ros::Subscriber calibrated_y_sub;
+        ros::Subscriber calibrated_pose_sub;
         ros::Subscriber calibrated_yaw_sub;
-        ros::Subscriber uncalibrated_yaw_sub;
+        ros::Subscriber rotated_yaw_sub;
         
         tf::TransformBroadcaster geodesy_broadcaster;
         tf::TransformBroadcaster lidar_broadcaster;
@@ -46,8 +47,7 @@ class MasterTfNode
         bool calibration_complete = false;
 
         // initialize callback functions for calibrated messages from the frame_calibration node
-        void xPoseCallback(const std_msgs::Float32& cal_x_msg);
-        void yPoseCallback(const std_msgs::Float32& cal_y_msg);
+        void poseCallback(const geometry_msgs::Point& cal_pose_msg);
         void yawCallback(const std_msgs::Float32& cal_yaw_msg);
         void rotatedYawCallback(const std_msgs::Float32& rot_yaw_msg);
         void timerCallback(const ros::TimerEvent& event);
