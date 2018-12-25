@@ -1,23 +1,24 @@
 #ifndef ODOMETRY_H
 #define ODOMETRY_H
-//TODO: Possibly add x and y-position dead reckoning to wheel odometry code
+
 /*
-Takes wheel odometry from Arduino encoders and translates to vehicle velocity
-Uses an initialized orientation estimate from the IMU by collecting 100 samples
-and then averaging them out before vehicle operation
-'''
+Takes wheel odometry from Arduino encoders and translates to vehicle velocity and position
 NOTE: This script is to handle the raw wheel odometry values from the Signwise 600 P/R rotary encoder.
-      It also takes in various inputs from topics such as steering, and yaw from the IMU to dead-reckon 
-      position and velocity in the X and Y frame.
+      It also takes in various inputs from topics yaw from the IMU to dead-reckon position and velocity in the X and Y frame.
+      Dead-reckoning requires previous pose to be tracked, we take advantage of this by subscribing to
+      the output of the EKF and using those pose messages as the previous pose of the wheel odometry.
+      
+      SUBSCRIBERS:  TOPIC:  /localization/right_encoder_reading
+                                Msg: std_msgs::Int16
+                    TOPIC:  /localization/left_encoder_reading
+                                Msg: std_msgs::Int16
+                    TOPIC:  /localization/odometry/filtered
+                                Msg: nav_msgs::Odometry
+                    TOPIC:  /localization/rotated_yaw
+                                Msg: std_msgs::Float32
 
-      TOPIC SUBSCRIBERS: /localization/right_encoder_reading
-                         /localization/left_encoder_reading
-                         /control/steering_response
-                         /localization/rotated_yaw
-
-      TOPIC PUBLISHER:   /localization/wheel_odom_twist
-
-'''
+      PUBLISHER:    TOPIC:  /localization/wheel_odom
+                                Msg: nav_msgs::Odometry
 */
 
 #include "ros/ros.h"

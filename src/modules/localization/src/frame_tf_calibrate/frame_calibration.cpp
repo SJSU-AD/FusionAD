@@ -1,21 +1,27 @@
 #include "localization/frame_tf_calibrate/frame_calibration.h"
 /*
-TODO: Need to monitor geodesy covariances
-*/
-
-/*
-INPUTS: /gps/geodesy_odom
-        /localization/rotated_yaw
-        /localization/loam_odom_with_covar
+NOTE: This node listens to the tf broadcasts and performs the homogeneous transforms.
+      Another major function of this node is to "calibrate" the initial position and orientation
+      of the vehicle. The homogeneous transforms are applied and then the result is published.
+      
+INPUTS: TOPIC:  /gps/geodesy_odom
+                    Msg: nav_msgs::Odometry
+        TOPIC:  /localization/rotated_yaw
+                    Msg: std_msgs::Float32
+        TOPIC:  /localization/loam_odom_with_covar
+                    Msg: nav_msgs::Odometry
 
         TF Listeners: Geodesy TF Message
                       Lidar TF Message
 
-OUTPUTS: /localization/calibrated_x_pose
-         /localization/calibrated_y_pose
-         /localization/calibrated_yaw
-         /localization/geodesy_tf
-         /localization/lidar_tf
+OUTPUTS: TOPIC: /localization/calibrated_pose
+                    Msg: geometry_msgs::Point
+         TOPIC: /localization/calibrated_yaw
+                    Msg: std_msgs::Float32
+         TOPIC: /localization/geodesy_tf
+                    Msg: nav_msgs::Odometry
+         TOPIC: /localization/lidar_tf
+                    Msg: nav_msgs::Odometry
 */
 
 namespace fusionad

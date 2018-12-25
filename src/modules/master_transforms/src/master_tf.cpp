@@ -1,9 +1,15 @@
 #include "master_tf.h"
 
 /*
-INPUTS: /localization/rotated_yaw
-        /localization/calibrated_x_pose
-        /localization/calibrated_y_pose
+NOTE: This node prepares the tf message to broadcast by using the input of the rotated yaw message
+      (according to REP-105) and performing the 2D rotation required from sensor location to front-axle. 
+      Only the x-position is offset (with respect to the vehicle on the red car) so there is no y-position component in the 
+      2-D transform. 
+
+INPUTS: TOPIC:  /localization/rotated_yaw
+                Msg: std_msgs::Float32
+        TOPIC:  /localization/calibrated_yaw
+                Msg: std_msgs::Float32
 
 OUTPUTS: Geodesy TF Broadcast
          Lidar TF Broadcast
@@ -31,7 +37,6 @@ namespace master_tf_node
         // initializing the subscribers
         rotated_yaw_sub = masterTfNode_nh.subscribe("/localization/rotated_yaw", 50, &MasterTfNode::rotatedYawCallback, this);
         calibrated_yaw_sub = masterTfNode_nh.subscribe("/localization/calibrated_yaw", 10, &MasterTfNode::yawCallback, this);
-        // calibrated_pose_sub = masterTfNode_nh.subscribe("/localization/calibrated_pose", 10, &MasterTfNode::poseCallback, this);
     }
 
     void MasterTfNode::yawCallback(const std_msgs::Float32& cal_yaw_msg)
@@ -39,13 +44,6 @@ namespace master_tf_node
         calibrated_yaw = cal_yaw_msg.data;
         calibration_complete = true;
     }
-
-    // void MasterTfNode::poseCallback(const geometry_msgs::Point& cal_pose_msg)
-    // {
-    //     calibrated_x_pose = cal_pose_msg.x;
-    //     calibrated_y_pose = cal_pose_msg.y;
-    //     calibration_complete = true;
-    // }
 
     void MasterTfNode::rotatedYawCallback(const std_msgs::Float32& rot_yaw_msg)
     {

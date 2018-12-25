@@ -1,6 +1,31 @@
 #ifndef FRAME_CALIBRATION_H
 #define FRAME_CALIBRATION_H
 
+/*
+NOTE: This node listens to the tf broadcasts and performs the homogeneous transforms.
+      Another major function of this node is to "calibrate" the initial position and orientation
+      of the vehicle. The homogeneous transforms are applied and then the result is published.
+      
+INPUTS: TOPIC:  /gps/geodesy_odom
+                    Msg: nav_msgs::Odometry
+        TOPIC:  /localization/rotated_yaw
+                    Msg: std_msgs::Float32
+        TOPIC:  /localization/loam_odom_with_covar
+                    Msg: nav_msgs::Odometry
+
+        TF Listeners: Geodesy TF Message
+                      Lidar TF Message
+
+OUTPUTS: TOPIC: /localization/calibrated_pose
+                    Msg: geometry_msgs::Point
+         TOPIC: /localization/calibrated_yaw
+                    Msg: std_msgs::Float32
+         TOPIC: /localization/geodesy_tf
+                    Msg: nav_msgs::Odometry
+         TOPIC: /localization/lidar_tf
+                    Msg: nav_msgs::Odometry
+*/
+
 #include "ros/ros.h"
 #include "nav_msgs/Odometry.h"
 #include "sensor_msgs/Imu.h"

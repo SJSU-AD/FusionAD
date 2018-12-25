@@ -1,5 +1,27 @@
 #include "localization/wheel_odom/odometry.h"
 
+//NOTE: Currently commented out calibration phase of the odometry node
+
+/*
+Takes wheel odometry from Arduino encoders and translates to vehicle velocity and position
+NOTE: This script is to handle the raw wheel odometry values from the Signwise 600 P/R rotary encoder.
+      It also takes in various inputs from topics yaw from the IMU to dead-reckon position and velocity in the X and Y frame.
+      Dead-reckoning requires previous pose to be tracked, we take advantage of this by subscribing to
+      the output of the EKF and using those pose messages as the previous pose of the wheel odometry.
+      
+      SUBSCRIBERS:  TOPIC:  /localization/right_encoder_reading
+                                Msg: std_msgs::Int16
+                    TOPIC:  /localization/left_encoder_reading
+                                Msg: std_msgs::Int16
+                    TOPIC:  /localization/odometry/filtered
+                                Msg: nav_msgs::Odometry
+                    TOPIC:  /localization/rotated_yaw
+                                Msg: std_msgs::Float32
+
+      PUBLISHER:    TOPIC:  /localization/wheel_odom
+                                Msg: nav_msgs::Odometry
+*/
+
 namespace fusionad
 {
 namespace localization
