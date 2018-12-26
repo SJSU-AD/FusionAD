@@ -143,7 +143,8 @@ namespace node
       prev_pos[0] = position(0);
       prev_pos[1] = position(1);
     }*/
-
+    
+    linear_velocity = veh_state_msg.Speed.twist.linear.x;
     position(0) = veh_state_msg.Position.pose.position.x + (0.8636 * std::cos(vehicle_heading));
     position(1) = veh_state_msg.Position.pose.position.y + (0.8636 * std::sin(vehicle_heading));    
   
