@@ -34,7 +34,6 @@ class ControlNode
     bool goalReached, debug, externalFailFlag;
     
   private:
-    fusionad::control::lat_controller::Stanley lat_control;
     ros::NodeHandle control_nh;
     ros::Publisher control_main_pub;
     ros::Publisher control_debug_pub;
@@ -48,12 +47,18 @@ class ControlNode
     bool pathInitialized, stateInitialized, imuInitialized, internalFailFlag;
     bool autonomousDrivingFlag, obstacleDetected;
     double roll, pitch, yaw;
-    float controlGain, linear_velocity, vehicle_heading;
+    // Declare control gain variable
+    float controlGain_p, controlGain_d;
+    float linear_velocity, vehicle_heading;
     int targetPointIndex;
     ros::Timer control_cmd_timer;
 
-    const float magnetic_declination_rad = M_PI_2;
-    const float imu_residual_offset = -0.3567612546;
+    const float magnetic_declination_rad = M_PI_2;          // radians
+    const float imu_residual_offset = -0.3567612546;        // radians
+    const float control_loop_rate = 25;                 // Hertz
+    float control_loop_time = 1/control_loop_rate;
+
+    fusionad::control::lat_controller::Stanley lat_control{control_loop_time};
 
     //Heading Estimator
     /*

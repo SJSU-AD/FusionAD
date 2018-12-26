@@ -19,10 +19,10 @@ namespace node
     roll = 0;
     pitch = 0;
     yaw = 0;
-    controlGain = 0;
+    controlGain_p = 0;
+    controlGain_d = 0;
     targetPointIndex = 0;
     dynamicArraySize = 0;
-    //estimated_orientation = 0;
   }
 
   ControlNode::~ControlNode()
@@ -31,8 +31,8 @@ namespace node
 
   void ControlNode::initRosComm()
   {
-    //Create Timer Function for running the control stack, currently set to 25 hz
-    control_cmd_timer = control_nh.createTimer(ros::Duration(0.04), &ControlNode::masterTimerCallback, this);  
+    //Create Timer Function for running the control stack
+    control_cmd_timer = control_nh.createTimer(ros::Duration(control_loop_time), &ControlNode::masterTimerCallback, this);  
     
     //Control Main publisher
     control_main_pub = control_nh.advertise<interface::Controlcmd>("/control/controlcmd", 100);
@@ -61,13 +61,14 @@ namespace node
 
     mode_sub = control_nh.subscribe("/control/mode", 100, &ControlNode::modeCallback, this);
     ROS_INFO_ONCE("Control Node Mode Subscriber Set!");
+    
   }
 
   bool ControlNode::getParameter()
   {
     //Obtain parameter to initialize the node
     std::string node_name = ros::this_node::getName();
-    if(!control_nh.param<float>(node_name+"/control_gain",controlGain, 1 ))
+    if(!control_nh.param<float>(node_name+"/control_p_gain",controlGain_p, 1 ))
     {
       ROS_WARN("Param control gain not set, using default - 1");
       return false;
@@ -75,6 +76,11 @@ namespace node
     if(!control_nh.param<bool>(node_name+"/debug",debug, false))
     {
       ROS_WARN("Param control debug not set, using default - false");
+      return false;
+    }
+    if(!control_nh.param<float>(node_name+"/control_d_gain",controlGain_d, 1))
+    {
+      ROS_WARN("Param control derivative gain not set, using default - 1");
       return false;
     }
     ROS_INFO_ONCE("-------- Param Retrieved - Good --------");
@@ -257,28 +263,19 @@ namespace node
       {
         //Goal reached
         goalReached = true;
-        ROS_WARN("Goal reached. End of Path. Autonomy mode set to manual.");
+        ROS_INFO("Goal reached. End of Path. Autonomy mode set to manual.");
         autonomousDrivingFlag = false;
         return;
       }
 
-      //Changed the controller to run on estimation 
-      /*steering_angle = lat_control.computeSteeringAngle(position,
-                                                pathPointListX,
-                                                pathPointListY,
-                                                linear_velocity,
-                                                targetPointIndex,
-                                                estimated_orientation,
-                                                controlGain,
-                                                dynamicArraySize
-                                                );*/
       steering_angle = lat_control.computeSteeringAngle(position,
                                                         pathPointListX,
                                                         pathPointListY,
                                                         linear_velocity,
                                                         targetPointIndex,
                                                         vehicle_heading,
-                                                        controlGain,
+                                                        controlGain_p,
+                                                        controlGain_d,
                                                         dynamicArraySize
                                                         );
       //TODO: Implement longitudinal Control --> blocker: Planning
@@ -289,7 +286,8 @@ namespace node
       if(debug)
       {
         control_core_command.debugControl = true;
-        lat_control.debug_info.stanleyGain = controlGain;
+        lat_control.debug_info.stanleyGain_p = controlGain_p;
+        lat_control.debug_info.stanleyGain_d = controlGain_d;
         //lat_control.debug_info.estimated_heading = estimated_orientation;
         control_debug_pub.publish(lat_control.debug_info);
       }   
