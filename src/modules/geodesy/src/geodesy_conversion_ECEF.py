@@ -12,6 +12,7 @@ from geodesy import Geodesy
 class GeodesyConverterECEF(Geodesy):
 
     def __init__(self, latitudesData, longitudesData, heightsData):
+        super(GeodesyConverterECEF, self).__init__()
         self.latitudesData = latitudesData
         self.longitudesData = longitudesData
         self.heightsData = heightsData
@@ -20,11 +21,11 @@ class GeodesyConverterECEF(Geodesy):
         """Convert a point in geodetic latitude/longitude/height format to ECEF X/Y/Z format"""
 
         # prime vertical radius of curvature
-        N = Geodesy.a / math.sqrt(1-(Geodesy.e**2) *
+        N = self.a / math.sqrt(1-(self.e**2) *
                                   (math.sin(lat*math.pi/180)**2))
         x = (N+h) * math.cos(lat*math.pi/180) * math.cos(lng*math.pi/180)
         y = (N+h) * math.cos(lat*math.pi/180) * math.sin(lng*math.pi/180)
-        z = ((Geodesy.b**2) / (Geodesy.a**2) * N+h) * \
+        z = ((self.b**2) / (self.a**2) * N+h) * \
             math.sin(lat * math.pi/180)
 
         return x, y, z
