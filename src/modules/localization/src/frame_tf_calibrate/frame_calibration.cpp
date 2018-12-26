@@ -3,25 +3,29 @@
 NOTE: This node listens to the tf broadcasts and performs the homogeneous transforms.
       Another major function of this node is to "calibrate" the initial position and orientation
       of the vehicle. The homogeneous transforms are applied and then the result is published.
-      
-INPUTS: TOPIC:  /gps/geodesy_odom
-                    Msg: nav_msgs::Odometry
-        TOPIC:  /localization/rotated_yaw
-                    Msg: std_msgs::Float32
-        TOPIC:  /localization/loam_odom_with_covar
-                    Msg: nav_msgs::Odometry
 
-        TF Listeners: Geodesy TF Message
-                      Lidar TF Message
+Subscribers
+--------------------------------------------------
+TOPIC:  /gps/geodesy_odom
+            Msg: nav_msgs::Odometry
+TOPIC:  /imu
+            Msg: sensor_msgs::Imu
+TOPIC:  /localization/loam_odom_with_covar
+            Msg: nav_msgs::Odometry
 
-OUTPUTS: TOPIC: /localization/calibrated_pose
-                    Msg: geometry_msgs::Point
-         TOPIC: /localization/calibrated_yaw
-                    Msg: std_msgs::Float32
-         TOPIC: /localization/geodesy_tf
-                    Msg: nav_msgs::Odometry
-         TOPIC: /localization/lidar_tf
-                    Msg: nav_msgs::Odometry
+TF Listeners: Geodesy TF Message
+              Lidar TF Message
+
+Publishers
+-------------------------------------------------
+TOPIC: /localization/calibration
+            Msg: geometry_msgs::Pose
+TOPIC: /localization/rotated_imu
+            Msg: sensor_msgs::Imu
+TOPIC: /localization/geodesy_tf
+            Msg: nav_msgs::Odometry
+TOPIC: /localization/lidar_tf
+            Msg: nav_msgs::Odometry
 */
 
 namespace fusionad
@@ -36,28 +40,64 @@ namespace frame_calibration_node
 
     void FrameCalibrationNode::initRosComm()
     {
-        // publisher for gps position calibration
-        calibrated_pose_pub = frameCalibrationNode_nh.advertise<geometry_msgs::Point>("/localization/calibrated_pose", 10);
+        // publisher for gps position and orientation calibration
+        calibrated_pose_pub = frameCalibrationNode_nh.advertise<geometry_msgs::Pose>("/localization/calibration", 10);
 
-        // publisher for orientation calibration (yaw)
-        calibrated_yaw_pub = frameCalibrationNode_nh.advertise<std_msgs::Float32>("/localization/calibrated_yaw", 10);
-
-        // publisher for transformed messages
+        // publishers for transformed messages
         geodesy_tf_pub = frameCalibrationNode_nh.advertise<nav_msgs::Odometry>("/localization/geodesy_tf", 10);
         lidar_tf_pub = frameCalibrationNode_nh.advertise<nav_msgs::Odometry>("/localization/lidar_tf", 10);
+        imu_tf_pub = frameCalibrationNode_nh.advertise<sensor_msgs::Imu>("/localization/rotated_imu", 50);
 
         // subscriber for gps position calibration
         geodesy_sub = frameCalibrationNode_nh.subscribe("/gps/geodesy_odom", 10, &FrameCalibrationNode::geodesyCallback, this);
        
         // subscriber for orientation calibration (yaw)
-        yaw_sub = frameCalibrationNode_nh.subscribe("/localization/rotated_yaw", 50, &FrameCalibrationNode::yawCallback, this);
+        imu_sub = frameCalibrationNode_nh.subscribe("/imu", 50, &FrameCalibrationNode::yawCallback, this);
 
         // subscriber for lidar tf
         lidar_sub = frameCalibrationNode_nh.subscribe("/loam_odom_with_covar", 10, &FrameCalibrationNode::lidarCallback, this);
     }
 
-    void FrameCalibrationNode::yawCallback(const std_msgs::Float32& yaw_msg)
+    void FrameCalibrationNode::yawCallback(const sensor_msgs::Imu& imu_msg)
     {
+        double roll = 0, pitch = 0, yaw = 0, vehicle_heading = 0;
+        const float imu_residual_offset = -0.3567612546;
+        const float yaw_offset = M_PI_2;
+
+        rot_msg = imu_msg;
+        tf::Quaternion imu_quaternion(imu_msg.orientation.x,
+                                      imu_msg.orientation.y,
+                                      imu_msg.orientation.z,
+                                      imu_msg.orientation.w);
+        tf::Matrix3x3 temporary_rot_matrix(imu_quaternion);
+        temporary_rot_matrix.getRPY(roll, pitch, yaw);
+
+        float adjusted_yaw = yaw + yaw_offset + imu_residual_offset;
+        //float adjusted_yaw = yaw + magnetic_declination_rad;
+
+        if(adjusted_yaw > M_PI)
+        {
+            vehicle_heading = adjusted_yaw - 2*M_PI;
+        }
+        else if(adjusted_yaw < (-1)*M_PI)
+        {
+            vehicle_heading = (2*M_PI) + adjusted_yaw;
+        }
+        else
+        {
+            vehicle_heading = adjusted_yaw;
+        }
+
+        // pitch multiplied by (-1) to adhere to ROS-105 frame standards
+        tf::Quaternion new_imu_quaternion = tf::createQuaternionFromRPY(roll, (-1)*pitch, vehicle_heading);
+
+        rot_msg.orientation.x = new_imu_quaternion[0];
+        rot_msg.orientation.y = new_imu_quaternion[1];
+        rot_msg.orientation.z = new_imu_quaternion[2];
+        rot_msg.orientation.w = new_imu_quaternion[3];
+
+        imu_tf_pub.publish(rot_msg);
+
         // Perform while yaw is not calibrated
         if(!yaw_is_calibrated)
         {
@@ -65,7 +105,7 @@ namespace frame_calibration_node
             ROS_INFO_ONCE("Collecting Yaw Samples");
 
             // Accumulate samples
-            yaw_accumulation += yaw_msg.data;
+            yaw_accumulation += vehicle_heading;
 
             // Increment sample counter
             yaw_samples_counter++;
@@ -73,15 +113,10 @@ namespace frame_calibration_node
             // Calculate average of samples once threshold is hit
             if(yaw_samples_counter >= MSG_THRESHOLD)
             {
-
                 // Store and calculate calibrated data
-                std_msgs::Float32 calibrated_yaw;
-                calibrated_yaw.data = yaw_accumulation / yaw_samples_counter;
+                calibrated_yaw = yaw_accumulation / yaw_samples_counter;
 
-                // Publish data to /localization/calibrated_yaw
-                calibrated_yaw_pub.publish(calibrated_yaw);
-
-                // Yaw is now callibrated
+                // Yaw is now calibrated
                 ROS_INFO("Yaw Calibration Completed");
                 yaw_is_calibrated = true;
             }
@@ -148,18 +183,23 @@ namespace frame_calibration_node
                 // Calculate average of samples once threshold is hit
                 if(geodesy_samples_counter >= MSG_THRESHOLD)
                 {    
-                    // Declare floats to store averaged data
-                    geometry_msgs::Point geodesy_pose_calibrated;
+                    // Initialize a Pose message to store averaged data
+                    geometry_msgs::Pose pose_calibrated;
 
                     // Take average of x and y position samples
-                    geodesy_pose_calibrated.x = geodesy_x_accumulation / geodesy_samples_counter;
-                    geodesy_pose_calibrated.y = geodesy_y_accumulation / geodesy_samples_counter;
+                    pose_calibrated.position.x = geodesy_x_accumulation / geodesy_samples_counter;
+                    pose_calibrated.position.y = geodesy_y_accumulation / geodesy_samples_counter;
+
+                    pose_calibrated.orientation.x = rot_msg.orientation.x;
+                    pose_calibrated.orientation.y = rot_msg.orientation.y;
+                    pose_calibrated.orientation.z = rot_msg.orientation.z;
+                    pose_calibrated.orientation.w = rot_msg.orientation.w;
 
                     // Publish averaged samples
-                    calibrated_pose_pub.publish(geodesy_pose_calibrated);
+                    calibrated_pose_pub.publish(pose_calibrated);
                     // Calibration is complete
-                    geodesy_calibrated_x_value = geodesy_pose_calibrated.x;
-                    geodesy_calibrated_y_value = geodesy_pose_calibrated.y;
+                    geodesy_calibrated_x_value = pose_calibrated.position.x;
+                    geodesy_calibrated_y_value = pose_calibrated.position.y;
                     ROS_INFO("Geodesy Position Calibration Completed");
                     geodesy_is_calibrated = true;
                 }
@@ -169,7 +209,7 @@ namespace frame_calibration_node
 
     void FrameCalibrationNode::lidarCallback(const nav_msgs::Odometry& lidar_msg)
     {
-        if(geodesy_is_calibrated)
+        if(geodesy_is_calibrated && yaw_is_calibrated)
         {
             geometry_msgs::PointStamped lidar_tf_point;
 

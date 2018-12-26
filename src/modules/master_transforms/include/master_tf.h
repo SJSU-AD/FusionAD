@@ -7,13 +7,20 @@ NOTE: This node prepares the tf message to broadcast by using the input of the r
       Only the x-position is offset (with respect to the vehicle on the red car) so there is no y-position component in the 
       2-D transform. 
 
-INPUTS: TOPIC:  /localization/rotated_yaw
-                Msg: std_msgs::Float32
-        TOPIC:  /localization/calibrated_yaw
-                Msg: std_msgs::Float32
+NOTE: Lidar tf logic has been commented out until the loam_velodyne odometry has been verified to be accurate
+      Calibration logic has also been commented out for the same reason ^^^^^
+      
+Subscribers
+----------------------------------------
+TOPIC:  /localization/rotated_imu
+            Msg: sensor_msgs::Imu
+TOPIC:  /localization/calibration
+            Msg: geometry_msgs::Pose
 
-OUTPUTS: Geodesy TF Broadcast
-         Lidar TF Broadcast
+Publisher
+---------------------------------------
+Geodesy TF Broadcast
+Lidar TF Broadcast
 */
 
 #include "ros/ros.h"
@@ -21,11 +28,10 @@ OUTPUTS: Geodesy TF Broadcast
 #include "nav_msgs/Odometry.h"
 #include "std_msgs/Float32.h"
 #include "std_msgs/Bool.h"
-#include "tf2_ros/transform_broadcaster.h"
-#include "geometry_msgs/Point.h"
+#include "geometry_msgs/Pose.h"
+#include "sensor_msgs/Imu.h"
 #include "geometry_msgs/TransformStamped.h"
 #include "tf/transform_broadcaster.h"
-#include "tf2/LinearMath/Quaternion.h"
 
 namespace fusionad
 {
@@ -48,21 +54,19 @@ class MasterTfNode
         ros::Timer master_tf_timer;
 
         // initialize the subscribers
-        ros::Subscriber calibrated_yaw_sub;
-        ros::Subscriber rotated_yaw_sub;
+        ros::Subscriber imu_sub;
+        // ros::Subscriber calibration_sub;
         
         tf::TransformBroadcaster geodesy_broadcaster;
         tf::TransformBroadcaster lidar_broadcaster;
 
-        float calibrated_x_pose;
-        float calibrated_y_pose;
-        float calibrated_yaw;
-        float rot_yaw;
+        float calibrated_yaw = 0;
+        float rot_yaw = 0;
         bool calibration_complete = false;
 
         // initialize callback functions for calibrated messages from the frame_calibration node
-        void yawCallback(const std_msgs::Float32& cal_yaw_msg);
-        void rotatedYawCallback(const std_msgs::Float32& rot_yaw_msg);
+        void imuCallback(const sensor_msgs::Imu& imu_msg);
+        // void calibrationCallback(const geometry_msgs::Pose& pose_msg);
         void timerCallback(const ros::TimerEvent& event);
 
 }; // MasterTfNode

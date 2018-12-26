@@ -8,9 +8,6 @@
     <node type="master_tf" pkg="master_transforms" name="master_tf" output="screen">
     </node>
 
-    <node type="imu_tf_adapter" pkg="localization" name="imu_tf_adapter" output="screen">
-    </node>
-
     <node type="odom_to_chassis_state.py" pkg="localization" name="odom_converter_node" output="screen">
     </node>
 

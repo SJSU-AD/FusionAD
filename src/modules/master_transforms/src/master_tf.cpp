@@ -6,13 +6,20 @@ NOTE: This node prepares the tf message to broadcast by using the input of the r
       Only the x-position is offset (with respect to the vehicle on the red car) so there is no y-position component in the 
       2-D transform. 
 
-INPUTS: TOPIC:  /localization/rotated_yaw
-                Msg: std_msgs::Float32
-        TOPIC:  /localization/calibrated_yaw
-                Msg: std_msgs::Float32
+NOTE: Lidar tf logic has been commented out until the loam_velodyne odometry has been verified to be accurate
+      Calibration logic has also been commented out for the same reason ^^^^^
 
-OUTPUTS: Geodesy TF Broadcast
-         Lidar TF Broadcast
+Subscribers
+----------------------------------------
+TOPIC:  /localization/rotated_imu
+            Msg: sensor_msgs::Imu
+TOPIC:  /localization/calibration
+            Msg: geometry_msgs::Pose
+
+Publisher
+---------------------------------------
+Geodesy TF Broadcast
+Lidar TF Broadcast
 */
 
 namespace fusionad
@@ -22,12 +29,10 @@ namespace master_tf
 namespace master_tf_node
 {
     MasterTfNode::MasterTfNode()
-    {
-    }
+    {}
 
     MasterTfNode::~MasterTfNode()
-    {
-    }
+    {}
 
     void MasterTfNode::initRosComm()
     {
@@ -35,20 +40,35 @@ namespace master_tf_node
         master_tf_timer = masterTfNode_nh.createTimer(ros::Duration(0.02), &MasterTfNode::timerCallback, this);
 
         // initializing the subscribers
-        rotated_yaw_sub = masterTfNode_nh.subscribe("/localization/rotated_yaw", 50, &MasterTfNode::rotatedYawCallback, this);
-        calibrated_yaw_sub = masterTfNode_nh.subscribe("/localization/calibrated_yaw", 10, &MasterTfNode::yawCallback, this);
+        imu_sub = masterTfNode_nh.subscribe("/localization/rotated_imu", 50, &MasterTfNode::imuCallback, this);
+        // calibrated_sub = masterTfNode_nh.subscribe("/localization/calibrated_yaw", 10, &MasterTfNode::calibrationCallback, this);
     }
 
-    void MasterTfNode::yawCallback(const std_msgs::Float32& cal_yaw_msg)
+    void MasterTfNode::imuCallback(const sensor_msgs::Imu& imu_msg)
     {
-        calibrated_yaw = cal_yaw_msg.data;
-        calibration_complete = true;
+        double roll = 0, pitch = 0, yaw = 0;
+
+        tf::Quaternion imu_quaternion(imu_msg.orientation.x,
+                                      imu_msg.orientation.y,
+                                      imu_msg.orientation.z,
+                                      imu_msg.orientation.w);
+        tf::Matrix3x3 temporary_rot_matrix(imu_quaternion);
+        temporary_rot_matrix.getRPY(roll, pitch, yaw);
+        rot_yaw = yaw;
     }
 
-    void MasterTfNode::rotatedYawCallback(const std_msgs::Float32& rot_yaw_msg)
-    {
-        rot_yaw = rot_yaw_msg.data;
-    }
+    // void MasterTfNode::calibrationCallback(const geometry_msgs::Pose& pose_msg)
+    // {
+    //     double roll = 0, pitch = 0, yaw = 0;
+
+    //     tf::Quaternion imu_quaternion(pose_msg.orientation.x,
+    //                                   pose_msg.orientation.y,
+    //                                   pose_msg.orientation.z,
+    //                                   pose_msg.orientation.w);
+    //     tf::Matrix3x3 temporary_rot_matrix(imu_quaternion);
+    //     temporary_rot_matrix.getRPY(roll, pitch, yaw);
+    //     calibrated_yaw = yaw
+    // }
 
     void MasterTfNode::timerCallback(const ros::TimerEvent& event)
     {
@@ -65,21 +85,21 @@ namespace master_tf_node
                 tf::Transform(tf::Quaternion(0, 0, 0, 1), tf::Vector3(0.8763*std::cos(rot_yaw), 0.8763*std::sin(rot_yaw), 0)),
                     ros::Time::now(),"odom", "gps"));
 
-        // if the calibration has been completed, start creating the lidar tf2 message
-        if (calibration_complete == true)
-        {
-            // initialize a quaternion message from roll pitch yaw 
-            // (roll, pitch, yaw)
-            tf::Quaternion lidar_quat_msg;
-            lidar_quat_msg.setRPY(0, 0, calibrated_yaw);
+        // // if the calibration has been completed, start creating the lidar tf2 message
+        // if (calibration_complete == true)
+        // {
+        //     // initialize a quaternion message from roll pitch yaw 
+        //     // (roll, pitch, yaw)
+        //     tf::Quaternion lidar_quat_msg;
+        //     lidar_quat_msg.setRPY(0, 0, calibrated_yaw);
 
-            // build the lidar transform message and broadcast it 
-            lidar_broadcaster.sendTransform(
-                tf::StampedTransform(
-                    tf::Transform(tf::Quaternion(lidar_quat_msg[0], lidar_quat_msg[1], lidar_quat_msg[2], lidar_quat_msg[3]), 
-                        tf::Vector3(0.37465*std::cos(rot_yaw), 0.37465*std::sin(rot_yaw), 0)),
-                            ros::Time::now(), "odom", "/camera_init"));
-        }
+        //     // build the lidar transform message and broadcast it 
+        //     lidar_broadcaster.sendTransform(
+        //         tf::StampedTransform(
+        //             tf::Transform(tf::Quaternion(lidar_quat_msg[0], lidar_quat_msg[1], lidar_quat_msg[2], lidar_quat_msg[3]), 
+        //                 tf::Vector3(0.37465*std::cos(rot_yaw), 0.37465*std::sin(rot_yaw), 0)),
+        //                     ros::Time::now(), "odom", "/camera_init"));
+        // }
     }
 }
 }

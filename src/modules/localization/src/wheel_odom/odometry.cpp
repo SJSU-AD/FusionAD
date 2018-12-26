@@ -8,18 +8,22 @@ NOTE: This script is to handle the raw wheel odometry values from the Signwise 6
       It also takes in various inputs from topics yaw from the IMU to dead-reckon position and velocity in the X and Y frame.
       Dead-reckoning requires previous pose to be tracked, we take advantage of this by subscribing to
       the output of the EKF and using those pose messages as the previous pose of the wheel odometry.
-      
-      SUBSCRIBERS:  TOPIC:  /localization/right_encoder_reading
-                                Msg: std_msgs::Int16
-                    TOPIC:  /localization/left_encoder_reading
-                                Msg: std_msgs::Int16
-                    TOPIC:  /localization/odometry/filtered
-                                Msg: nav_msgs::Odometry
-                    TOPIC:  /localization/rotated_yaw
-                                Msg: std_msgs::Float32
 
-      PUBLISHER:    TOPIC:  /localization/wheel_odom
-                                Msg: nav_msgs::Odometry
+SUBSCRIBERS:  
+-------------------------------------------
+TOPIC:  /localization/right_encoder_reading
+            Msg: std_msgs::Int16
+TOPIC:  /localization/left_encoder_reading
+            Msg: std_msgs::Int16
+TOPIC:  /localization/odometry/filtered
+            Msg: nav_msgs::Odometry
+TOPIC:  /localization/rotated_imu
+            Msg: sensor_msgs::Imu
+
+PUBLISHER:
+-------------------------------------------  
+TOPIC:  /localization/wheel_odom
+            Msg: nav_msgs::Odometry
 */
 
 namespace fusionad
@@ -29,27 +33,24 @@ namespace localization
 namespace wheel_odometry_node
 {
     WheelOdometryNode::WheelOdometryNode()
-    {
-    }
+    {}
 
     WheelOdometryNode::~WheelOdometryNode()
-    {
-    }
+    {}
 
     void WheelOdometryNode::initRosComm()
     {
         // create a timer at 50 Hz
         odometry_timer = odometrynode_nh.createTimer(ros::Duration(0.02), &WheelOdometryNode::timerCallback, this);
+       
         // main publisher for odometry
         odometry_pub = odometrynode_nh.advertise<nav_msgs::Odometry>("/localization/wheel_odom", 50);
+        
         // subscribers for odometry
         left_encoder_sub = odometrynode_nh.subscribe("/localization/left_encoder_reading", 50, &WheelOdometryNode::leftEncoderCallback, this);
         right_encoder_sub = odometrynode_nh.subscribe("/localization/right_encoder_reading", 50, &WheelOdometryNode::rightEncoderCallback, this);
-        // odometry_steering_sub = odometrynode_nh.subscribe("/control/steering_response", 50, &WheelOdometryNode::steeringCallback, this);
-        odometry_imu_sub = odometrynode_nh.subscribe("/localization/rotated_yaw", 50, &WheelOdometryNode::imuCallback, this);
-        // pose_calibration_sub = odometrynode_nh.subscribe("/localization/calibrated_pose", 10, &WheelOdometryNode::calibratedPoseCallback, this);
+        imu_sub = odometrynode_nh.subscribe("/localization/rotated_imu", 50, &WheelOdometryNode::imuCallback, this);
         ekf_odom_sub = odometrynode_nh.subscribe("/odometry/filtered", 50, &WheelOdometryNode::ekfCallback, this);
-        // yaw_calibration_sub = odometrynode_nh.subscribe("/localization/calibrated_yaw", 50, &WheelOdometryNode::calibratedYawCallback, this);
     }
 
     void WheelOdometryNode::leftEncoderCallback(const std_msgs::Int32& left_encoder_msg)
@@ -66,63 +67,24 @@ namespace wheel_odometry_node
         previous_right_encoder_msg = (-1)*right_encoder_msg.data;
     }
 
-    // void WheelOdometryNode::steeringCallback(const std_msgs::Int16& steering_msg)
-    // {
-    //     // steering angle from the linear actuator potentiometer connected to an Arduino
-    //     float steering_analog_intercept = 322;
-    //     float steering_analog_slope = 424.2424;
-    //     steering_angle = (steering_msg.data-steering_analog_intercept)/steering_analog_slope;
-    // }
-
-    // void WheelOdometryNode::calibratedYawCallback(const std_msgs::Float32& calibrated_yaw_msg)
-    // {
-    //     previous_yaw = calibrated_yaw_msg.data;
-    // }
-
     void WheelOdometryNode::ekfCallback(const nav_msgs::Odometry& ekf_odom_msg)
     {
         previous_x_position = ekf_odom_msg.pose.pose.position.x;
         previous_y_position = ekf_odom_msg.pose.pose.position.y;
     }
 
-    void WheelOdometryNode::imuCallback(const std_msgs::Float32& yaw_msg)
+    void WheelOdometryNode::imuCallback(const sensor_msgs::Imu& yaw_msg)
     {
-        // getting yaw estimate from the imu_tf_adapter node, which rotates the yaw to adhere to ROS standards
-        yaw_estimate = yaw_msg.data;
-        // if (yaw_msg_count <= yaw_msg_threshold)
-        // {
-        //     ROS_INFO("Collecting Yaw Samples");
-        //     yaw_msg_storage[yaw_msg_count] = yaw_msg.data;
-        //     yaw_msg_count += 1;
-        //     imu_calibration();
-        // }
+        double roll = 0, pitch = 0, yaw = 0;
+
+        tf::Quaternion imu_quaternion(yaw_msg.orientation.x,
+                                      yaw_msg.orientation.y,
+                                      yaw_msg.orientation.z,
+                                      yaw_msg.orientation.w);
+        tf::Matrix3x3 temporary_rot_matrix(imu_quaternion);
+        temporary_rot_matrix.getRPY(roll, pitch, yaw);
+        yaw_estimate = yaw;
     }
-
-    //TODO: Possibly add position dead-reckoning from wheel odometry
-    // void WheelOdometryNode::calibratedPoseCallback(const geometry_msgs::Point& calibrated_pose_msg)
-    // {
-    //     previous_x_position = calibrated_pose_msg.x;
-    //     previous_y_position = calibrated_pose_msg.y;
-    //     calibration_completed = true;
-    // }
-
-
-    // void WheelOdometryNode::imu_calibration()
-    // {
-    //     // function to calibrate the initialized yaw value
-    //     // collects 100 samples of yaw messages and averages them
-    //     // if the threshold (100 samples) is met, then calculate the average of the values
-    //     if (yaw_msg_count == yaw_msg_threshold)
-    //     {
-    //         float yaw_msg_sum = 0;
-    //         for (int n = 0; n < yaw_msg_threshold; n++)
-    //         {
-    //             yaw_msg_sum += yaw_msg_storage[n];
-    //         }
-    //         previous_yaw = yaw_msg_sum/yaw_msg_threshold;
-    //         ROS_INFO("Yaw Calibration Completed!");
-    //     }
-    // }
 
     void WheelOdometryNode::wheel_odom_median_filter()
     {
@@ -180,7 +142,7 @@ namespace wheel_odometry_node
         velocity_estimate.twist.linear.x = x_velocity; // [m/s]
         velocity_estimate.twist.linear.y = y_velocity; // [m/s]
         
-        // velocity covariances 
+        // velocity variances from a straight-line test at constant velocity
         float x_vel_covariance = 0.0021878/2; // [m^2/s^2]
         float y_vel_covariance = 0.0021878/2; // [m^2/s^2]
 
@@ -203,7 +165,7 @@ namespace wheel_odometry_node
         position_estimate.pose.position.x = x_position;
         position_estimate.pose.position.y = y_position;
 
-        // position covariances
+        // position covariances from a straight-line test at constant velocity
         float x_pose_covariance = 0.0021878/2; // [m^2]
         float y_pose_covariance = 0.0021878/2; // [m^2]
 
@@ -223,19 +185,6 @@ namespace wheel_odometry_node
         // timestamping the message
         full_odom_message.header.stamp = ros::Time::now();
         odometry_pub.publish(full_odom_message);
-
-        // if(calibration_completed)
-        // {
-        //     odometry_state_estimation();
-        //     full_odom_message.twist = velocity_estimate;
-        //     full_odom_message.pose = position_estimate;
-
-        //     // declaring the header frame of the wheel_odom message
-        //     full_odom_message.header.frame_id = "odom";
-        //     // timestamping the message
-        //     full_odom_message.header.stamp = ros::Time::now();
-        //     odometry_pub.publish(full_odom_message);
-        // }
     }
     
 } // wheel_odometry_node

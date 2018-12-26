@@ -7,18 +7,22 @@ NOTE: This script is to handle the raw wheel odometry values from the Signwise 6
       It also takes in various inputs from topics yaw from the IMU to dead-reckon position and velocity in the X and Y frame.
       Dead-reckoning requires previous pose to be tracked, we take advantage of this by subscribing to
       the output of the EKF and using those pose messages as the previous pose of the wheel odometry.
-      
-      SUBSCRIBERS:  TOPIC:  /localization/right_encoder_reading
-                                Msg: std_msgs::Int16
-                    TOPIC:  /localization/left_encoder_reading
-                                Msg: std_msgs::Int16
-                    TOPIC:  /localization/odometry/filtered
-                                Msg: nav_msgs::Odometry
-                    TOPIC:  /localization/rotated_yaw
-                                Msg: std_msgs::Float32
 
-      PUBLISHER:    TOPIC:  /localization/wheel_odom
-                                Msg: nav_msgs::Odometry
+SUBSCRIBERS:  
+-------------------------------------------
+TOPIC:  /localization/right_encoder_reading
+            Msg: std_msgs::Int16
+TOPIC:  /localization/left_encoder_reading
+            Msg: std_msgs::Int16
+TOPIC:  /localization/odometry/filtered
+            Msg: nav_msgs::Odometry
+TOPIC:  /localization/rotated_imu
+            Msg: sensor_msgs::Imu
+
+PUBLISHER:
+-------------------------------------------  
+TOPIC:  /localization/wheel_odom
+            Msg: nav_msgs::Odometry
 */
 
 #include "ros/ros.h"
@@ -32,6 +36,8 @@ NOTE: This script is to handle the raw wheel odometry values from the Signwise 6
 #include "geometry_msgs/PoseWithCovariance.h"
 #include "geometry_msgs/TwistWithCovariance.h"
 #include "sensor_msgs/Imu.h"
+#include "tf/transform_broadcaster.h"
+#include "tf/transform_listener.h"
 #include "stdio.h"
 #include <queue>
 #include <algorithm>
@@ -61,11 +67,8 @@ class WheelOdometryNode
         // initialize subscriber
         ros::Subscriber left_encoder_sub;
         ros::Subscriber right_encoder_sub;
-        // ros::Subscriber odometry_steering_sub;
-        ros::Subscriber odometry_imu_sub;
-        // ros::Subscriber pose_calibration_sub;
+        ros::Subscriber imu_sub;
         ros::Subscriber ekf_odom_sub;
-        // ros::Subscriber yaw_calibration_sub;
                 
         // Kalman Filter Preparation
         // Odometry messages
@@ -73,9 +76,6 @@ class WheelOdometryNode
         geometry_msgs::TwistWithCovariance velocity_estimate;
         geometry_msgs::PoseWithCovariance position_estimate;
         
-        // Imu message to extract yaw
-        // wheelbase in meters
-        const float WHEELBASE = 0.7112;
         // wheel radius in meters
         const float WHEEL_RADIUS = 0.1397;
         // time interval
@@ -84,8 +84,7 @@ class WheelOdometryNode
         float left_angular_vel = 0;
         // right angular velocity
         float right_angular_vel = 0;
-        // steering angle
-        float steering_angle = 0;
+
         // previous odometry values
         long previous_right_encoder_msg = 0;
         long previous_left_encoder_msg = 0;
@@ -113,31 +112,20 @@ class WheelOdometryNode
 
         bool calibration_completed = false;
 
-        // float yaw_msg = 0;
-        // number of messages to store into yaw_msg_storage
-        // const int yaw_msg_threshold = 100;
-        // array to store yaw messages
-        // float yaw_msg_storage[100];
-        // unsigned int yaw_msg_count = 0;
-
         // initializing a deque for a running median
         std::deque<float> vel_deque;
         
         // declare support functions
-        // performs a calibration for the yaw estimate
-        // void imu_calibration();
         // calculates the current velocity state of the vehicle
         void odometry_state_estimation();
         // does the median filter calculation for the wheel odometry
         void wheel_odom_median_filter();
+
         // declare the callbacks
         void leftEncoderCallback(const std_msgs::Int32& left_encoder_msg);
         void rightEncoderCallback(const std_msgs::Int32& right_encoder_msg);
-        // void steeringCallback(const std_msgs::Int16& steering_msg);
         void ekfCallback(const nav_msgs::Odometry& ekf_odom_msg);
-        // void calibratedPoseCallback(const geometry_msgs::Point& calibrated_pose_msg);
-        // void calibratedYawCallback(const std_msgs::Float32& calibrated_yaw_msg);
-        void imuCallback(const std_msgs::Float32& yaw_msg);
+        void imuCallback(const sensor_msgs::Imu& yaw_msg);
         void timerCallback(const ros::TimerEvent& event);
         
 

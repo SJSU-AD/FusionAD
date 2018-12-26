@@ -152,7 +152,6 @@ add_library(segment_processor
 
 add_executable(segmenter_node src/segmentation/segmenter_node.cpp)
 add_executable(odometry src/wheel_odom/odometry.cpp)
-add_executable(imu_tf_adapter src/imu_adapter/imu_tf_adapter.cpp)
 add_executable(frame_calibration src/frame_tf_calibrate/frame_calibration.cpp)
 
 ## Rename C++ executable without prefix
@@ -165,7 +164,6 @@ add_executable(frame_calibration src/frame_tf_calibrate/frame_calibration.cpp)
 ## same as for the library above
 ##add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(odometry ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-add_dependencies(imu_tf_adapter ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(frame_calibration ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
@@ -176,10 +174,6 @@ target_link_libraries(segmenter_node
 )
 
 target_link_libraries(odometry
-  ${catkin_LIBRARIES}
-)
-
-target_link_libraries(imu_tf_adapter
   ${catkin_LIBRARIES}
 )
 

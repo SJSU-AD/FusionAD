@@ -6,25 +6,30 @@ NOTE: This node listens to the tf broadcasts and performs the homogeneous transf
       Another major function of this node is to "calibrate" the initial position and orientation
       of the vehicle. The homogeneous transforms are applied and then the result is published.
       
-INPUTS: TOPIC:  /gps/geodesy_odom
-                    Msg: nav_msgs::Odometry
-        TOPIC:  /localization/rotated_yaw
-                    Msg: std_msgs::Float32
-        TOPIC:  /localization/loam_odom_with_covar
-                    Msg: nav_msgs::Odometry
+Subscribers
+--------------------------------------------------
+TOPIC:  /gps/geodesy_odom
+            Msg: nav_msgs::Odometry
+TOPIC:  /imu
+            Msg: sensor_msgs::Imu
+TOPIC:  /localization/loam_odom_with_covar
+            Msg: nav_msgs::Odometry
 
-        TF Listeners: Geodesy TF Message
-                      Lidar TF Message
+TF Listeners: Geodesy TF Message
+              Lidar TF Message
 
-OUTPUTS: TOPIC: /localization/calibrated_pose
-                    Msg: geometry_msgs::Point
-         TOPIC: /localization/calibrated_yaw
-                    Msg: std_msgs::Float32
-         TOPIC: /localization/geodesy_tf
-                    Msg: nav_msgs::Odometry
-         TOPIC: /localization/lidar_tf
-                    Msg: nav_msgs::Odometry
+Publishers
+-------------------------------------------------
+TOPIC: /localization/calibration
+            Msg: geometry_msgs::Pose
+TOPIC: /localization/rotated_imu
+            Msg: sensor_msgs::Imu
+TOPIC: /localization/geodesy_tf
+            Msg: nav_msgs::Odometry
+TOPIC: /localization/lidar_tf
+            Msg: nav_msgs::Odometry
 */
+
 
 #include "ros/ros.h"
 #include "nav_msgs/Odometry.h"
@@ -68,22 +73,23 @@ class FrameCalibrationNode
 
         // initializing nodehandle
         ros::NodeHandle frameCalibrationNode_nh;
-
+        
         // initialize publishers
-        // publisher for calibrated x and y positions
         ros::Publisher calibrated_pose_pub;
-
-        // publisher for calibrated yaw orientation
-        ros::Publisher calibrated_yaw_pub;
 
         // publish transformed measurements
         ros::Publisher geodesy_tf_pub;
         ros::Publisher lidar_tf_pub;
+        ros::Publisher imu_tf_pub;
 
         // initialize subscribers
         ros::Subscriber geodesy_sub;
-        ros::Subscriber yaw_sub;
+        ros::Subscriber imu_sub;
         ros::Subscriber lidar_sub;
+
+        // inputs to the calibration message
+        float calibrated_yaw;
+        sensor_msgs::Imu rot_msg;
 
         // messages after transform
         nav_msgs::Odometry geodesy_tf_msg;
@@ -96,9 +102,10 @@ class FrameCalibrationNode
         // message threshold for calibration
         const int MSG_THRESHOLD = 100;
 
+
         // declaring callbacks
         void geodesyCallback(const nav_msgs::Odometry& geodesy_msg);
-        void yawCallback(const std_msgs::Float32& yaw_msg);
+        void yawCallback(const sensor_msgs::Imu& imu_msg);
         void lidarCallback(const nav_msgs::Odometry& lidar_msg);
 };
 }// frame_calibration_node
