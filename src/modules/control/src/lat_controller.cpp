@@ -236,6 +236,7 @@ namespace lat_controller{
     //Find heading difference between vehicle orientation and the path
     //Follows the convention of left turn is positive 
     float headingDelta = pathTheta - vehTheta;
+
     
     /**************************NaN Check*****************************/
     if(std::isfinite(headingDelta))
@@ -249,7 +250,17 @@ namespace lat_controller{
     }    
     
     //Apply Stanley kinematic control law
-    float unfilteredSteeringAngle = headingDelta + std::atan((gain * crossTrackError)/vehSpeed);
+    float unfilteredSteeringAngle = 0;
+
+    // Check if gain is zero, only report heading delta if gain is zero.
+    if(gain != 0)
+    {
+      unfilteredSteeringAngle = headingDelta + std::atan((gain * crossTrackError)/vehSpeed);
+    }
+    else
+    {
+      unfilteredSteeringAngle = headingDelta;
+    }
 
     float steeringAngle = 0;
 

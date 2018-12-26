@@ -53,6 +53,7 @@ class ControlNode
     ros::Timer control_cmd_timer;
 
     const float magnetic_declination_rad = M_PI_2;
+    const float imu_residual_offset = -0.3567612546;
 
     //Heading Estimator
     /*
@@ -68,6 +69,8 @@ class ControlNode
     std::vector<float> pathPointListX;
     std::vector<float> pathPointListY;
     std::vector<float>::size_type dynamicArraySize;
+
+    bool getClosesWaypoint(const nav_msgs::Path& current_path, const interface::Chassis_state& current_position, int& waypoint_index);
 
     void pathCallback(const nav_msgs::Path& trajectory_msg);
     void stateCallback(const interface::Chassis_state& veh_state_msg);
