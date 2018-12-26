@@ -210,6 +210,27 @@ namespace node
     autonomousDrivingFlag = autonomous_mode_msg.data;
   }
 
+  int getTargetWaypoint(const nav_msgs::Path& current_path, const interface::Chassis_state& current_position)
+  {
+    float searchDistance = 5.0;
+    
+    // Check if the path is empty
+    if(current_path.poses.empty())
+    {
+      return -1;
+    }
+
+    // Look for possible waypoint candidates
+    
+    // Create a dummy vector to store the possible candidates
+    std::vector<int> waypointCandidatesIndex;
+    for(int i = 0; i < current_path.poses.size(); i++)
+    {
+      
+    }
+
+  }
+
   void ControlNode::masterTimerCallback(const ros::TimerEvent& controlTimeEvent)
   {
     interface::Controlcmd control_core_command;
