@@ -3,14 +3,14 @@
 NOTE: This node listens to the tf broadcasts and performs the homogeneous transforms.
       Another major function of this node is to "calibrate" the initial position and orientation
       of the vehicle. The homogeneous transforms are applied and then the result is published.
-
+      
 Subscribers
 --------------------------------------------------
-TOPIC:  /gps/geodesy_odom
+Topic:  /gps/geodesy_odom
             Msg: nav_msgs::Odometry
-TOPIC:  /imu
+Topic:  /imu
             Msg: sensor_msgs::Imu
-TOPIC:  /localization/loam_odom_with_covar
+Topic:  /localization/loam_odom_with_covar
             Msg: nav_msgs::Odometry
 
 TF Listeners: Geodesy TF Message
@@ -18,13 +18,13 @@ TF Listeners: Geodesy TF Message
 
 Publishers
 -------------------------------------------------
-TOPIC: /localization/calibration
+Topic: /localization/calibration
             Msg: geometry_msgs::Pose
-TOPIC: /localization/rotated_imu
+Topic: /localization/rotated_imu
             Msg: sensor_msgs::Imu
-TOPIC: /localization/geodesy_tf
+Topic: /localization/geodesy_tf
             Msg: nav_msgs::Odometry
-TOPIC: /localization/lidar_tf
+Topic: /localization/lidar_tf
             Msg: nav_msgs::Odometry
 */
 
@@ -73,7 +73,6 @@ namespace frame_calibration_node
         temporary_rot_matrix.getRPY(roll, pitch, yaw);
 
         float adjusted_yaw = yaw + yaw_offset + imu_residual_offset;
-        //float adjusted_yaw = yaw + magnetic_declination_rad;
 
         if(adjusted_yaw > M_PI)
         {
@@ -98,25 +97,25 @@ namespace frame_calibration_node
 
         imu_tf_pub.publish(rot_msg);
 
-        // Perform while yaw is not calibrated
+        // perform while yaw is not calibrated
         if(!yaw_is_calibrated)
         {
             
             ROS_INFO_ONCE("Collecting Yaw Samples");
 
-            // Accumulate samples
+            // accumulate samples
             yaw_accumulation += vehicle_heading;
 
-            // Increment sample counter
+            // increment sample counter
             yaw_samples_counter++;
 
-            // Calculate average of samples once threshold is hit
+            // calculate average of samples once threshold is hit
             if(yaw_samples_counter >= MSG_THRESHOLD)
             {
-                // Store and calculate calibrated data
+                // store and calculate calibrated data
                 calibrated_yaw = yaw_accumulation / yaw_samples_counter;
 
-                // Yaw is now calibrated
+                // yaw is now calibrated
                 ROS_INFO("Yaw Calibration Completed");
                 yaw_is_calibrated = true;
             }
@@ -166,27 +165,27 @@ namespace frame_calibration_node
                 geodesy_exception.what());
             }
 
-            // Perform while geodesy is not calibrated
+            // perform while geodesy is not calibrated
             if(!geodesy_is_calibrated)
             {
                 ROS_INFO_ONCE("Collecting Geodesy Samples");
 
-                // Collect x sample and add to previous samples
+                // collect x sample and add to previous samples
                 geodesy_x_accumulation += geodesy_tf_msg.pose.pose.position.x;
 
-                // Collect y sample and add to previous samples
+                // collect y sample and add to previous samples
                 geodesy_y_accumulation += geodesy_tf_msg.pose.pose.position.y;
 
-                // Increment geodesy samples counter
+                // increment geodesy samples counter
                 geodesy_samples_counter++;
 
-                // Calculate average of samples once threshold is hit
+                // calculate average of samples once threshold is hit
                 if(geodesy_samples_counter >= MSG_THRESHOLD)
                 {    
-                    // Initialize a Pose message to store averaged data
+                    // initialize a Pose message to store averaged data
                     geometry_msgs::Pose pose_calibrated;
 
-                    // Take average of x and y position samples
+                    // take average of x and y position samples
                     pose_calibrated.position.x = geodesy_x_accumulation / geodesy_samples_counter;
                     pose_calibrated.position.y = geodesy_y_accumulation / geodesy_samples_counter;
 
@@ -195,9 +194,10 @@ namespace frame_calibration_node
                     pose_calibrated.orientation.z = rot_msg.orientation.z;
                     pose_calibrated.orientation.w = rot_msg.orientation.w;
 
-                    // Publish averaged samples
+                    // publish averaged samples
                     calibrated_pose_pub.publish(pose_calibrated);
-                    // Calibration is complete
+                    
+                    // calibration is complete
                     geodesy_calibrated_x_value = pose_calibrated.position.x;
                     geodesy_calibrated_y_value = pose_calibrated.position.y;
                     ROS_INFO("Geodesy Position Calibration Completed");

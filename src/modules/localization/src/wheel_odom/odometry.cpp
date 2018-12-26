@@ -1,7 +1,5 @@
 #include "localization/wheel_odom/odometry.h"
 
-//NOTE: Currently commented out calibration phase of the odometry node
-
 /*
 Takes wheel odometry from Arduino encoders and translates to vehicle velocity and position
 NOTE: This script is to handle the raw wheel odometry values from the Signwise 600 P/R rotary encoder.
@@ -9,20 +7,20 @@ NOTE: This script is to handle the raw wheel odometry values from the Signwise 6
       Dead-reckoning requires previous pose to be tracked, we take advantage of this by subscribing to
       the output of the EKF and using those pose messages as the previous pose of the wheel odometry.
 
-SUBSCRIBERS:  
+Subscribers:  
 -------------------------------------------
-TOPIC:  /localization/right_encoder_reading
+Topic:  /localization/right_encoder_reading
             Msg: std_msgs::Int16
-TOPIC:  /localization/left_encoder_reading
+Topic:  /localization/left_encoder_reading
             Msg: std_msgs::Int16
-TOPIC:  /localization/odometry/filtered
+Topic:  /localization/odometry/filtered
             Msg: nav_msgs::Odometry
-TOPIC:  /localization/rotated_imu
+Topic:  /localization/rotated_imu
             Msg: sensor_msgs::Imu
 
-PUBLISHER:
+Publisher:
 -------------------------------------------  
-TOPIC:  /localization/wheel_odom
+Topic:  /localization/wheel_odom
             Msg: nav_msgs::Odometry
 */
 
@@ -127,12 +125,8 @@ namespace wheel_odometry_node
         wheel_odom_median_filter();
         
         ////////////////////////
-        // VELOCITY ESTIMATE //
+        // Velocity Estimate  //
         ///////////////////////
-
-        // yaw estimate from odometry and steering
-        // yaw_estimate = previous_yaw + (vel_magnitude/WHEELBASE)*tan(steering_angle)*DT; // [rad]
-        // previous_yaw = yaw_estimate;
         
         // velocity estimate in x and y
         x_velocity = vel_magnitude * cos(yaw_estimate); // [m/s]
@@ -150,7 +144,7 @@ namespace wheel_odometry_node
         velocity_estimate.covariance[7] = y_vel_covariance;
         
         ///////////////////////
-        // POSITION ESTIMATE //
+        // Position Estimate //
         ///////////////////////
 
         // position estimate in x and y

@@ -9,12 +9,12 @@ NOTE: This node prepares the tf message to broadcast by using the input of the r
 
 NOTE: Lidar tf logic has been commented out until the loam_velodyne odometry has been verified to be accurate
       Calibration logic has also been commented out for the same reason ^^^^^
-      
+
 Subscribers
 ----------------------------------------
-TOPIC:  /localization/rotated_imu
+Topic:  /localization/rotated_imu
             Msg: sensor_msgs::Imu
-TOPIC:  /localization/calibration
+Topic:  /localization/calibration
             Msg: geometry_msgs::Pose
 
 Publisher

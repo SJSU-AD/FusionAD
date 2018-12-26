@@ -11,9 +11,9 @@ NOTE: Lidar tf logic has been commented out until the loam_velodyne odometry has
 
 Subscribers
 ----------------------------------------
-TOPIC:  /localization/rotated_imu
+Topic:  /localization/rotated_imu
             Msg: sensor_msgs::Imu
-TOPIC:  /localization/calibration
+Topic:  /localization/calibration
             Msg: geometry_msgs::Pose
 
 Publisher

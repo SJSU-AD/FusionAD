@@ -8,11 +8,11 @@ NOTE: This node listens to the tf broadcasts and performs the homogeneous transf
       
 Subscribers
 --------------------------------------------------
-TOPIC:  /gps/geodesy_odom
+Topic:  /gps/geodesy_odom
             Msg: nav_msgs::Odometry
-TOPIC:  /imu
+Topic:  /imu
             Msg: sensor_msgs::Imu
-TOPIC:  /localization/loam_odom_with_covar
+Topic:  /localization/loam_odom_with_covar
             Msg: nav_msgs::Odometry
 
 TF Listeners: Geodesy TF Message
@@ -20,13 +20,13 @@ TF Listeners: Geodesy TF Message
 
 Publishers
 -------------------------------------------------
-TOPIC: /localization/calibration
+Topic: /localization/calibration
             Msg: geometry_msgs::Pose
-TOPIC: /localization/rotated_imu
+Topic: /localization/rotated_imu
             Msg: sensor_msgs::Imu
-TOPIC: /localization/geodesy_tf
+Topic: /localization/geodesy_tf
             Msg: nav_msgs::Odometry
-TOPIC: /localization/lidar_tf
+Topic: /localization/lidar_tf
             Msg: nav_msgs::Odometry
 */
 
@@ -55,15 +55,15 @@ class FrameCalibrationNode
 
     private:
 
-        // Booleans to know when calibration is finished
+        // booleans to know when calibration is finished
         bool yaw_is_calibrated = false;
         bool geodesy_is_calibrated = false;
 
-        // Counters to keep track of # of samples
+        // counters to keep track of # of samples
         unsigned int yaw_samples_counter = 0;
         unsigned int geodesy_samples_counter = 0;
 
-        // Variables to store samples
+        // variables to store samples
         float yaw_accumulation = 0; 
         float geodesy_x_accumulation = 0;
         float geodesy_y_accumulation = 0;

@@ -8,20 +8,20 @@ NOTE: This script is to handle the raw wheel odometry values from the Signwise 6
       Dead-reckoning requires previous pose to be tracked, we take advantage of this by subscribing to
       the output of the EKF and using those pose messages as the previous pose of the wheel odometry.
 
-SUBSCRIBERS:  
+Subscribers:  
 -------------------------------------------
-TOPIC:  /localization/right_encoder_reading
+Topic:  /localization/right_encoder_reading
             Msg: std_msgs::Int16
-TOPIC:  /localization/left_encoder_reading
+Topic:  /localization/left_encoder_reading
             Msg: std_msgs::Int16
-TOPIC:  /localization/odometry/filtered
+Topic:  /localization/odometry/filtered
             Msg: nav_msgs::Odometry
-TOPIC:  /localization/rotated_imu
+Topic:  /localization/rotated_imu
             Msg: sensor_msgs::Imu
 
-PUBLISHER:
+Publisher:
 -------------------------------------------  
-TOPIC:  /localization/wheel_odom
+Topic:  /localization/wheel_odom
             Msg: nav_msgs::Odometry
 */
 
