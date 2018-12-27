@@ -29,14 +29,14 @@ class Waypoints
 {
   private:
     nav_msgs::Path current_path_list_;
-  
+
   public:
     void SetPath(const nav_msgs::Path incoming_path_list)
     {
       current_path_list_ = incoming_path_list;
     }
     
-    int GetPathSize() const
+    size_t GetPathSize() const
     {
       return current_path_list_.poses.size();
     }
@@ -52,7 +52,7 @@ class Waypoints
     }    
 
     float GetWaypointTheta(const int& index);
-    float GetWaypointPlaneDistance(const int& index, const geometry_msgs::Point& current_vehicle_position);
+    float GetWaypointRelativePlaneDistance(const int& index, const geometry_msgs::Point& current_vehicle_position);
     // This function compares the relative location of the current index and the position of the vehicle
     // to determine whether the waypoint is within logical/reachable space ("Aheadness")
     bool IsWaypointAhead(const int& index, const geometry_msgs::Pose& current_vehicle_pose);
@@ -60,10 +60,6 @@ class Waypoints
 }
 
 float getAbsoluteRelativeAngle(const int& index, const interface::Chassis_state& currentPosition);
-
-float getPlaneDistance(const int& index,  const interface::Chassis_state& currentPosition);
-
-
 
 }    
 }
