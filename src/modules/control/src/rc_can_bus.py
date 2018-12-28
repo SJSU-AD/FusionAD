@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 '''
-NOTE: Transceiver code to facilitate CAN Messages 
+TODO: Possibly clean up the method for timing
+
+NOTE: Must be plugged into the CAN device with a completed CAN network to work
+
 Hardware Included: USB2CAN Device
                    Globe Pow-R Steer EPAS Motor
                    Kartech Linear Actuator
@@ -13,12 +16,17 @@ NOTE: bus = can.interface.Bus(channel='can0', bustype='socketcan_ctypes')
       Only send lists with a UNIFORM data type through the CAN Network
         Example: Only send [int,int,int,int,int,int,int,int]
                         or [string,string,string,string,string,string,string,string]
+
+      The SME Propulsion Motor Controller requires 5 seconds of power messages until operation can begin
+      Afterwards, the controller must receive power messages and propulsion control messages with a 50 ms time delay
+      between the two different messages
 '''
 import rospy
 from sensor_msgs.msg import Joy
 import can
 import time
 import os
+
 
 # establishing the CAN connection and setting bitrate to 250 kbps
 os.system('sudo /sbin/ip link set can0 up type can bitrate 250000')
@@ -57,6 +65,7 @@ braking_data = [0x0F, 0x4A, 0xF4, 0xC1, 0x00, 0x00, 0x00, 0x00]
 zero_braking_data = [0x7E, 0x02, 0x12, 0x34, 0x56, 0xAB, 0xCD, 0xEF]
 
 class CanDriver:
+    """Converts joy input into appropriate CAN Message and sends the message"""
     # initializing the node
     rospy.init_node('controller', anonymous = True)
     def __init__(self):
@@ -65,7 +74,7 @@ class CanDriver:
         # cyclic time cycle of 5 milliseconds required
         self.main()
 
-    def joeyCallback(self, data):
+    def joyCallback(self, data):
         
         # declaring the steering axis on the joy node
         STEERING_AXIS = 0
@@ -83,11 +92,12 @@ class CanDriver:
 
         # mask for hex
         MASKER = 0xFF
-        '''
-        steering logic
-        '''
+        
         # the safety switch must be pressed for operation
         if safety_switch == 1:
+            ####################
+            ## Steering Logic ##
+            ####################
             # rev = joy_steering_input
             # # positive full lock bytes
             # POS_FULL_LOCK = 0x00180000
@@ -123,7 +133,9 @@ class CanDriver:
             #     steering_data[3]= int(steering_map >> 8 & MASKER)
             #     steering_data[2] = int(steering_map & MASKER)
 
-            # #braking logic
+            # ###################
+              ## Braking Logic ##
+              ###################
             # BRAKE = joy_braking_input
             # MAX_BRAKE_MESSAGE = 0xCDAC
             # MIN_BRAKE_MESSAGE = 0xC1F4
@@ -140,8 +152,9 @@ class CanDriver:
             # braking_data[3] = int(braking_map >> 8 & MASKER)
             # braking_data[4] = int(braking_map & MASKER)
 
-            #Propulsion CAN Message Interpolation
-
+            ######################
+            ## Propulsion Logic ##
+            ######################
             MAX_PROP_MESSAGE = 0xF401
             MIN_PROP_MESSAGE = 0x0000
             # 511 RPM 
@@ -171,22 +184,22 @@ class CanDriver:
 
     def main(self):
         start_time = time.clock()
-        steering_zero_msg = can.Message(arbitration_id = steering_arbitration_id, data = zero_steering_data, extended_id = True)
-        braking_zero_msg = can.Message(arbitration_id = braking_arbitration_id, data = zero_braking_data, extended_id = True)
+        # steering_zero_msg = can.Message(arbitration_id = steering_arbitration_id, data = zero_steering_data, extended_id = True)
+        # braking_zero_msg = can.Message(arbitration_id = braking_arbitration_id, data = zero_braking_data, extended_id = True)
 
-        bus.send(steering_zero_msg)
-        #bus.send(braking_zero_msg)
+        # bus.send(steering_zero_msg)
+        # bus.send(braking_zero_msg)
 
         TIME_DELAY = 5
         while not rospy.is_shutdown():
             frequency_start_time = time.clock()
             FREQUENCY_STATE = False
             # 0x66 is 0.4 rev/s            
-            #print steering_data
+            # print steering_data
             present_time = time.clock()
             power_propulsion_msg = can.Message(arbitration_id = prop_power_arbitration_id, data = prop_power_request_data, extended_id = False)
-            steering_msg = can.Message(arbitration_id = steering_arbitration_id, data = steering_data, extended_id = True)
-            braking_msg = can.Message(arbitration_id = braking_arbitration_id, data = braking_data, extended_id = True)
+            # steering_msg = can.Message(arbitration_id = steering_arbitration_id, data = steering_data, extended_id = True)
+            # braking_msg = can.Message(arbitration_id = braking_arbitration_id, data = braking_data, extended_id = True)
             propulsion_msg = can.Message(arbitration_id = propulsion_arbitration_id, data = propulsion_data, extended_id = False)
             bus.send(steering_msg)
             #bus.send(braking_msg)
@@ -202,7 +215,7 @@ class CanDriver:
                         bus.send(propulsion_msg)
                         # exiting the send control message loop
                         control_state = True
-                        #print('Sleeping')
+                        # print('Sleeping')
             while FREQUENCY_STATE == False:
                 frequency_time = time.clock()
                 if abs(frequency_start_time-frequency_time) >= 0.100:
