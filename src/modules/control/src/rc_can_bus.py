@@ -193,21 +193,21 @@ class CanDriver:
         TIME_DELAY = 5
         while not rospy.is_shutdown():
             frequency_start_time = time.clock()
-            FREQUENCY_STATE = False
+            frequency_state = False
             # 0x66 is 0.4 rev/s            
             # print steering_data
             present_time = time.clock()
             power_propulsion_msg = can.Message(arbitration_id = prop_power_arbitration_id, data = prop_power_request_data, extended_id = False)
-            # steering_msg = can.Message(arbitration_id = steering_arbitration_id, data = steering_data, extended_id = True)
-            # braking_msg = can.Message(arbitration_id = braking_arbitration_id, data = braking_data, extended_id = True)
+            steering_msg = can.Message(arbitration_id = steering_arbitration_id, data = steering_data, extended_id = True)
+            braking_msg = can.Message(arbitration_id = braking_arbitration_id, data = braking_data, extended_id = True)
             propulsion_msg = can.Message(arbitration_id = propulsion_arbitration_id, data = propulsion_data, extended_id = False)
-            bus.send(steering_msg)
+            # bus.send(steering_msg)
             #bus.send(braking_msg)
             bus.send(power_propulsion_msg)
-            power_time = time.clock()
             control_state = False
 			# only allow messages to go through if cyclic delay is met
             if abs(present_time-start_time) >= TIME_DELAY:
+                power_time = time.clock()
                 while control_state == False:
                     control_time = time.clock()
                     # regulate the 50 ms period offset required
@@ -215,14 +215,15 @@ class CanDriver:
                         bus.send(propulsion_msg)
                         # exiting the send control message loop
                         control_state = True
+                        power_time = control_time
                         # print('Sleeping')
-            while FREQUENCY_STATE == False:
+            while frequency_state == False:
                 frequency_time = time.clock()
                 if abs(frequency_start_time-frequency_time) >= 0.100:
                     # resetting the overall time.clock()
                     frequency_start_time = frequency_time
                     # exiting the while loop
-                    FREQUENCY_STATE = True
+                    frequency_state = True
 
     
 
