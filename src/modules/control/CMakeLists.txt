@@ -15,6 +15,8 @@ find_package(catkin REQUIRED COMPONENTS
   nav_msgs
   geometry_msgs
   interface
+  tf2
+  tf2_ros
 )
 find_package(Eigen3 REQUIRED)
 include_directories(${EIGEN3_INCLUDE_DIR})
@@ -146,6 +148,15 @@ target_link_libraries(lateral_control
   ${catkin_LIBRARIES}
 )
 
+add_library(waypoint_selector
+  src/lib_high_level_control.cpp
+)
+
+add_dependencies(waypoint_selector ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(waypoint_selector
+  ${catkin_LIBRARIES}
+)
+
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
@@ -162,7 +173,7 @@ target_link_libraries(lateral_control
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME} src/control_node.cpp)
 
-add_executable(core_control src/control_node.cpp src/lat_controller.cpp)
+add_executable(core_control src/control_node.cpp src/lat_controller.cpp src/lib_high_level_control.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
