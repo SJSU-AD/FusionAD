@@ -73,6 +73,9 @@ namespace master_tf_node
     void MasterTfNode::timerCallback(const ros::TimerEvent& event)
     {
         /*
+        Red Car Sensor Locations
+        the sensors are not offset in the y-axis of the vehicle base_link
+
         GPS to front axle: -34.5" = -0.8763 [m]
         Lidar to front axle: -14.75" = -0.37465 [m]
         IMU to front axle: 5" = 0.127 [m]
@@ -86,7 +89,7 @@ namespace master_tf_node
                     ros::Time::now(),"odom", "gps"));
 
         // // if the calibration has been completed, start creating the lidar tf2 message
-        // if (calibration_complete == true)
+        // if (calibration_complete)
         // {
         //     // initialize a quaternion message from roll pitch yaw 
         //     // (roll, pitch, yaw)
