@@ -13,6 +13,7 @@
 #include "geometry_msgs/Point.h"
 #include "geometry_msgs/Pose.h"
 #include "geometry_msgs/TwistStamped.h"
+#include "geometry_msgs/Quaternion.h"
 #include "std_msgs/Bool.h"
 #include <interface/Controlcmd.h>
 #include <interface/Chassis_state.h>
@@ -32,12 +33,13 @@ class Waypoints
 {
   private:
     nav_msgs::Path current_path_list_;
+    float ComputeWaypointTheta(const int& index);
 
   public:
     Waypoints();
     ~Waypoints();
 
-    void SetPath(const nav_msgs::Path& incoming_path_list);
+    bool SetPath(const nav_msgs::Path& incoming_path_list);
     
     size_t GetPathSize() const
     {
@@ -62,6 +64,7 @@ class Waypoints
     bool IsWaypointAligned(const int& index, const float& current_vehicle_heading, const float& heading_thereshold);
 };
 
+void SetROSQuaternionFromRPY(geometry_msgs::Quaternion& ROS_quaternion, const float& roll,const float& pitch,const float& yaw);
 //float getAbsoluteRelativeAngle(const int& index, const interface::Chassis_state& currentPosition);
 
 }    

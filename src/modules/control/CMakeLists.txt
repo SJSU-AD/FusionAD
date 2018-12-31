@@ -248,6 +248,7 @@ target_link_libraries(core_control
 ################# TESTING #########################
 # add the test file with the main function, and place the testing libraries behind
 catkin_add_gtest(control_test test/control_test.cpp src/lat_controller.cpp)
+catkin_add_gtest(control_path_test test/control_path_test.cpp src/lib_high_level_control.cpp)
 
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
@@ -255,6 +256,7 @@ catkin_add_gtest(control_test test/control_test.cpp src/lat_controller.cpp)
 
 ################# TESTING #########################
 target_link_libraries(control_test ${catkin_LIBRARIES})
+target_link_libraries(control_path_test ${catkin_LIBRARIES})
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)

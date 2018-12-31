@@ -15,17 +15,29 @@ namespace libraries
   {
   }
 
-  void Waypoints::SetPath(const nav_msgs::Path& incoming_path_list)
+  bool Waypoints::SetPath(const nav_msgs::Path& incoming_path_list)
   {
+    current_path_list_.poses.clear();
     current_path_list_ = incoming_path_list;
-    if(!IsPathEmpty())
+    // Only perform path stuffing if the current path data is empty
+    if(!incoming_path_list.poses.empty())
     {
       for(int i = 0; i < GetPathSize(); i++)
       {
         tf2::Quaternion waypoint_quaternion;
-        waypoint_quaternion.setRPY(0,0,GetWaypointTheta(i));
+        float waypoint_theta = 0;
+        try
+        {
+          waypoint_theta = ComputeWaypointTheta(i);
+        }
+        catch(const char* msg)
+        {
+          return false;
+        }
+        waypoint_quaternion.setRPY(0,0,waypoint_theta);
         tf2::convert(waypoint_quaternion,current_path_list_.poses[i].pose.orientation);
       }
+      return true;
     }
     else
     {
@@ -34,6 +46,31 @@ namespace libraries
   }
 
   float Waypoints::GetWaypointTheta(const int& index)
+  {
+    if(!IsPathEmpty())
+    {
+      double waypoint_roll, waypoint_pitch, waypoint_yaw;
+      tf2::Quaternion waypoint_quaternion;
+      tf2::convert(current_path_list_.poses[index].pose.orientation, waypoint_quaternion);
+      tf2::Matrix3x3 waypoint_quaternion_matrix(waypoint_quaternion);
+      waypoint_quaternion_matrix.getRPY(waypoint_roll, waypoint_pitch, waypoint_yaw);
+      float waypoint_theta = static_cast<float>(waypoint_yaw);
+      if(!std::isfinite(waypoint_theta))
+      {
+        throw "Waypoint Theta not finite!";
+      }
+      else
+      {
+        return waypoint_theta;
+      }
+    }
+    else
+    {
+      throw "Path is not set!";
+    }
+  }
+
+  float Waypoints::ComputeWaypointTheta(const int& index)
   {
     if(!IsPathEmpty())
     {
@@ -83,13 +120,20 @@ namespace libraries
                 
       //Calculate pathSlope at index value;
       float pathSlope = pathYawCoeff(0) * current_path_list_.poses[index].pose.position.x +
-                  pathYawCoeff(1);   
+                        pathYawCoeff(1);   
 
       float nextXpos;
       float nextYpos;
 
       float targetXpos;
       float targetYpos;
+
+      //Now estimate the direction of the path to generate heading.
+      //Find the linear representation of the slope
+      float b = current_path_list_.poses[index].pose.position.y - (pathSlope * current_path_list_.poses[index].pose.position.x);
+
+      float heading_dx = 0;
+      float heading_dy = 0;    
 
       if(index == (GetPathSize() - 1))
       {
@@ -98,6 +142,10 @@ namespace libraries
 
         targetXpos = current_path_list_.poses[index-1].pose.position.x;
         targetYpos = current_path_list_.poses[index-1].pose.position.y;
+        
+        // Take the direct backward differencing of the positions to get path heading if at last waypoint
+        heading_dx = nextXpos - targetXpos;
+        heading_dy = nextYpos - targetYpos;
       }
       else
       {
@@ -107,26 +155,29 @@ namespace libraries
         targetXpos = current_path_list_.poses[index].pose.position.x;
         targetYpos = current_path_list_.poses[index].pose.position.y;
 
+        //Find the next Y point of the slope to get the linear interpolated vector
+        float nextYslope = (pathSlope*nextXpos) + b;
+
+        //Linear interpolate the vector
+        heading_dx = nextXpos - targetXpos;
+        heading_dy = nextYslope - targetYpos;   
       }
 
-      //Now estimate the direction of the path to generate heading.
-      //Find the linear representation of the slope
-      float b = targetYpos - (pathSlope * targetXpos);
-      
-      //Find the next Y point of the slope to get the linear interpolated vector
-      float nextYslope = (pathSlope*nextXpos) + b;
+      float waypoint_heading = atan2(heading_dy, heading_dx);
 
-      //Linear interpolate the vector
-      float heading_dx = nextXpos - targetXpos;
-      float heading_dy = nextYslope - targetYpos;    
-
-      return atan2(heading_dy, heading_dx);
+      if(!std::isfinite(waypoint_heading))
+      {
+        throw "Waypoint Theta calculation fault!";
+      }
+      else
+      {
+        return waypoint_heading;
+      }
     }
     else
     {
       throw "Path not set! Exception Thrown!"; 
     }
-
   }
 
   float Waypoints::GetWaypointRelativePlaneDistance(const int& index, const geometry_msgs::Point& current_vehicle_position)
@@ -147,13 +198,47 @@ namespace libraries
   {
     if(!IsPathEmpty())
     {
-      //TODO: See matlab file for transform proof and work
-      //      Check against the heading signs, might need to check the sign to determine how to perform transform
+      // Note: see test/test_data_and_doc/transform_test.m for all kinds of proof for transform and checking
       
-      // NOTE: This is a different kinda transform compared to the later error extraction
-      //       This transform is to relatively transform the waypoint coordinates into the vehicle's fixed
-      //       fixed body frame.
-      return true;
+      // Extract location of the waypoint
+      float waypoint_x_position = current_path_list_.poses[index].pose.position.x;
+      float waypoint_y_position = current_path_list_.poses[index].pose.position.y;
+
+      // Extract location and orientation of the vehicle
+      float car_x_position = current_vehicle_pose.position.x;
+      float car_y_position = current_vehicle_pose.position.y;
+      tf2::Quaternion car_quaternion;
+      tf2::convert(current_vehicle_pose.orientation, car_quaternion);
+      tf2::Matrix3x3 car_quaternion_matrix(car_quaternion);
+      double car_roll = 0, car_pitch = 0, car_yaw = 0;
+      car_quaternion_matrix.getRPY(car_roll, car_pitch, car_yaw);     
+
+      float car_theta = static_cast<float>(car_yaw);
+
+      // Calculate the X component of the relative location of the waypoint w.r.t. the vehicle's body fixed frame.
+      // Vehicle body fixed frame: X axis is aligned with the heading of the vehicle.
+
+      float waypoint_wrt_vehicle_dx = (waypoint_x_position*std::cos(car_theta))
+                                      - (car_y_position*std::sin(car_theta))
+                                      - (car_x_position*std::cos(car_theta))
+                                      + (waypoint_y_position*std::sin(car_theta));
+      
+      if(!std::isfinite(waypoint_wrt_vehicle_dx))
+      {
+        throw "Waypoint Ahead calculation error!";
+      }
+
+      // Check if waypoint is ahead of the vehicle by whether they are in the positive or negative X axis 
+      // w.r.t. the vehicle's body fixed frame
+
+      if(waypoint_wrt_vehicle_dx > 0)
+      {
+        return true;
+      }
+      else
+      {
+        return false;
+      }
     }
     else
     {
@@ -163,12 +248,17 @@ namespace libraries
 
   bool Waypoints::IsWaypointAligned(const int& index, const float& current_vehicle_heading, const float& heading_thereshold)
   {
-    double roll, pitch, yaw;
+    double waypoint_roll, waypoint_pitch, waypoint_yaw;
     tf2::Quaternion waypoint_quaternion;
     tf2::convert(current_path_list_.poses[index].pose.orientation, waypoint_quaternion);
     tf2::Matrix3x3 waypoint_quaternion_matrix(waypoint_quaternion);
-    waypoint_quaternion_matrix.getRPY(roll, pitch, yaw);
-    float absolute_heading_delta = std::abs(static_cast<float>(yaw) - current_vehicle_heading);
+    waypoint_quaternion_matrix.getRPY(waypoint_roll, waypoint_pitch, waypoint_yaw);
+    float absolute_heading_delta = std::abs(static_cast<float>(waypoint_yaw) - current_vehicle_heading);
+
+    if(!std::isfinite(absolute_heading_delta) || !std::isfinite(heading_thereshold))
+    {
+      throw "Waypoint alignment calculation fault!";
+    }
 
     if(absolute_heading_delta <= heading_thereshold)
     {
@@ -179,6 +269,14 @@ namespace libraries
       return false;
     }
   }
+
+  void SetROSQuaternionFromRPY(geometry_msgs::Quaternion& ROS_quaternion, const float& roll,const float& pitch,const float& yaw)
+  {
+    tf2::Quaternion tf_quaternion;
+    tf_quaternion.setRPY(roll,pitch,yaw);
+    tf2::convert(tf_quaternion,ROS_quaternion);
+  }
+
 }
 }
 }
