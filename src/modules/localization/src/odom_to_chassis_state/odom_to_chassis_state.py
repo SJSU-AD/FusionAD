@@ -34,6 +34,7 @@ class MsgConverter(object):
 
         # Initialize a sensor_msgs/Imu message and assign to MsgConverter object
         self.newImuMsg = Imu()
+        # Initialize a nav_msgs/Odometry message and assign to MsgConverter object
         self.newWheelMsg = Odometry()
 
     def imu_callback(self, imuMsg):
