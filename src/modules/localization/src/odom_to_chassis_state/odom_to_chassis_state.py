@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
-"""Takes odometry data from robot_localization and imu data from frame_calibration and publishes as a chassis_state message
+"""Takes odometry data from robot_localization and imu data from frame_calibration and publishes as a chassis_state message.
+   Currently using the velocity estimates from wheel odometry because the EKF velocity estimates are incorrect as discussed 
+   in ISS-160.
 
 NOTE: Uses interface/chassis_state.msg
 
@@ -27,21 +29,27 @@ class MsgConverter(object):
     """Takes odometry data from robot_localization and imu data from frame_calibration publishes as a chassis_state message"""
 
     def __init__(self):
-        """initializing Chassis_state message publisher"""
+        """Initializing Chassis_state message publisher"""
         self.chassisStatePublisher = rospy.Publisher("/localization/state", Chassis_state, queue_size=1000)
 
         # Initialize a sensor_msgs/Imu message and assign to MsgConverter object
         self.newImuMsg = Imu()
+        # Initialize a nav_msgs/Odometry message and assign to MsgConverter object
+        self.newWheelMsg = Odometry()
 
     def imu_callback(self, imuMsg):
         """Callback subscribed to the rotated IMU topic"""
         self.newImuMsg = imuMsg
 
+    def wheel_odom_callback(self, wheelMsg):
+        """Callback subscribed to the wheel odometry topic"""
+        self.newWheelMsg = wheelMsg
+
     def ekf_odom_callback(self, odomMsg):
         """Callback subscribed to EKF odometry topic"""
         currentChassisState = self.create_chassis_state_msg(odomMsg.header.stamp, 
                                                             odomMsg.pose.pose.position.x, odomMsg.pose.pose.position.y,
-                                                            odomMsg.twist.twist.linear.x, odomMsg.twist.twist.linear.y,
+                                                            self.newWheelMsg.twist.twist.linear.x, self.newWheelMsg.twist.twist.linear.y,
                                                             self.newImuMsg.orientation.x, self.newImuMsg.orientation.y, 
                                                             self.newImuMsg.orientation.z, self.newImuMsg.orientation.w)
 
@@ -72,6 +80,7 @@ class MsgConverter(object):
         """Take EKF odom data, convert to chassis_state, republish"""
         rospy.Subscriber("/odometry/filtered", Odometry, self.ekf_odom_callback, queue_size=1000)
         rospy.Subscriber("/localization/rotated_imu", Imu, self.imu_callback, queue_size=1000)
+        rospy.Subscriber("/localization/wheel_odom", Odometry, self.wheel_odom_callback, queue_size=1000)
         rospy.spin()
 
 def main():
