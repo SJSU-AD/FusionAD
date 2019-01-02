@@ -28,7 +28,7 @@ plot(p_vec_x,p_vec_y,'x-');
 hold on;
 plot(p_adj_vec_x,p_adj_vec_y,'o-');
 grid on;
-legend("Pre-transform", "After transform");
+legend('Pre-transform', 'After transform');
 %}
 
 % Check Transformation matrix
@@ -57,13 +57,13 @@ hold on;
 plot(car_dx,car_dy,'o-');
 grid on;
 plot(Tcar_wp(1,4),Tcar_wp(2,4), '*');
-legend("OG_waypoint", "CAR", "After TF WP");
+legend('OG_waypoint', 'CAR', 'After TF WP');
 
 car_wp_dx = car(1)-wp(1);
 car_wp_dy = car(2)-wp(2);
 
-disp(["Distance to origin after TF: " sqrt(Tcar_wp(1,4)^2+Tcar_wp(2,4)^2)]);
-disp(["Relative distance before tf to car: " sqrt(car_wp_dx^2+car_wp_dy^2)]);
+disp(['Distance to origin after TF: ' sqrt(Tcar_wp(1,4)^2+Tcar_wp(2,4)^2)]);
+disp(['Relative distance before tf to car: ' sqrt(car_wp_dx^2+car_wp_dy^2)]);
 %}
 
 % Proof check relative angle
@@ -91,8 +91,8 @@ wp_car_dy = wp(2)-car(2);
 relative_theta = atan2(wp_car_dy,wp_car_dx) - theta;
 relative_theta_tf = atan2(Tcar_wp(2,4),Tcar_wp(1,4));
 
-disp(["Relative theta before TF:" num2str(relative_theta)]);
-disp(["Relative theta after TF:" num2str(relative_theta_tf)]);
+disp(['Relative theta before TF:' num2str(relative_theta)]);
+disp(['Relative theta after TF:' num2str(relative_theta_tf)]);
 
 % This proves that the relative angle between the position vector of the
 % waypoint relative to the car's coordinate frame is the same as the
@@ -130,22 +130,22 @@ wp_car_dx = wp(1)-car(1);
 wp_car_dy = wp(2)-car(2);
 
 if(Tcar_wp(1,4) > 0)
-    disp(["Waypoint is ahead (x) by: " Tcar_wp(1,4) "meter"]);
+    disp(['Waypoint is ahead (x) by: ' Tcar_wp(1,4) 'meter']);
 else
-    disp(["Waypoint is trailing (x) by: " Tcar_wp(1,4) "meter"]);
+    disp(['Waypoint is trailing (x) by: ' Tcar_wp(1,4) 'meter']);
 end
 
 % Checks
 % The two distance values must equal for the transform to be valid.
 % The two angle values must equal for the tranform to be valid.
-disp(["Distance to origin after TF: " sqrt(Tcar_wp(1,4)^2+Tcar_wp(2,4)^2)]);
-disp(["Relative distance before tf to car: " sqrt(wp_car_dx^2+wp_car_dy^2)]);
+disp(['Distance to origin after TF: ' num2str(sqrt(Tcar_wp(1,4)^2+Tcar_wp(2,4)^2))]);
+disp(['Relative distance before tf to car: ' num2str(sqrt(wp_car_dx^2+wp_car_dy^2))]);
 
 relative_theta = atan2(wp_car_dy,wp_car_dx) - theta;
 relative_theta_tf = atan2(Tcar_wp(2,4),Tcar_wp(1,4));
 
-disp(["Relative theta before TF:" num2str(relative_theta)]);
-disp(["Relative theta after TF:" num2str(relative_theta_tf)]);
+disp(['Relative theta before TF: ' num2str(relative_theta)]);
+disp(['Relative theta after TF: ' num2str(relative_theta_tf)]);
 % End of checks
 
 figure();
@@ -157,7 +157,7 @@ grid on;
 plot(Tcar_wp(1,4),Tcar_wp(2,4), '^','MarkerSize', 10);
 quiver(0,0,0.5,0,0);
 
-legend("OG_waypoint", "CAR", "After TF WayPoint", "Car fixed frame's Origin");
+legend('OG_waypoint', 'CAR', 'After TF WayPoint', 'Car fixed frame Origin');
 xlim([-3 3]);
 ylim([-3 3]);
 
@@ -197,9 +197,9 @@ inv_To_car = [ trans_To_car_R inv_coordinate;
                0 0 0 1];
       
 Tcar_wp = inv_To_car*To_wp;
-disp("Homogeneous Transformation Maxtrix of the Waypoint frame wrt Vehicle's body fixed frame:");
+disp('Homogeneous Transformation Maxtrix of the Waypoint frame wrt Vehicle body fixed frame:');
 Tcar_wp;
-disp("The X component of the transformed waypoint is:");
+disp('The X component of the transformed waypoint is:');
 Tcar_wp(1,4)
 
 %% Proof the generated equation is correct;
@@ -237,14 +237,14 @@ absolute_answer_difference = abs(x_ans - x_gen_eqn);
 % location of the car at the x axis (x=0), because x*0.01 = 0.
 
 if(absolute_answer_difference < (x_ans*0.01))
-    disp("Equation is proved");
-    fprintf("Equation Outputs: %f\n", x_gen_eqn);
-    fprintf("Mathematical Solution: %f\n",x_ans);
+    disp('Equation is proved');
+    fprintf('Equation Outputs: %f\n', x_gen_eqn);
+    fprintf('Mathematical Solution: %f\n',x_ans);
 else
-    disp("Equation is wrong");
+    disp('Equation is wrong');
     format long;
-    disp("Equation's answer:");
+    disp('Equation answer:');
     x_gen_eqn
-    disp("Model Answer:");
+    disp('Model Answer:');
     x_ans    
 end
