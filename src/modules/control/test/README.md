@@ -23,7 +23,7 @@ The unittest in control package is written with gtest, Google's C++ unittest fra
 * To build and run the tests individually:  
     * ```catkin_make tests```
         * For running the control lateral test:  
-            * ```roscore && rosrun control control_test```     
+            * ```roscore && rosrun control lateral_control_test```     
         * For running the control waypoint selector test:
             * ```roscore && rosrun control control_path_test```    
         * Press Ctrl + C to kill the node, the test result will appear after the node is killed   
