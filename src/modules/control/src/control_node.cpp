@@ -9,7 +9,6 @@ namespace node
   ControlNode::ControlNode():
   pathInitialized(false),
   stateInitialized(false),
-  imuInitialized(false),
   autonomousDrivingFlag(false),
   obstacleDetected(false),
   debug(false),
@@ -52,9 +51,6 @@ namespace node
     //Control State Subscriber
     localization_sub = control_nh.subscribe("/localization/state", 100, &ControlNode::stateCallback, this);
     ROS_INFO_ONCE("Control Node Path Subscriber Set!");
-
-    imu_sub = control_nh.subscribe("/imu", 100, &ControlNode::imuCallback, this);
-    ROS_INFO_ONCE("Control Node IMU Subscriber Set!");
 
     obstacle_sub = control_nh.subscribe("/localization/obstacle", 100, &ControlNode::obstacleCallback, this);
     ROS_INFO_ONCE("Control Node Obstacle Subscriber Set!");
@@ -121,90 +117,24 @@ namespace node
 
   void ControlNode::stateCallback(const interface::Chassis_state& veh_state_msg)
   {
-    //float veh_theta = 0;
-    /*if(!autonomousDrivingFlag && pathInitialized)
-    {
-      veh_theta = std::atan2(pathPointListY[1] - pathPointListY[0], 
-                             pathPointListX[1] - pathPointListX[0]);
-      estimated_orientation = veh_theta;
-      // Transformation to front axle - Red car measures around 34 inchs from GPS to front axle
-      // 34 in = 0.8636 m
-      position(0) = veh_state_msg.Position.pose.position.x + (0.8636 * std::cos(estimated_orientation));
-      position(1) = veh_state_msg.Position.pose.position.y + (0.8636 * std::sin(estimated_orientation));
-    }
-    else
-    {
-      // Transformation to front axle - Red car measures around 34 inchs from GPS to front axle
-      // 34 in = 0.8636 m
-      position(0) = veh_state_msg.Position.pose.position.x + (0.8636 * std::cos(estimated_orientation));
-      position(1) = veh_state_msg.Position.pose.position.y + (0.8636 * std::sin(estimated_orientation));
-      //linear_velocity = veh_state_msg.Speed.twist.linear.x;
-      linear_velocity = 0.5;
-      //std::cout << position(0) << std::endl;
-      orientation_pos_vector(0) = position(0) - prev_pos[0];   //X delta
-      orientation_pos_vector(1) = position(1) - prev_pos[1];   //Y delta
-      veh_theta = std::atan2(orientation_pos_vector(1), orientation_pos_vector(0));
-      
-      estimated_orientation = veh_theta;
-      prev_pos[0] = position(0);
-      prev_pos[1] = position(1);
-    }*/
-    
+    // Unpack orientation of the vehicle
+    tf2::Quaternion quaternion;
+    tf2::convert(veh_state_msg.Position.pose.orientation, quaternion);
+    tf2::Matrix3x3 quaternion_matrix(quaternion);
+    quaternion_matrix.getRPY(roll, pitch, yaw);
+    vehicle_heading = static_cast<float>(yaw);
+
+    // Unpack linear velocity
     linear_velocity = sqrt(std::pow(veh_state_msg.Speed.twist.linear.x, 2) 
                            + std::pow(veh_state_msg.Speed.twist.linear.y,2));
-    position(0) = veh_state_msg.Position.pose.position.x + (0.8636 * std::cos(vehicle_heading));
-    position(1) = veh_state_msg.Position.pose.position.y + (0.8636 * std::sin(vehicle_heading));    
+    
+    // Unpack vehicle planar position
+    position(0) = veh_state_msg.Position.pose.position.x;
+    position(1) = veh_state_msg.Position.pose.position.y;  
   
-    /*if(std::isfinite(estimated_orientation))
-    {
-      lat_control.debug_info.estimated_heading = estimated_orientation;
-    }
-    else
-    {
-      std::cout << "Heading Error Calculation Is Not Finite!" << std::endl;
-      internalFailFlag = true;
-    }   */
-
     if(!stateInitialized)
     {
       stateInitialized = true;
-    }
-  }
-
-  void ControlNode::imuCallback(const sensor_msgs::Imu& inertial_msg)
-  {
-    tf::Quaternion chassis_quaternion(inertial_msg.orientation.x,
-                                      inertial_msg.orientation.y,
-                                      inertial_msg.orientation.z,
-                                      inertial_msg.orientation.w);
-    tf::Matrix3x3 temp_rotation_matrix(chassis_quaternion);
-    temp_rotation_matrix.getRPY(roll, pitch, yaw);
-
-    lat_control.debug_info.imu_heading = yaw;
-
-
-    // Declination and IMU transform to ENU
-    float adjusted_yaw = yaw + magnetic_declination_rad + imu_residual_offset;
-
-    if(adjusted_yaw > M_PI)
-    {
-      vehicle_heading = adjusted_yaw - 2*M_PI;
-    }
-    else if(adjusted_yaw < (-1)*M_PI)
-    {
-      vehicle_heading = (2*M_PI) + adjusted_yaw;
-    }
-    else
-    {
-      vehicle_heading = adjusted_yaw;
-    }  
-
-    lat_control.debug_info.imu_transformed_heading = vehicle_heading;
-
-
-    if(!imuInitialized)
-    {
-      imuInitialized = true;
     }
   }
 
@@ -229,7 +159,7 @@ namespace node
     float steering_angle = 0;
     float cmd_linear_vel = 0;   
 
-    if((imuInitialized) && (stateInitialized) && (pathInitialized) && (!obstacleDetected) && (!internalFailFlag) && (!goalReached) && (autonomousDrivingFlag) && (!externalFailFlag))
+    if((stateInitialized) && (pathInitialized) && (!obstacleDetected) && (!internalFailFlag) && (!goalReached) && (autonomousDrivingFlag) && (!externalFailFlag))
     {
       std::cout << "Entered Timer loop " << std::endl;
       //TODO: Add new backward search prevention algo
