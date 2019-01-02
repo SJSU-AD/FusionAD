@@ -9,7 +9,6 @@ namespace node
   ControlNode::ControlNode():
   pathInitialized(false),
   stateInitialized(false),
-  imuInitialized(false),
   autonomousDrivingFlag(false),
   obstacleDetected(false),
   debug(false),
@@ -19,10 +18,10 @@ namespace node
     roll = 0;
     pitch = 0;
     yaw = 0;
-    controlGain = 0;
+    controlGain_p = 0;
+    controlGain_d = 0;
     targetPointIndex = 0;
     dynamicArraySize = 0;
-    //estimated_orientation = 0;
   }
 
   ControlNode::~ControlNode()
@@ -31,8 +30,8 @@ namespace node
 
   void ControlNode::initRosComm()
   {
-    //Create Timer Function for running the control stack, currently set to 25 hz
-    control_cmd_timer = control_nh.createTimer(ros::Duration(0.04), &ControlNode::masterTimerCallback, this);  
+    //Create Timer Function for running the control stack
+    control_cmd_timer = control_nh.createTimer(ros::Duration(control_loop_time), &ControlNode::masterTimerCallback, this);  
     
     //Control Main publisher
     control_main_pub = control_nh.advertise<interface::Controlcmd>("/control/controlcmd", 100);
@@ -53,21 +52,19 @@ namespace node
     localization_sub = control_nh.subscribe("/localization/state", 100, &ControlNode::stateCallback, this);
     ROS_INFO_ONCE("Control Node Path Subscriber Set!");
 
-    imu_sub = control_nh.subscribe("/imu", 100, &ControlNode::imuCallback, this);
-    ROS_INFO_ONCE("Control Node IMU Subscriber Set!");
-
     obstacle_sub = control_nh.subscribe("/localization/obstacle", 100, &ControlNode::obstacleCallback, this);
     ROS_INFO_ONCE("Control Node Obstacle Subscriber Set!");
 
     mode_sub = control_nh.subscribe("/control/mode", 100, &ControlNode::modeCallback, this);
     ROS_INFO_ONCE("Control Node Mode Subscriber Set!");
+    
   }
 
   bool ControlNode::getParameter()
   {
     //Obtain parameter to initialize the node
     std::string node_name = ros::this_node::getName();
-    if(!control_nh.param<float>(node_name+"/control_gain",controlGain, 1 ))
+    if(!control_nh.param<float>(node_name+"/control_p_gain",controlGain_p, 1 ))
     {
       ROS_WARN("Param control gain not set, using default - 1");
       return false;
@@ -75,6 +72,11 @@ namespace node
     if(!control_nh.param<bool>(node_name+"/debug",debug, false))
     {
       ROS_WARN("Param control debug not set, using default - false");
+      return false;
+    }
+    if(!control_nh.param<float>(node_name+"/control_d_gain",controlGain_d, 1))
+    {
+      ROS_WARN("Param control derivative gain not set, using default - 1");
       return false;
     }
     ROS_INFO_ONCE("-------- Param Retrieved - Good --------");
@@ -115,88 +117,24 @@ namespace node
 
   void ControlNode::stateCallback(const interface::Chassis_state& veh_state_msg)
   {
-    //float veh_theta = 0;
-    /*if(!autonomousDrivingFlag && pathInitialized)
-    {
-      veh_theta = std::atan2(pathPointListY[1] - pathPointListY[0], 
-                             pathPointListX[1] - pathPointListX[0]);
-      estimated_orientation = veh_theta;
-      // Transformation to front axle - Red car measures around 34 inchs from GPS to front axle
-      // 34 in = 0.8636 m
-      position(0) = veh_state_msg.Position.pose.position.x + (0.8636 * std::cos(estimated_orientation));
-      position(1) = veh_state_msg.Position.pose.position.y + (0.8636 * std::sin(estimated_orientation));
-    }
-    else
-    {
-      // Transformation to front axle - Red car measures around 34 inchs from GPS to front axle
-      // 34 in = 0.8636 m
-      position(0) = veh_state_msg.Position.pose.position.x + (0.8636 * std::cos(estimated_orientation));
-      position(1) = veh_state_msg.Position.pose.position.y + (0.8636 * std::sin(estimated_orientation));
-      //linear_velocity = veh_state_msg.Speed.twist.linear.x;
-      linear_velocity = 0.5;
-      //std::cout << position(0) << std::endl;
-      orientation_pos_vector(0) = position(0) - prev_pos[0];   //X delta
-      orientation_pos_vector(1) = position(1) - prev_pos[1];   //Y delta
-      veh_theta = std::atan2(orientation_pos_vector(1), orientation_pos_vector(0));
-      
-      estimated_orientation = veh_theta;
-      prev_pos[0] = position(0);
-      prev_pos[1] = position(1);
-    }*/
+    // Unpack orientation of the vehicle
+    tf2::Quaternion quaternion;
+    tf2::convert(veh_state_msg.Position.pose.orientation, quaternion);
+    tf2::Matrix3x3 quaternion_matrix(quaternion);
+    quaternion_matrix.getRPY(roll, pitch, yaw);
+    vehicle_heading = static_cast<float>(yaw);
 
-    position(0) = veh_state_msg.Position.pose.position.x + (0.8636 * std::cos(vehicle_heading));
-    position(1) = veh_state_msg.Position.pose.position.y + (0.8636 * std::sin(vehicle_heading));    
+    // Unpack linear velocity
+    linear_velocity = sqrt(std::pow(veh_state_msg.Speed.twist.linear.x, 2) 
+                           + std::pow(veh_state_msg.Speed.twist.linear.y,2));
+    
+    // Unpack vehicle planar position
+    position(0) = veh_state_msg.Position.pose.position.x;
+    position(1) = veh_state_msg.Position.pose.position.y;  
   
-    /*if(std::isfinite(estimated_orientation))
-    {
-      lat_control.debug_info.estimated_heading = estimated_orientation;
-    }
-    else
-    {
-      std::cout << "Heading Error Calculation Is Not Finite!" << std::endl;
-      internalFailFlag = true;
-    }   */
-
     if(!stateInitialized)
     {
       stateInitialized = true;
-    }
-  }
-
-  void ControlNode::imuCallback(const sensor_msgs::Imu& inertial_msg)
-  {
-    tf::Quaternion chassis_quaternion(inertial_msg.orientation.x,
-                                      inertial_msg.orientation.y,
-                                      inertial_msg.orientation.z,
-                                      inertial_msg.orientation.w);
-    tf::Matrix3x3 temp_rotation_matrix(chassis_quaternion);
-    temp_rotation_matrix.getRPY(roll, pitch, yaw);
-
-    lat_control.debug_info.imu_heading = yaw;
-
-
-    // Declination and IMU transform to ENU
-    float adjusted_yaw = yaw + magnetic_declination_rad + imu_residual_offset;
-
-    if(adjusted_yaw > M_PI)
-    {
-      vehicle_heading = adjusted_yaw - 2*M_PI;
-    }
-    else if(adjusted_yaw < (-1)*M_PI)
-    {
-      vehicle_heading = (2*M_PI) + adjusted_yaw;
-    }
-    else
-    {
-      vehicle_heading = adjusted_yaw;
-    }  
-
-    lat_control.debug_info.imu_transformed_heading = vehicle_heading;
-
-
-    if(!imuInitialized)
-    {
-      imuInitialized = true;
     }
   }
 
@@ -226,7 +164,7 @@ namespace node
     float steering_angle = 0;
     float cmd_linear_vel = 0;   
 
-    if((imuInitialized) && (stateInitialized) && (pathInitialized) && (!obstacleDetected) && (!internalFailFlag) && (!goalReached) && (autonomousDrivingFlag) && (!externalFailFlag))
+    if((stateInitialized) && (pathInitialized) && (!obstacleDetected) && (!internalFailFlag) && (!goalReached) && (autonomousDrivingFlag) && (!externalFailFlag))
     {
       std::cout << "Entered Timer loop " << std::endl;
       //TODO: Add new backward search prevention algo
@@ -261,28 +199,19 @@ namespace node
       {
         //Goal reached
         goalReached = true;
-        ROS_WARN("Goal reached. End of Path. Autonomy mode set to manual.");
+        ROS_INFO("Goal reached. End of Path. Autonomy mode set to manual.");
         autonomousDrivingFlag = false;
         return;
       }
 
-      //Changed the controller to run on estimation 
-      /*steering_angle = lat_control.computeSteeringAngle(position,
-                                                pathPointListX,
-                                                pathPointListY,
-                                                linear_velocity,
-                                                targetPointIndex,
-                                                estimated_orientation,
-                                                controlGain,
-                                                dynamicArraySize
-                                                );*/
       steering_angle = lat_control.computeSteeringAngle(position,
                                                         pathPointListX,
                                                         pathPointListY,
                                                         linear_velocity,
                                                         targetPointIndex,
                                                         vehicle_heading,
-                                                        controlGain,
+                                                        controlGain_p,
+                                                        controlGain_d,
                                                         dynamicArraySize
                                                         );
       //TODO: Implement longitudinal Control --> blocker: Planning
@@ -293,7 +222,8 @@ namespace node
       if(debug)
       {
         control_core_command.debugControl = true;
-        lat_control.debug_info.stanleyGain = controlGain;
+        lat_control.debug_info.stanleyGain_p = controlGain_p;
+        lat_control.debug_info.stanleyGain_d = controlGain_d;
         //lat_control.debug_info.estimated_heading = estimated_orientation;
         control_debug_pub.publish(lat_control.debug_info);
       }   
