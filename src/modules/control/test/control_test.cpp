@@ -22,44 +22,49 @@ float pathArrayY[1001] = {0,0.131138903,0.260075491,0.386823689,0.511397423,0.63
                      15.01639829,15.01602419,15.01561587,15.01517553,15.01470536,15.01420756,15.01368432,15.01313784,15.01257031,15.01198393,15.01138089,15.01076339,15.01013363,15.00949379,15.00884608,15.00819268,15.0075358,15.00687763,15.00622036,15.00556619,15.00491732,15.00427593,15.00364423,15.00302441,15.00241866,15.00182918,15.00125816,15.00070781,15.00018031,14.99967774,14.99920069,14.99874874,14.99832146,14.9979184,14.99753912,14.99718319,14.99685017,14.99653961,14.99625108,14.99598414,14.99573835,14.99551327,14.99530847,14.99512349,14.99495792,14.99481129,14.99468319,14.99457316,14.99448076,14.99440557,14.99434714,14.99430503,14.9942788,14.99426801,14.99427223,14.99429101,14.99432392,14.99437052,14.99443036,14.99450301,14.99458804,14.99468499,14.99479344,14.99491293,14.99504305,14.99518333,14.99533336,14.99549268,14.99566085,14.99583745,14.99602203,14.99621414,14.99641336,14.99661924,14.99683135,14.99704924,14.99727247,14.99750062,14.99773323,14.99796986,14.99821009,14.99845347,14.99869956,14.99894792,14.99919812,14.99944971,14.99970226,14.99995532,15.00020846,15.00046124,15.00071322,15.00096396,15.00121302,15.00145996,15.00170435,15.00194574,15.00218369,15.00241777,15.00264754,15.00287256,15.00309239,15.00330658,15.00351471,15.00371633,15.00391101,15.00409829,15.00427776,15.00444896,15.00461145,15.00476481,15.00490858,15.00504233,15.00516563,15.00527802,15.00537908,15.00546837,15.00554544,15.00560985,15.00566117,15.00569896,15.00572278,15.00573219,15.00572675,15.00570602,15.00566956,15.00561694,15.00554772,15.00546144,15.00535769,15.00523601,15.00509597,15.00493714,15.00475906,15.0045613,15.00434343,15.004105,15.00384558,15.00356472,15.00326198,15.00293694,15.00258914,15.00221816,15.00182354,15.00140485,15.00096166,15.00049352,15};
 
 
-// TEST CASE 1: Arithmatic test for algorithm, refer to "unittest_cases.pdf" in the folder
+// TEST CASE 1: Arithmetic test for algorithm, refer to "unittest_cases.pdf" in the folder
 //  ArimthMatic test case 1
 TEST(arithmatic_test_1, ShouldPass)
 {
-  fusionad::control::lat_controller::stanley stanley_test_1;
+  fusionad::control::lat_controller::Stanley stanley_test_1{0.04};
   vector<float> pathX(pathArrayX, pathArrayX + sizeof(pathArrayX)/sizeof(pathArrayX[0]));
   vector<float> pathY(pathArrayY, pathArrayY + sizeof(pathArrayY)/sizeof(pathArrayY[0]));
 
   // Set the position of the vehical at (-1, -1)
   Eigen::Vector2f veh_pos(-1,-1);
 
+  stanley_test_1.previous_crossTrackError = 0.05;
+
   float veh_theta = 1.5708;
   float veh_velocity = 1.2;
 
   int wpIndex = 0;
 
-  float k_hard = 7;
+  float k_hard = 1;
+  float k_d = 0.3;
 
-  ASSERT_EQ(pathX.size() , pathY.size());
+  //ASSERT_EQ(pathX.size() , pathY.size());
 
   size_t path_size = pathX.size();
 
   float computed_steering_1 = stanley_test_1.computeSteeringAngle(veh_pos, pathX, pathY,
                                            veh_velocity, wpIndex,
-                                           veh_theta, k_hard, path_size);
+                                           veh_theta, k_hard, k_d, path_size);
 
-  float tc1_solution = -0.11307;
+  float tc1_solution = -0.1609;
 
-  ASSERT_EQ(tc1_solution, computed_steering_1);
+  ASSERT_NEAR(tc1_solution, computed_steering_1, std::abs(tc1_solution)*0.02);
 }
 
-// TEST CASE 2: Arithmatic test for algorithm, refer to "unittest_cases.pdf" in the folder
+// TEST CASE 2: Arithmetic test for algorithm, refer to "unittest_cases.pdf" in the folder
 //  ArimthMatic test case 2
 TEST(arithmatic_test_2, ShouldPass)
 {
-  fusionad::control::lat_controller::stanley stanley_test_2;
+  fusionad::control::lat_controller::Stanley stanley_test_2{0.04};
   vector<float> pathX(pathArrayX, pathArrayX + sizeof(pathArrayX)/sizeof(pathArrayX[0]));
   vector<float> pathY(pathArrayY, pathArrayY + sizeof(pathArrayY)/sizeof(pathArrayY[0]));
+
+  stanley_test_2.previous_crossTrackError = -0.01;
 
   // Set the position of the vehical at (10.2, 4.5)
   Eigen::Vector2f veh_pos(10.2,4.5);
@@ -69,28 +74,31 @@ TEST(arithmatic_test_2, ShouldPass)
 
   int wpIndex = 60;
 
-  float k_hard = 7;
+  float k_hard = 1;
+  float k_d = 0.3;
 
-  ASSERT_EQ(pathX.size() , pathY.size());
+  //ASSERT_EQ(pathX.size() , pathY.size());
 
   size_t path_size = pathX.size();
 
   float computed_steering_2 = stanley_test_2.computeSteeringAngle(veh_pos, pathX, pathY,
                                            veh_velocity, wpIndex,
-                                           veh_theta, k_hard, path_size);
+                                           veh_theta, k_hard, k_d, path_size);
 
-  float tc2_solution = -0.29211;
+  float tc2_solution = -0.2952;
 
-  ASSERT_EQ(tc2_solution, computed_steering_2);
+  ASSERT_NEAR(tc2_solution, computed_steering_2, std::abs(tc2_solution)*0.02);
 }
 
-// TEST CASE 3: Arithmatic test for algorithm, refer to "unittest_cases.pdf" in the folder
+// TEST CASE 3: Arithmetic test for algorithm, refer to "unittest_cases.pdf" in the folder
 //  ArimthMatic test case 3
 TEST(arithmatic_test_3, ShouldPass)
 {
-  fusionad::control::lat_controller::stanley stanley_test_3;
+  fusionad::control::lat_controller::Stanley stanley_test_3{0.04};
   vector<float> pathX(pathArrayX, pathArrayX + sizeof(pathArrayX)/sizeof(pathArrayX[0]));
   vector<float> pathY(pathArrayY, pathArrayY + sizeof(pathArrayY)/sizeof(pathArrayY[0]));
+
+  stanley_test_3.previous_crossTrackError = -0.05;
 
   // Set the position of the vehical at (86, 10.2)
   Eigen::Vector2f veh_pos(87.3,8.5);
@@ -100,28 +108,31 @@ TEST(arithmatic_test_3, ShouldPass)
 
   int wpIndex = 514;
 
-  float k_hard = 7;
+  float k_hard = 1;
+  float k_d = 0.3;
 
-  ASSERT_EQ(pathX.size() , pathY.size());
+  //ASSERT_EQ(pathX.size() , pathY.size());
 
   size_t path_size = pathX.size();
 
   float computed_steering_3 = stanley_test_3.computeSteeringAngle(veh_pos, pathX, pathY,
                                            veh_velocity, wpIndex,
-                                           veh_theta, k_hard, path_size);
+                                           veh_theta, k_hard, k_d, path_size);
 
-  float tc3_solution = -0.36652;
+  float tc3_solution = -0.3059;
 
-  ASSERT_EQ(tc3_solution, computed_steering_3);
+  ASSERT_NEAR(tc3_solution, computed_steering_3,std::abs(tc3_solution)*0.02);
 }
 
 // TEST CASE 4: NaN case testing, function should return -69 for error catching
 //  NaN test case 1
 TEST(NaN_test_case_1, ShouldPass)
 {
-  fusionad::control::lat_controller::stanley stanley_test_4;
+  fusionad::control::lat_controller::Stanley stanley_test_4{0.04};
   vector<float> pathX(pathArrayX, pathArrayX + sizeof(pathArrayX)/sizeof(pathArrayX[0]));
   vector<float> pathY(pathArrayY, pathArrayY + sizeof(pathArrayY)/sizeof(pathArrayY[0]));
+
+  stanley_test_4.previous_crossTrackError = -0.05;
 
   // Set the position of the vehical at (86, 10.2)
   Eigen::Vector2f veh_pos(86,10.2);
@@ -131,30 +142,67 @@ TEST(NaN_test_case_1, ShouldPass)
 
   int wpIndex = 515;
 
-  float k_hard = 7;
+  float k_hard = 1;
+  float k_d = 0.3;
 
-  ASSERT_EQ(pathX.size() , pathY.size());
+  //ASSERT_EQ(pathX.size() , pathY.size());
 
   size_t path_size = pathX.size();
 
   float computed_steering_4 = stanley_test_4.computeSteeringAngle(veh_pos, pathX, pathY,
                                            veh_velocity, wpIndex,
-                                           veh_theta, k_hard, path_size);
+                                           veh_theta, k_hard, k_d, path_size);
 
   float tc4_solution = -69;
 
   ASSERT_EQ(tc4_solution, computed_steering_4);
 }
 
-// TEST CASE 5: Arithmatic test for algorithm, refer to "unittest_cases.pdf" in the folder
+// TEST CASE 5: Arithmetic test for algorithm, refer to "unittest_cases.pdf" in the folder
 //  ArimthMatic test case 4
 TEST(arithmatic_test_4, ShouldPass)
 {
-  fusionad::control::lat_controller::stanley stanley_test_5;
+  fusionad::control::lat_controller::Stanley stanley_test_5{0.04};
   vector<float> pathX(pathArrayX, pathArrayX + sizeof(pathArrayX)/sizeof(pathArrayX[0]));
   vector<float> pathY(pathArrayY, pathArrayY + sizeof(pathArrayY)/sizeof(pathArrayY[0]));
 
   // Set the position of the vehical at (93.33, 10.7)
+  Eigen::Vector2f veh_pos(93.33,10.7);
+
+  stanley_test_5.previous_crossTrackError = -0.01;
+
+  float veh_theta = 0.01;
+  float veh_velocity = 1.2;
+
+  int wpIndex = 549;
+
+  float k_hard = 1;
+  float k_d = 0.3;
+
+  //ASSERT_EQ(pathX.size() , pathY.size());
+
+  size_t path_size = pathX.size();
+
+  float computed_steering_5 = stanley_test_5.computeSteeringAngle(veh_pos, pathX, pathY,
+                                           veh_velocity, wpIndex,
+                                           veh_theta, k_hard, k_d, path_size);
+
+  float tc5_solution = -0.26426;
+
+  ASSERT_NEAR(tc5_solution, computed_steering_5, std::abs(tc5_solution)*0.02);
+}
+
+// TEST CASE 6: 0 Gain test for algorithm, refer to "unittest_cases.pdf" in the folder
+//  gain test case 1
+TEST(gain_test_1, ShouldPass)
+{
+  fusionad::control::lat_controller::Stanley stanley_test_6{0.04};
+  vector<float> pathX(pathArrayX, pathArrayX + sizeof(pathArrayX)/sizeof(pathArrayX[0]));
+  vector<float> pathY(pathArrayY, pathArrayY + sizeof(pathArrayY)/sizeof(pathArrayY[0]));
+
+  stanley_test_6.previous_crossTrackError = -0.05;
+
+  // Set the position of the vehicle at (93.33, 10.7)
   Eigen::Vector2f veh_pos(93.33,10.7);
 
   float veh_theta = 0.01;
@@ -162,20 +210,23 @@ TEST(arithmatic_test_4, ShouldPass)
 
   int wpIndex = 549;
 
-  float k_hard = 7;
+  // Setting gain to 0
+  float k_hard = 0;
+  float k_d = 0.3;
 
-  ASSERT_EQ(pathX.size() , pathY.size());
+  //ASSERT_EQ(pathX.size() , pathY.size());
 
   size_t path_size = pathX.size();
 
-  float computed_steering_5 = stanley_test_5.computeSteeringAngle(veh_pos, pathX, pathY,
+  float computed_steering_6 = stanley_test_6.computeSteeringAngle(veh_pos, pathX, pathY,
                                            veh_velocity, wpIndex,
-                                           veh_theta, k_hard, path_size);
+                                           veh_theta, k_hard, k_d, path_size);
 
-  float tc5_solution = -0.2671;
+  float tc6_solution = 0.0035004;
 
-  ASSERT_EQ(tc5_solution, computed_steering_5);
+  ASSERT_NEAR(tc6_solution, computed_steering_6, std::abs(tc6_solution)*0.02);
 }
+
 
 
 int main(int argc, char **argv) {

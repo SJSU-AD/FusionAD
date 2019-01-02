@@ -16,6 +16,10 @@
 #include <string>
 #include "tf/tf.h"
 #include <algorithm>
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2/LinearMath/Matrix3x3.h>
+#include <tf2/convert.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 
 namespace fusionad
@@ -34,44 +38,51 @@ class ControlNode
     bool goalReached, debug, externalFailFlag;
     
   private:
-    fusionad::control::lat_controller::Stanley lat_control;
+    // ROS Node, publishers, and subscribers
     ros::NodeHandle control_nh;
     ros::Publisher control_main_pub;
     ros::Publisher control_debug_pub;
     ros::Subscriber path_sub;
     ros::Subscriber localization_sub;
-    ros::Subscriber imu_sub;
     ros::Subscriber obstacle_sub;
     ros::Subscriber mode_sub;
-    typedef Eigen::Matrix<float, 4, 2> pathMatrix42f; 
-    Eigen::Vector2f position;
-    bool pathInitialized, stateInitialized, imuInitialized, internalFailFlag;
+
+    // System flags and triggers
+    bool pathInitialized, stateInitialized, internalFailFlag;
     bool autonomousDrivingFlag, obstacleDetected;
-    double roll, pitch, yaw;
-    float controlGain, linear_velocity, vehicle_heading;
+
+    // Declare control gain variable
+    float controlGain_p, controlGain_d;
+    
+    // Vehicle State Variables
+    typedef Eigen::Matrix<float, 4, 2> pathMatrix42f; 
+    Eigen::Vector2f position;    
+    double roll, pitch, yaw;    
+    float linear_velocity, vehicle_heading;
+    
+    // Waypoint Selection variables
     int targetPointIndex;
+    
+    // Control Timer and timer variables
     ros::Timer control_cmd_timer;
+    const float control_loop_rate = 25;                 // Hertz
+    float control_loop_time = 1/control_loop_rate;
 
-    const float magnetic_declination_rad = M_PI_2;
-
-    //Heading Estimator
-    /*
-    float prev_pos[2] = {0, 0};
-    Eigen::Vector2f orientation_pos_vector;
-    float estimated_orientation;
-    */
+    // Lateral controller objects
+    fusionad::control::lat_controller::Stanley lat_control{control_loop_time};
 
     //TODO: Safety Mechanism bool
     //bool isWorking;
 
-    //Variable Definition
+    //Path Variables
     std::vector<float> pathPointListX;
     std::vector<float> pathPointListY;
     std::vector<float>::size_type dynamicArraySize;
 
+    bool getClosestWaypoint(const nav_msgs::Path& current_path, const interface::Chassis_state& current_position, int& waypoint_index);
+
     void pathCallback(const nav_msgs::Path& trajectory_msg);
     void stateCallback(const interface::Chassis_state& veh_state_msg);
-    void imuCallback(const sensor_msgs::Imu& inertial_msg);
     void obstacleCallback(const std_msgs::Bool& obstacleDetection_msg);
     void modeCallback(const std_msgs::Bool& autonomous_mode_msg);
     void masterTimerCallback(const ros::TimerEvent& controlTimeEvent);

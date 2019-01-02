@@ -1,0 +1,5 @@
+<launch>
+    <include file="$(find localization)/launch/wheel_odom.launch" />
+    <include file="$(find control)/launch/rc.launch" />
+    <include file="$(find robot_localization)/launch/robot_localization.launch" />
+</launch>
