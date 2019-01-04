@@ -1,0 +1,3 @@
+type	latitude	longitude	name
+W	37.3371389	-121.8799411	1
+
