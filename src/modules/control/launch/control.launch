@@ -1,6 +1,7 @@
 <launch>
   <node type="core_control" pkg="control" name="control_core" output="screen">
-	  <param name="control_gain" value="0"/>
+	  <param name="control_p_gain" value="1"/>
+    <param name="control_d_gain" value="1"/>
     <param name="debug" value="true"/>
   </node>
 
@@ -9,5 +10,6 @@
   
   <node pkg="rosserial_python" type="serial_node.py" name="serial_node">
     <param name="port" value="/dev/ttyACM0"/>
+    <param name="baud" value="115200"/>
   </node>   
 </launch>

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import rospy
-from std_msgs.msg import Float64
+#from std_msgs.msg import Float64
+from std_msgs.msg import Int16
 from interface.msg import Controlcmd
 '''
 NOTE: Please be in ~/FusionAD to run this code with the following commands:
@@ -19,8 +20,8 @@ Eventually this script will be used for low level control when we move away from
 TODO: Need to prevent steering oscillation due to slower subscriber rate than 50 Hz
 '''
 # declaring publishers for propulsion and steering
-steering_low_lvl_node_publisher = rospy.Publisher('/control/steering_channel', Float64, queue_size=10)
-driving_low_lvl_node_publisher = rospy.Publisher('/control/driving_channel', Float64, queue_size=10)
+steering_low_lvl_node_publisher = rospy.Publisher('/control/steering_channel', Int16, queue_size=10)
+driving_low_lvl_node_publisher = rospy.Publisher('/control/driving_channel', Int16, queue_size=10)
 
 # declaring constants
 desired_steering = 319
@@ -28,12 +29,9 @@ steering_msg = 0
 desired_throttle = 0
 driving_msg = 0
 
-pi = 3.1415926535
-
-potentiometer_offset = 112
-steering_analog_slope = .1721
-steering_analog_intercept = 36.15
 steering_limit_radians = 0.33
+steering_analog_slope = 424.2424
+steering_analog_intercept = 322
 
 min_driving_input = 0
 max_driving_input = 100
@@ -48,10 +46,7 @@ def high_lvl_callback(high_lvl_control_msg):
     steering_msg = high_lvl_control_msg.steeringAngle
     global driving_msg
     driving_msg = high_lvl_control_msg.throttle
-
-def timer_callback(event):
-    '''Handles the conversion between steering in radians from the high level control and analog value for the low level control
-    '''
+    
     global desired_throttle
     if driving_msg >= 0:
         desired_throttle = (driving_msg-min_driving_input)*(max_driving_output-min_driving_output)/(max_driving_input-min_driving_input)+min_driving_output
@@ -65,11 +60,30 @@ def timer_callback(event):
         steering_angle = steering_msg 
 
     global desired_steering
-    desired_steering = ((-1)*steering_angle*180/pi+steering_analog_intercept)/steering_analog_slope+potentiometer_offset
-    
+    desired_steering = ((-1)*steering_angle*steering_analog_slope+steering_analog_intercept)
     steering_low_lvl_node_publisher.publish(desired_steering)
     driving_low_lvl_node_publisher.publish(desired_throttle)
+    
+    
+# def timer_callback(event):
+#     '''Handles the conversion between steering in radians from the high level control and analog value for the low level control
+#     '''
+#     global desired_throttle
+#     if driving_msg >= 0:
+#         desired_throttle = (driving_msg-min_driving_input)*(max_driving_output-min_driving_output)/(max_driving_input-min_driving_input)+min_driving_output
+#     else:
+#         desired_throttle = (-1)*(abs(driving_msg)-min_driving_input)*(max_driving_output-min_driving_output)/(max_driving_input-min_driving_input)+min_driving_output
+#     steering_angle = 0
 
+#     if(abs(steering_msg) > steering_limit_radians): # establishing limits in radians for steering
+#         steering_angle = steering_limit_radians*(abs(steering_msg)/steering_msg)
+#     else:
+#         steering_angle = steering_msg 
+
+#     global desired_steering
+#     desired_steering = ((-1)*steering_angle*steering_analog_slope+steering_analog_intercept)
+#     steering_low_lvl_node_publisher.publish(desired_steering)
+#     driving_low_lvl_node_publisher.publish(desired_throttle)
 
 def Control_Adapter_Arduino_Node():
     '''Node to facilitate the publisher and subscriber relationship between the high lvl and low lvl control
@@ -77,18 +91,20 @@ def Control_Adapter_Arduino_Node():
     rospy.init_node('Control_Adapter', anonymous = True)
 
     rospy.Subscriber("/control/controlcmd", Controlcmd, high_lvl_callback)
-    timer = rospy.Timer(rospy.Duration(0.02), timer_callback)
+    # timer = rospy.Timer(rospy.Duration(0.02), timer_callback)
 
-    rospy.spin()
-    timer.shutdown()
-    '''
-    rate = rospy.Rate(50)
+    # rospy.spin()
+    # timer.shutdown()
+    # '''
+    #rate = rospy.Rate(50)
+    rate = rospy.Rate(25)
 
     while not rospy.is_shutdown():
         steering_low_lvl_node_publisher.publish(desired_steering)
         driving_low_lvl_node_publisher.publish(desired_throttle)
         rate.sleep()
-    '''
+    
+    
 
 if __name__ == '__main__':
     try:
