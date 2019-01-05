@@ -2,6 +2,11 @@
 
 <launch>
   <!-- Settings: will overwrite default setting loaded from file.  -->
+
+  <!--                               WARNING!                                 -->
+  <!-- Altering any of the following settings may cause the GPS to malfunction-->
+  <!--                               WARNING!                                 -->
+
   <!-- Available interfaces where Piksi Multi can be connected: serial or tcp. -->
   <arg name="interface"                   default="tcp"/>
   <!-- If interface is serial, this specifies baud rate of Piksi Multi. -->
