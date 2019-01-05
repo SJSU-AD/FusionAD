@@ -148,6 +148,11 @@ namespace node
     autonomousDrivingFlag = autonomous_mode_msg.data;
   }
 
+  int getTargetWaypoint(const nav_msgs::Path& current_path, const interface::Chassis_state& current_position)
+  {
+    //TODO: Implement node side logic and clean up after selector algorithm PR is approved.
+  }
+
   void ControlNode::masterTimerCallback(const ros::TimerEvent& controlTimeEvent)
   {
     interface::Controlcmd control_core_command;
