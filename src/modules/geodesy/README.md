@@ -9,6 +9,19 @@ Module for geographic coordinate system conversions and reference frame transfor
 
 **NOTE:** This vehicle's coordinate system standard is in ENU
 
+## Running Tests
+Run this command to run all tests not involving file I/O:
+```
+rostest geodesy test_geodesy.test
+```
+
+Run this command in the test directory to validate file I/O:
+```
+python -m unittest test_gps_parser
+```
+
+Please run tests after every modification that may potentially affect geodesy.
+
 ## Usage - Preparation
 ### Collect coarse input path data
 Input path in /geodesy_data/gps_coarse_points in the following ".csv" format:
