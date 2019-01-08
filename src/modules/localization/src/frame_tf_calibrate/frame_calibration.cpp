@@ -88,7 +88,7 @@ namespace frame_calibration_node
         }
 
         // pitch multiplied by (-1) to adhere to ROS-105 frame standards
-        tf::Quaternion new_imu_quaternion = tf::createQuaternionFromRPY(roll, (-1)*pitch, vehicle_heading);
+        tf::Quaternion new_imu_quaternion = tf::createQuaternionFromRPY(roll, pitch, vehicle_heading);
 
         rot_msg.orientation.x = new_imu_quaternion[0];
         rot_msg.orientation.y = new_imu_quaternion[1];
@@ -136,7 +136,7 @@ namespace frame_calibration_node
         temp_geodesy_tf_point.point.y = geodesy_msg.pose.pose.position.y;
 
         // threshold standard deviation for publishing geodesy 
-        float THRESHOLD_POSE_STD_DEV = 0.15; // [m]
+        float THRESHOLD_POSE_STD_DEV = 5; // [m]
 
         if(std::sqrt(geodesy_tf_msg.pose.covariance[0]) <= THRESHOLD_POSE_STD_DEV)
         {
