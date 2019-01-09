@@ -28,6 +28,22 @@ def lat_lon_csv_reader(readFile):
     
     return rawLatitude, rawLongitude, rawHeights
 
+def east_north_csv_reader(readFile):
+    rawEData = []
+    rawNData = []
+    rawUData = []
+
+    with open(readFile, "r") as readFile:
+        # Eastings in first column and Northings in second column
+        for line in readFile:
+            currentLine = line.split(",")
+            
+            rawEData.append(float(currentLine[0]))
+            rawNData.append(float(currentLine[1]))
+            rawUData.append(0)
+    
+    return rawEData, rawNData, rawUData
+
 def verify_gps_csv_data_enu(readFile, outFile):
     """Convert latitude/longitude data to ENU and back from many data points
     
@@ -58,6 +74,39 @@ def verify_gps_csv_data_enu(readFile, outFile):
         
         latsAndLongs = zip(latitudesBack, longitudesBack)
         csvWriter.writerows(latsAndLongs)
+    
+def verify_enu_to_latlon(readFile, outFile):
+    """Convert ENU coordinates from readFile to Lat/Lon to outFile
+    
+    Read ENU from readFile,
+    converts ENU coordinates to ECEF,
+    converts ECEF coordinates to lat/lon,
+    writes lat/lon to CSV outFile"""
+    rawEData, rawNData, rawUData = east_north_csv_reader(readFile)
+    
+    geodesyENUConv = GeodesyConverterENU(rawEData, rawNData, rawUData)
+
+    # Convert latitudes/longitudes to ENU
+    # eData, nData, uData = geodesyENUConv.geodetic_data_to_ENU_data()
+    # print("===eData===\n {}, nData: {}, uData: {}\n".format(eData, nData, uData))
+    
+    # TODO: Remove hardcoded initial conditions for lat0, lon0, and h0
+    # Convert ENU back to ECEF
+    xData, yData, zData =  geodesyENUConv.ENU_data_to_ECEF_data(rawEData, rawNData, rawUData, 
+                                lat0=37.3371389, lon0=-121.8799411, h0=-6.0)
+    # print("===xData===\nxData: {}, \nyData: {}, \nzData: {}\n".format(xData, yData, zData))
+    
+    # Convert ECEF back to latitude/longitude
+    latitudes, longitudes = geodesyENUConv.ECEF_data_to_geodetic_data(xData, yData, zData)
+    # print("===latitudesBack===\nlatitudes: {}, \nlongitudes: {}\n".format(
+    #     latitudes, longitudes))
+    
+    with open(outFile, "wb") as verificationWriteFile:
+        csvWriter = csv.writer(verificationWriteFile, delimiter=",")
+        
+        latsAndLongs = zip(latitudes, longitudes)
+        csvWriter.writerows(latsAndLongs)
+
 
 def verify_gps_point_enu(readFile):
     """Converts input lat/long point to ENU and back"""
@@ -79,17 +128,72 @@ def verify_gps_point_enu(readFile):
 
     return latitudePointBack, longitudePointBack
 
+def convert_latlon_to_gpsVisualizer_format(latlonFile, gpsVisualizerFile):
+    """Read CSV file with latitude and longitude values and convert to GPSVisualizer format"""
+
+    print("Converting from lat,lon '.csv' to GPSVisualizer '.txt'...")
+
+    rawLatLonValues = []
+
+    with open(latlonFile, "r") as f:
+        for line in f:
+            currentCoordinate = line.split(",")
+
+            rawLatLonValues.append(currentCoordinate)
+
+    waypointCounter = 1
+
+    with open(gpsVisualizerFile, 'wb') as f:
+        for coordinate in rawLatLonValues:
+            line = "W\t{}\t{}\t{}\n".format(coordinate[0], coordinate[1].strip(), str(waypointCounter))
+            
+            f.write(line)
+            waypointCounter += 1
+
+def filter_coordinates(readFile, filteredFile, frequency):
+    """Convert lat,lon '.csv' to GPSVisualizer '.txt' format"""
+
+    print("Converting from lat,lon '.csv' to GPSVisualizer '.txt", end="")
+
+    print(", where filtering frequency is {}".format(frequency)) if frequency != None else print(", unfiltered")
+
+    acceptPoint = 0
+    rawLatLonValues = []
+
+    with open(readFile, "r") as f:
+        for line in f:
+            currentCoordinate = line.split(",")
+            
+            if acceptPoint == 0:
+                rawLatLonValues.append(currentCoordinate)
+            
+            acceptPoint += 1
+            if acceptPoint == frequency:
+                acceptPoint = 0
+    
+    waypointCounter = 1
+    with open(filteredFile, "wb") as f:
+        for coordinate in rawLatLonValues:
+            line = "W\t{}\t{}\t{}\n".format(coordinate[0], coordinate[1].strip(), str(waypointCounter))
+            
+            f.write(line)
+            waypointCounter += 1
+    
 def main():
-    print("=====Converting CSV Points=====")
-    verify_gps_csv_data_enu("../geodesy_data/data_validation/gps.csv", "../geodesy_data/data_validation/back_from_enu.csv")
-    print()
+    # print("=====Converting CSV Points=====")
+    # verify_gps_csv_data_enu("../geodesy_data/data_validation/gps.csv", "../geodesy_data/data_validation/back_from_enu.csv")
+    # print()
 
-    print("=====Converting Single Lat/Lon Point=====")
-    latitudePointBack, longitudePointBack = verify_gps_point_enu("../geodesy_data/data_validation/gps.csv")
-    print()
+    # print("=====Converting Single Lat/Lon Point=====")
+    # latitudePointBack, longitudePointBack = verify_gps_point_enu("../geodesy_data/data_validation/gps.csv")
+    # print()
 
-    print("latitude converted back: {}\nlongitude converted back: {}".format(latitudePointBack, longitudePointBack))
+    # print("latitude converted back: {}\nlongitude converted back: {}".format(latitudePointBack, longitudePointBack))
 
+    print("=====Validating ENU Points=====")
+    verify_enu_to_latlon("../geodesy_data/data_validation/uTurn_joy_campus_raw_e_n2.csv", "../geodesy_data/data_validation/uTurn_joy_campus_from_raw_enu_to_latlon.csv")
+    # convert_latlon_to_gpsVisualizer_format("../geodesy_data/data_validation/uTurn_joy_campus_from_raw_enu_to_latlon.csv", "../geodesy_data/data_validation/visualizer_formatted_uTurn_joy_campus_from_raw_enu_to_latlon.txt")
+    filter_coordinates("../geodesy_data/data_validation/uTurn_joy_campus_from_raw_enu_to_latlon.csv", "../geodesy_data/data_validation/filtered_visualizer_data.txt", 100)
 
 if __name__ == "__main__":
     main()
