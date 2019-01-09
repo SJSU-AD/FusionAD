@@ -107,7 +107,6 @@ def verify_enu_to_latlon(readFile, outFile):
         latsAndLongs = zip(latitudes, longitudes)
         csvWriter.writerows(latsAndLongs)
 
-
 def verify_gps_point_enu(readFile):
     """Converts input lat/long point to ENU and back"""
     rawLatitude, rawLongitude, rawHeights = lat_lon_csv_reader(readFile)
@@ -166,7 +165,6 @@ def main():
     # print("=====Converting Single Lat/Lon Point=====")
     # latitudePointBack, longitudePointBack = verify_gps_point_enu("../geodesy_data/data_validation/gps.csv")
     # print()
-
     # print("latitude converted back: {}\nlongitude converted back: {}".format(latitudePointBack, longitudePointBack))
 
     print("=====Validating ENU Points=====")
