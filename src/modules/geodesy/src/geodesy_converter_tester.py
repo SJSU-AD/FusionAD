@@ -128,34 +128,12 @@ def verify_gps_point_enu(readFile):
 
     return latitudePointBack, longitudePointBack
 
-def convert_latlon_to_gpsVisualizer_format(latlonFile, gpsVisualizerFile):
-    """Read CSV file with latitude and longitude values and convert to GPSVisualizer format"""
-
-    print("Converting from lat,lon '.csv' to GPSVisualizer '.txt'...")
-
-    rawLatLonValues = []
-
-    with open(latlonFile, "r") as f:
-        for line in f:
-            currentCoordinate = line.split(",")
-
-            rawLatLonValues.append(currentCoordinate)
-
-    waypointCounter = 1
-
-    with open(gpsVisualizerFile, 'wb') as f:
-        for coordinate in rawLatLonValues:
-            line = "W\t{}\t{}\t{}\n".format(coordinate[0], coordinate[1].strip(), str(waypointCounter))
-            
-            f.write(line)
-            waypointCounter += 1
-
-def filter_coordinates(readFile, filteredFile, frequency):
+def latlon_to_gpsVisualizer(readFile, gpsVisualizerFile, filterFrequency=None):
     """Convert lat,lon '.csv' to GPSVisualizer '.txt' format"""
 
     print("Converting from lat,lon '.csv' to GPSVisualizer '.txt", end="")
 
-    print(", where filtering frequency is {}".format(frequency)) if frequency != None else print(", unfiltered")
+    print(", where filtering frequency is {}".format(filterFrequency)) if filterFrequency != None else print(", unfiltered")
 
     acceptPoint = 0
     rawLatLonValues = []
@@ -167,12 +145,13 @@ def filter_coordinates(readFile, filteredFile, frequency):
             if acceptPoint == 0:
                 rawLatLonValues.append(currentCoordinate)
             
-            acceptPoint += 1
-            if acceptPoint == frequency:
-                acceptPoint = 0
+            if filterFrequency != None:
+                acceptPoint += 1
+                if acceptPoint == filterFrequency:
+                    acceptPoint = 0
     
     waypointCounter = 1
-    with open(filteredFile, "wb") as f:
+    with open(gpsVisualizerFile, "wb") as f:
         for coordinate in rawLatLonValues:
             line = "W\t{}\t{}\t{}\n".format(coordinate[0], coordinate[1].strip(), str(waypointCounter))
             
@@ -191,9 +170,11 @@ def main():
     # print("latitude converted back: {}\nlongitude converted back: {}".format(latitudePointBack, longitudePointBack))
 
     print("=====Validating ENU Points=====")
-    verify_enu_to_latlon("../geodesy_data/data_validation/uTurn_joy_campus_raw_e_n2.csv", "../geodesy_data/data_validation/uTurn_joy_campus_from_raw_enu_to_latlon.csv")
-    # convert_latlon_to_gpsVisualizer_format("../geodesy_data/data_validation/uTurn_joy_campus_from_raw_enu_to_latlon.csv", "../geodesy_data/data_validation/visualizer_formatted_uTurn_joy_campus_from_raw_enu_to_latlon.txt")
-    filter_coordinates("../geodesy_data/data_validation/uTurn_joy_campus_from_raw_enu_to_latlon.csv", "../geodesy_data/data_validation/filtered_visualizer_data.txt", 100)
+    verify_enu_to_latlon("../geodesy_data/data_validation/uTurn_joy_campus_raw_e_n2.csv", \
+                         "../geodesy_data/data_validation/uTurn_joy_campus_from_raw_enu_to_latlon.csv")
+    latlon_to_gpsVisualizer("../geodesy_data/data_validation/uTurn_joy_campus_from_raw_enu_to_latlon.csv", \
+                            "../geodesy_data/data_validation/filtered_visualizer_data.txt", \
+                            filterFrequency=100)
 
 if __name__ == "__main__":
     main()
