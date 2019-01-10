@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 '''
-TODO: Possibly clean up the method for timing
-
 NOTE: Must be plugged into the CAN device with a completed CAN network to work
 
 Hardware Included: USB2CAN Device
@@ -29,10 +27,10 @@ import os
 
 
 # establishing the CAN connection and setting bitrate to 250 kbps
-# os.system('sudo /sbin/ip link set can0 up type can bitrate 250000')
+os.system('sudo /sbin/ip link set can0 up type can bitrate 250000')
 
 # initializing the bus to channel 0 and bustype 'socketcan_ctypes'
-# bus = can.interface.Bus(channel='can0', bustype='socketcan_ctypes')
+bus = can.interface.Bus(channel='can0', bustype='socketcan_ctypes')
 
 steering_arbitration_id = 0x18FF00F9
 braking_arbitration_id = 0xFF0000
@@ -52,7 +50,7 @@ stop_propulsion_data = [0x00, 0x00, 0xFF, 0x7F, 0x00, 0x00, 0x00, 0x00]
 # 8 byte message for requesting power to the propulsion motor
 prop_power_request_data = [0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
 # 8 byte message for moving the propulsion motor @ 511 rpm
-propulsion_data = [0xF4, 0x01, 0xFF, 0x7F, 0x00, 0x0D, 0x00, 0x00]
+propulsion_data = [0x00, 0x00, 0xFF, 0x7F, 0x00, 0x0D, 0x00, 0x00]
 
 # 8 byte message for moving the linear actuator
 '''
@@ -70,7 +68,7 @@ class CanDriver:
     rospy.init_node('controller', anonymous = True)
     def __init__(self):
         # subscriber to the joystick
-        joy_subscriber = rospy.Subscriber('joy', Joy, self.joyCallback, queue_size = 1)
+        joy_subscriber = rospy.Subscriber('/joy', Joy, self.joyCallback, queue_size = 1)
         # cyclic time cycle of 5 milliseconds required
         self.main()
 
@@ -81,9 +79,9 @@ class CanDriver:
         # declaring the braking button on the joy node
         BRAKING_BUTTON = 6
         # declaring the propulsion axis on the joy node
-        PROPULSION_AXIS = 3
+        PROPULSION_AXIS = 4
         # declaring the safety button
-        SAFETY_BUTTON = 7
+        SAFETY_BUTTON = 5
 
         joy_steering_input = data.axes[STEERING_AXIS]
         joy_braking_input = data.buttons[BRAKING_BUTTON]
@@ -110,23 +108,14 @@ class CanDriver:
             # # 0 REVOLUTIONS
             # ZERO_REV = 0
             # # minimum number of revolutions (negative)
-            # #NEG_REV = -1
+            # NEG_REV = -1
             # #establishing the limits of the joy node (from -1 to 1)
-            # if rev > 1:
-            #     rev = 1
-            # if rev < -1:
-            #     rev = -1
+            # if rev > MAX_REV:
+            #     rev = MAX_REV
+            # if rev < NEG_REV:
+            #     rev = NEG_REV
             # # turn right
-            # if rev <= 0 and rev >= -1:
-            #     steering_map = int(round(((-1)*rev-ZERO_REV)*(POS_FULL_LOCK-ZERO_FULL_LOCK)/(MAX_REV-ZERO_REV)+ZERO_FULL_LOCK))
-            #     steering_data[5] = int(steering_map >> 24 & MASKER)    
-            #     steering_data[4] = int(steering_map >> 16 & MASKER)    
-            #     steering_data[3]= int(steering_map >> 8 & MASKER)
-            #     steering_data[2] = int(steering_map & MASKER)
-
-            #         # turn left
-            #         # mapping out negative values for steering   
-            # elif rev >= 0 and rev <= 1:
+            # if rev <= MAX_REV and rev >= NEG_REV:
             #     steering_map = int(round(((-1)*rev-ZERO_REV)*(POS_FULL_LOCK-ZERO_FULL_LOCK)/(MAX_REV-ZERO_REV)+ZERO_FULL_LOCK))
             #     steering_data[5] = int(steering_map >> 24 & MASKER)    
             #     steering_data[4] = int(steering_map >> 16 & MASKER)    
@@ -140,36 +129,48 @@ class CanDriver:
             # MAX_BRAKE_MESSAGE = 0xCDAC
             # MIN_BRAKE_MESSAGE = 0xC1F4
 
-            # MAX_BRAKE_DISTANCE = 1
-            # MIN_BRAKE_DISTANCE = 0
+            # MIN_BRAKE_INPUT = 0
+            # MAX_BRAKE_INPUT = 1
 
-            # if BRAKE < 0:
+            # if BRAKE < MIN_BRAKE_INPUT:
             #     BRAKE = 0
             # if BRAKE > 1:
             #     BRAKE = 1
 
-            # braking_map = int(round((BRAKE-MAX_BRAKE_DISTANCE)*(MAX_BRAKE_MESSAGE-MIN_BRAKE_MESSAGE)/(MAX_BRAKE_DISTANCE-MIN_BRAKE_DISTANCE)+MAX_BRAKE_MESSAGE))
+            # braking_map = int(round((BRAKE-MIN_BRAKE_INPUT)*(MAX_BRAKE_MESSAGE-MIN_BRAKE_MESSAGE)/(MAX_BRAKE_INPUT-MIN_BRAKE_INPUT)+MIN_BRAKE_MESSAGE))
             # braking_data[3] = int(braking_map >> 8 & MASKER)
             # braking_data[4] = int(braking_map & MASKER)
 
             ######################
             ## Propulsion Logic ##
             ######################
-            MAX_PROP_MESSAGE = 0xF401
+            # MAX_PROP_MESSAGE = 0xF401
+            # MIN_PROP_MESSAGE = 0x0000
+            
+            # 250 RPM
+            MAX_PROP_MESSAGE = 0x00FA
             MIN_PROP_MESSAGE = 0x0000
-            # 511 RPM 
-            MAX_PROP_RPM = 1 
-            MIN_PROP_RPM = 0
 
+            # 500 RPM 
+            MAX_PROP_INPUT = 1
+            MIN_PROP_INPUT = 0
             PROP = joy_propulsion_input
-            if PROP < 0:
-                PROP = 0
-            if PROP > 1:
-                PROP = 1
+            
+            if PROP < MIN_PROP_INPUT:
+                PROP = MIN_PROP_INPUT
+            if PROP > MAX_PROP_INPUT:
+                PROP = MAX_PROP_INPUT
 
-            propulsion_map = int(round((PROP-MAX_PROP_RPM)*(MAX_PROP_MESSAGE-MIN_PROP_MESSAGE)/(MAX_PROP_RPM-MIN_PROP_RPM)+MAX_PROP_MESSAGE))
-            propulsion_data[0] = int(propulsion_map >> 8 & MASKER)
-            propulsion_data[1] = int(propulsion_map & MASKER)
+            if (PROP >= 0) and (PROP <= 1):
+                propulsion_map = int(round((PROP-MIN_PROP_INPUT)*(MAX_PROP_MESSAGE-MIN_PROP_MESSAGE)/(MAX_PROP_INPUT-MIN_PROP_INPUT)+MIN_PROP_MESSAGE))
+
+                propulsion_data[1] = int(propulsion_map >> 8 & MASKER)
+                propulsion_data[0] = int(propulsion_map & MASKER)
+                
+
+            else:
+                propulsion_data[0] = 0x00
+                propulsion_data[1] = 0x00    
             
         # when the safety button is not pressed, send zero messages
         else:
@@ -194,6 +195,8 @@ class CanDriver:
         while not rospy.is_shutdown():
             frequency_start_time = time.clock()
             frequency_state = False
+            POWER_CONTROL_PERIOD = 0.025
+            OVERALL_PERIOD = 0.05
             # 0x66 is 0.4 rev/s            
             # print steering_data
             present_time = time.clock()
@@ -202,8 +205,8 @@ class CanDriver:
             braking_msg = can.Message(arbitration_id = braking_arbitration_id, data = braking_data, extended_id = True)
             propulsion_msg = can.Message(arbitration_id = propulsion_arbitration_id, data = propulsion_data, extended_id = False)
             # bus.send(steering_msg)
-            #bus.send(braking_msg)
-            # bus.send(power_propulsion_msg)
+            # bus.send(braking_msg)
+            bus.send(power_propulsion_msg)
             control_state = False
 			# only allow messages to go through if cyclic delay is met
             if abs(present_time-start_time) >= TIME_DELAY:
@@ -211,15 +214,16 @@ class CanDriver:
                 while control_state == False:
                     control_time = time.clock()
                     # regulate the 50 ms period offset required
-                    if abs(power_time - control_time) >= 0.05:
-                        # bus.send(propulsion_msg)
+                    
+                    if abs(power_time - control_time) >= POWER_CONTROL_PERIOD:
+                        bus.send(propulsion_msg)
                         # exiting the send control message loop
                         control_state = True
                         power_time = control_time
                         # print('Sleeping')
             while frequency_state == False:
                 frequency_time = time.clock()
-                if abs(frequency_start_time-frequency_time) >= 0.100:
+                if abs(frequency_start_time-frequency_time) >= OVERALL_PERIOD:
                     # resetting the overall time.clock()
                     frequency_start_time = frequency_time
                     # exiting the while loop

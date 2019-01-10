@@ -16,10 +16,10 @@ class ThreadCAN(object):
         rospy.init_node('Can_Bus_Node', anonymous = True)
         # # establishing the CAN connection and setting bitrate to 250 kbps
         # os.system('sudo /sbin/ip link set can0 up type can bitrate 250000')
-        # # initializing the bus to channel 0 and bustype 'socketcan_ctypes'
-        # self.bus = can.interface.Bus(channel='can0', bustype='socketcan_ctypes')
+        # initializing the bus to channel 0 and bustype 'socketcan_ctypes'
+        self.bus = can.interface.Bus(channel='vcan0', bustype='socketcan_ctypes')
 
-        rospy.Subscriber('joy', Joy, self.joyCallback, queue_size = 100)
+        rospy.Subscriber('/joy', Joy, self.joyCallback, queue_size = 100)
         
         self.joy_steering_input = 0
         self.joy_braking_input = 0
@@ -30,7 +30,7 @@ class ThreadCAN(object):
         self.control_ready = False
         self.power_cycle_completed = False
         self.power_message_counter = 0
-        self.POWER_CYCLE_MSG_COUNT = 10
+        self.POWER_CYCLE_MSG_COUNT = 100
 
         #####################
         ## Arbitration IDs ##
@@ -58,7 +58,7 @@ class ThreadCAN(object):
         # 8 byte message for requesting power to the propulsion motor
         self.power_request_data = [0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
         # 8 byte message for moving the prop motor @ 511 rpm
-        self.prop_data = [0xF4, 0x01, 0xFF, 0x7F, 0x00, 0x0D, 0x00, 0x00]
+        self.prop_data = [0x00, 0x00, 0xFF, 0x7F, 0x00, 0x0D, 0x00, 0x00]
         # 8 byte message for moving the linear actuator
         '''
         NOTE: byte #3 (0-7) contains a nibble 
@@ -82,9 +82,9 @@ class ThreadCAN(object):
         # declaring the braking button on the joy node
         BRAKING_BUTTON = 6
         # declaring the propulsion axis on the joy node
-        PROP_AXIS = 3
+        PROP_AXIS = 4
         # declaring the safety button
-        SAFETY_BUTTON = 7
+        SAFETY_BUTTON = 5
 
         self.joy_steering_input = joy_msg.axes[STEERING_AXIS]
         self.joy_braking_input = joy_msg.buttons[BRAKING_BUTTON]
@@ -102,13 +102,13 @@ class ThreadCAN(object):
         self.send_power_thread.start()
 
         self.power_message_counter += 1
-        # self.bus.send(self.power_msg)
+        self.bus.send(self.power_msg)
         # print("Power Message #{}".format(self.power_message_counter))
         # print('%.09f' % time.time())
         if(self.power_message_counter == self.POWER_CYCLE_MSG_COUNT):
             self.power_cycle_completed = True
             self.control_ready = True
-            print("Power Cycling Completed!")
+            # print("Power Cycling Completed!")
 
     def send_control_msg(self):
         """Send the control message to the SME motor controller"""
@@ -119,7 +119,7 @@ class ThreadCAN(object):
         self.send_control_thread.start()
 
         if(self.control_ready):
-            # self.bus.send(control_msg)
+            self.bus.send(control_msg)
             # print("Control Message")
             # print('%.09f' % time.time())
             pass
@@ -145,21 +145,25 @@ class ThreadCAN(object):
         # if the safety switch is pressed then assemble control messages
         # else send the zero control message
         if(self.safety_switch == 1):
-            MAX_PROP_MESSAGE = 0xF401
+            MAX_PROP_MESSAGE = 0x01F4
             MIN_PROP_MESSAGE = 0x0000
-            MAX_PROP_RPM = 1 
-            MIN_PROP_RPM = 0
+            # 511 RPM 
+            MAX_PROP_INPUT = 1
+            MIN_PROP_INPUT = 0
+            PROP = self.joy_prop_input
+            
+            if PROP < MIN_PROP_INPUT:
+                PROP = MIN_PROP_INPUT
+            if PROP > MAX_PROP_INPUT:
+                PROP = MAX_PROP_INPUT
 
-            prop = self.joy_prop_input
-            if(prop < 0):
-                prop = 0
-            if(prop > 1):
-                prop = 1
-
-            # map out the joy input to the can message limits
-            prop_map = int(round((prop-MAX_PROP_RPM)*(MAX_PROP_MESSAGE-MIN_PROP_MESSAGE)/(MAX_PROP_RPM-MIN_PROP_RPM)+MAX_PROP_MESSAGE))
-            self.prop_data[0] = int(prop_map >> 8 & self.MASKER)
-            self.prop_data[1] = int(prop_map & self.MASKER)
+            if (PROP >= 0) and (PROP <= 1):
+                propulsion_map = int(round((PROP-MIN_PROP_INPUT)*(MAX_PROP_MESSAGE-MIN_PROP_MESSAGE)/(MAX_PROP_INPUT-MIN_PROP_INPUT)+MIN_PROP_MESSAGE))
+                self.prop_data[1] = int(propulsion_map >> 8 & self.MASKER)
+                self.prop_data[0] = int(propulsion_map & self.MASKER)
+            else:
+                self.prop_data[1] = 0x00
+                self.prop_data[0] = 0x00 
 
             # create the can message
             prop_calc_msg = can.Message(arbitration_id = self.prop_arbitration_id, data = self.prop_data, extended_id = False)
