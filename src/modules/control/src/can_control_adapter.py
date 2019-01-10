@@ -32,10 +32,10 @@ class CanDriver:
     def __init__(self):
         rospy.init_node('can_controller', anonymous = True)
         # establishing the CAN connection and setting bitrate to 250 kbps
-        os.system('sudo /sbin/ip link set can0 up type can bitrate 250000')
+        # os.system('sudo /sbin/ip link set can0 up type can bitrate 250000')
 
         # initializing the bus to channel 0 and bustype 'socketcan_ctypes'
-        self.bus = can.interface.Bus(channel='can0', bustype='socketcan_ctypes')
+        self.bus = can.interface.Bus(channel='vcan0', bustype='socketcan_ctypes')
 
         self.steering_arbitration_id = 0x18FF00F9
         self.braking_arbitration_id = 0xFF0000
@@ -114,7 +114,7 @@ class CanDriver:
         MAX_PROP_MESSAGE = 0x00FA
         MIN_PROP_MESSAGE = 0x0000
 
-        MAX_PROP_INPUT = 1
+        MAX_PROP_INPUT = 100
         MIN_PROP_INPUT = 0
         
         if prop_input < MIN_PROP_INPUT:
@@ -122,7 +122,7 @@ class CanDriver:
         if prop_input > MAX_PROP_INPUT:
             prop_input = MAX_PROP_INPUT
 
-        if (prop_input >= 0) and (prop_input <= 1):
+        if (prop_input >= MIN_PROP_INPUT) and (prop_input <= MAX_PROP_INPUT):
             propulsion_map = int(round((prop_input-MIN_PROP_INPUT)*(MAX_PROP_MESSAGE-MIN_PROP_MESSAGE)/(MAX_PROP_INPUT-MIN_PROP_INPUT)+MIN_PROP_MESSAGE))
 
             self.prop_data[1] = int(propulsion_map >> 8 & self.MASKER)
