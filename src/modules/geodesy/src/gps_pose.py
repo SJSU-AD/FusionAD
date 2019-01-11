@@ -25,7 +25,7 @@ class GPSDataConverter(object):
 
     Subscribes
     ----------
-    Topic: /gps/fix
+    Topic: /piksi/navsatfix_best_fix
         Msg: sensor_msgs/NavSatFix
 
     Publishes
@@ -55,7 +55,9 @@ class GPSDataConverter(object):
         self.prevTime        = 0.0
 
         filePath = rospy.get_param("~file_path")
-        self.lat0, self.lon0, self.h0 = map(float, gps_parser.read_file_coarse_points(filePath, -6.0, oneLineOnly=True))
+        
+        height = 7.493 # meters, for north garage
+        self.lat0, self.lon0, self.h0 = map(float, gps_parser.read_file_coarse_points(filePath, height, oneLineOnly=True))
         self.toENUConverter = GeodesyConverterENU(self.lat0, self.lon0, self.h0)
         rospy.loginfo("Found and initialized intial lat/lon/altitude values")
         rospy.loginfo("Initial latitude: %f", self.toENUConverter.latitudesData)
@@ -169,7 +171,7 @@ class GPSDataConverter(object):
 
     def GPS_data_converter(self):
         """Take GPS data, convert to ENU, and republish"""
-        rospy.Subscriber("/gps/fix", NavSatFix, self.GPS_to_ENU_callback, queue_size=1000)
+        rospy.Subscriber("/piksi/navsatfix_best_fix", NavSatFix, self.GPS_to_ENU_callback, queue_size=1000)
 
         rospy.spin()
 

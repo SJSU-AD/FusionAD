@@ -65,7 +65,7 @@ class ControlNode
     
     // Control Timer and timer variables
     ros::Timer control_cmd_timer;
-    const float control_loop_rate = 25;                 // Hertz
+    const float control_loop_rate = 10;                 // Hertz
     float control_loop_time = 1/control_loop_rate;
 
     // Lateral controller objects
@@ -79,7 +79,7 @@ class ControlNode
     std::vector<float> pathPointListY;
     std::vector<float>::size_type dynamicArraySize;
 
-    bool getClosestWaypoint(const nav_msgs::Path& current_path, const interface::Chassis_state& current_position, int& waypoint_index);
+    int getTargetWaypoint(const interface::Chassis_state& current_position);
 
     void pathCallback(const nav_msgs::Path& trajectory_msg);
     void stateCallback(const interface::Chassis_state& veh_state_msg);
