@@ -167,7 +167,7 @@ odom1_nodelay: false
 #                 false, false, false,
 #                 false, false, false] 
 # twist0_queue_size: 3
-# twist0_rejection_hreshold: 2
+# twist0_rejection_threshold: 2
 # twist0_nodelay: false
 
 imu0: /localization/rotated_imu
