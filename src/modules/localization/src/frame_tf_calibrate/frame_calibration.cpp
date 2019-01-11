@@ -87,7 +87,6 @@ namespace frame_calibration_node
             vehicle_heading = adjusted_yaw;
         }
 
-        // pitch multiplied by (-1) to adhere to ROS-105 frame standards
         tf::Quaternion new_imu_quaternion = tf::createQuaternionFromRPY(roll, pitch, vehicle_heading);
 
         rot_msg.orientation.x = new_imu_quaternion[0];
