@@ -65,7 +65,7 @@ class ControlNode
     
     // Control Timer and timer variables
     ros::Timer control_cmd_timer;
-    const float control_loop_rate = 25;                 // Hertz
+    const float control_loop_rate = 10;                 // Hertz
     float control_loop_time = 1/control_loop_rate;
 
     // Lateral controller objects
