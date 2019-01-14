@@ -62,7 +62,7 @@ def get_cmd_input():
         Chosen fixed altitude of lat/lon data
     """
     
-    parser = argparse.ArgumentParser(description="Tool to convert ENU data to latitude/longitude GPSVisualizer data")
+    parser = argparse.ArgumentParser(description="Tool to convert ENU bag data to lat/lon GPSVisualizer data")
     parser.add_argument("-b", "--bag-file-path", 
                         help="Path to input bag file",
                         default="",
@@ -101,9 +101,23 @@ def get_cmd_input():
 
     optional_args = vars(parser.parse_args())
 
+    _validate_bag_location(optional_args)
     _validate_filtering_rate(optional_args)
 
     return optional_args
+
+def _validate_bag_location(optional_args):
+    """Validate a valid path to bag file is chosen"""
+
+    while optional_args["bagFilePath"][-4:] != ".bag" and optional_args["bagFilePath"] != "":
+        try:
+            print("Please enter the path to the desired bag file to parse"
+                + " (complete path is preferred): ", end="")
+            optional_args["bagFilePath"] = sys.stdin.readline().strip()
+            print("Input path is:", optional_args["bagFilePath"])
+        except KeyboardInterrupt:
+            print("\nNow exitting the ENU-to-latlon validator...")
+            sys.exit()
 
 def _validate_filtering_rate(optional_args):
     """Validate a valid value for filtering rate is chosen"""
@@ -113,7 +127,8 @@ def _validate_filtering_rate(optional_args):
             print("Please enter a frequency value of 'None' (to specify no filtering)" +
                    "or an integer value greater than 0: ", end="")
             new_filtering_rate = unicode(sys.stdin.readline().strip(), "utf-8")
-            print("Input value is: ", new_filtering_rate)
+            print("Input value is:", new_filtering_rate)
+
             if new_filtering_rate == "None":
                 optional_args["filteringFreq"] = None
             elif new_filtering_rate.isnumeric():
@@ -130,6 +145,8 @@ def print_input_args(optional_args):
     
     for arg, val in optional_args.iteritems():
         print("{} = {}".format(arg, val))
+    
+    print()
 
 def generate_latlon_files(bagFilePath, properties):
     """Parses bag file for ENU data and writes recorded data as lat/lon
