@@ -5,10 +5,8 @@
 from __future__ import print_function
 from __future__ import division
 
-import math
 import csv
 
-import gps_parser
 from geodesy_conversion_ENU import GeodesyConverterENU
 from geodesy_conversion_ECEF import GeodesyConverterECEF
 
