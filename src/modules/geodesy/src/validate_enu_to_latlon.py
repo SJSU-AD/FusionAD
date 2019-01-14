@@ -61,6 +61,10 @@ def get_cmd_input():
     float
         Chosen fixed altitude of lat/lon data
     """
+
+    default_path_filename = "enuToLatLon_fromBag.txt"
+    default_gps_filename = "enuToLatLon_fromBag.txt"
+    default_chosen_altitude = -6.0 # meters
     
     parser = argparse.ArgumentParser(description="Tool to convert ENU bag data to lat/lon GPSVisualizer data")
     parser.add_argument("-b", "--bag-file-path", 
@@ -74,13 +78,13 @@ def get_cmd_input():
                         type=int,
                         dest="filteringFreq")
     parser.add_argument("-t", "--path-output-file", 
-                        help="File name to output file storing converted lat/lon values in '.csv' format",
-                        default="enuToLatLon_fromBag.txt",
+                        help="File name to output file storing converted lat/lon values in GPSVisualizer format",
+                        default=default_path_filename,
                         type=str,
                         dest="pathFileName")
     parser.add_argument("-m", "--gps-output-file", 
-                        help="File name to output file storing converted lat/lon values in GPS visualizer format",
-                        default="enuToLatLon_fromBag.txt",
+                        help="File name to output file storing converted lat/lon values in GPSVisualizer format",
+                        default=default_gps_filename,
                         type=str,
                         dest="gpsFileName")
     parser.add_argument("-p", "--path-topic", 
@@ -95,7 +99,7 @@ def get_cmd_input():
                         dest="gpsTopic")
     parser.add_argument("-a", "--altitude", 
                         help="Chosen fixed altitude of lat/lon data",
-                        default=-6.0,
+                        default=default_chosen_altitude,
                         type=float,
                         dest="chosenAltitude")
 
@@ -103,6 +107,8 @@ def get_cmd_input():
 
     _validate_bag_location(optional_args)
     _validate_filtering_rate(optional_args)
+    _validate_ouput_visualizer_filename(optional_args, "pathFileName", default_path_filename)
+    _validate_ouput_visualizer_filename(optional_args, "gpsFileName", default_gps_filename)
 
     return optional_args
 
@@ -114,7 +120,8 @@ def _validate_bag_location(optional_args):
             print("Please enter the path to the desired bag file to parse"
                 + " (complete path is preferred): ", end="")
             optional_args["bagFilePath"] = sys.stdin.readline().strip()
-            print("Input path is:", optional_args["bagFilePath"])
+            
+            print("Chosen bag location is: {}\n".format(optional_args["bagFilePath"]))
         except KeyboardInterrupt:
             print("\nNow exitting the ENU-to-latlon validator...")
             sys.exit()
@@ -127,12 +134,28 @@ def _validate_filtering_rate(optional_args):
             print("Please enter a frequency value of 'None' (to specify no filtering)" +
                    "or an integer value greater than 0: ", end="")
             new_filtering_rate = unicode(sys.stdin.readline().strip(), "utf-8")
-            print("Input value is:", new_filtering_rate)
+            print("Chosen filtering rate is: {}\n".format(new_filtering_rate))
 
             if new_filtering_rate == "None":
                 optional_args["filteringFreq"] = None
             elif new_filtering_rate.isnumeric():
                 optional_args["filteringFreq"] = int(math.floor(float(new_filtering_rate)))
+        except KeyboardInterrupt:
+            print("\nNow exitting the ENU-to-latlon validator...")
+            sys.exit()
+
+def _validate_ouput_visualizer_filename(optional_args, arg, default_filename):
+    """Validate a valid name for an output file is chosen"""
+
+    while optional_args[arg][-4:] != ".txt" and optional_args[arg] != "":
+        try:
+            print("Please enter the name for the output '.txt' ({}) file".format(arg)
+                + " for the GPSVisualizer: ", end="")
+            optional_args[arg] = sys.stdin.readline().strip()
+            print("Chosen output GPSVisualizer file ({}) name is: {}\n".format(arg, optional_args[arg]))
+
+            if optional_args[arg] == "":
+                optional_args[arg] = default_filename
         except KeyboardInterrupt:
             print("\nNow exitting the ENU-to-latlon validator...")
             sys.exit()
