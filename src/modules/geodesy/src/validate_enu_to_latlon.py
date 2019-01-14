@@ -30,9 +30,10 @@ import validate_geodesy_conversion as gct
 def prompt_input():
     """Prompt user for necessary filenames and parameters"""
     optional_args = get_cmd_input()
-    bagFilePath = get_bag_location()
+    if optional_args["bagFilePath"] == "":
+        optional_args["bagFilePath"] = get_bag_location()
 
-    return bagFilePath, optional_args
+    return optional_args
 
 def get_bag_location():
     Tk().withdraw()
@@ -62,6 +63,11 @@ def get_cmd_input():
     """
     
     parser = argparse.ArgumentParser(description="Tool to convert ENU data to latitude/longitude GPSVisualizer data")
+    parser.add_argument("-b", "--bag-file-path", 
+                        help="Path to input bag file",
+                        default="",
+                        type=str,
+                        dest="bagFilePath")
     parser.add_argument("-f", "--frequency", 
                         help="How many points to skip before saving a point in the input data",
                         default=100,
@@ -116,6 +122,15 @@ def _validate_filtering_rate(optional_args):
             print("\nNow exitting the ENU-to-latlon validator...")
             sys.exit()
 
+def print_input_args(optional_args):
+    config_properties_label = "=====Configuration Properties====="
+    print(len(config_properties_label) * "=" 
+        + "\n{}\n".format(config_properties_label)
+        + len(config_properties_label) * "=")
+    
+    for arg, val in optional_args.iteritems():
+        print("{} = {}".format(arg, val))
+
 def generate_latlon_files(bagFilePath, properties):
     """Parses bag file for ENU data and writes recorded data as lat/lon
     
@@ -165,23 +180,11 @@ def parse_gps_data(bagFilePath, radarPoint):
     
     NOTE: First point in path will be used as 'radar' point for ENU calculations"""
     pass
-
-def print_input_args(bagFilePath, optional_args):
-    config_properties_label = "=====Configuration Properties====="
-    print(config_properties_label, end="")
-
-    print("\n" + len(config_properties_label) * "=")
-    print("Bag File Location:\n{}".format(bagFilePath))
-
-    print("\n" + len(config_properties_label) * "=")
-    
-    for arg, val in optional_args.iteritems():
-        print("{} = {}".format(arg, val))
     
 def main():
-    bagFilePath, optional_args = prompt_input()
+    optional_args = prompt_input()
 
-    print_input_args(bagFilePath, optional_args)
+    print_input_args(optional_args)
 
     # generate_latlon_files(bagFilePath, optional_args)
 
