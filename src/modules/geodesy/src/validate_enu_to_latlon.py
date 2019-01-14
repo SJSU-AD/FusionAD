@@ -165,24 +165,6 @@ def _validate_ouput_visualizer_filename(optional_args, arg, default_filename):
             print("\nNow exitting the ENU-to-latlon validator...")
             sys.exit()
 
-def _validate_chosen_alitude(optional_args):
-    """Validate a value for chosen fixed altitude"""
-
-    while optional_args["chosenAltitude"] != None and optional_args["chosenAltitude"] < 1:
-        try:
-            print("Please enter a chosen altitude value of 'None' (to specify no filtering)" +
-                   "or a floating point value: ", end="")
-            optional_args["chosenAltitude"] = unicode(sys.stdin.readline().strip(), "utf-8")
-            print("Chosen filtering rate is: {}\n".format(optional_args["chosenAltitude"]))
-
-            if optional_args["chosenAltitude"].lower() == "none":
-                optional_args["chosenAltitude"] = None
-            elif optional_args["chosenAltitude"].isnumeric():
-                optional_args["chosenAltitude"] = float(optional_args["chosenAltitude"])
-        except KeyboardInterrupt:
-            print("\nNow exitting the ENU-to-latlon validator...")
-            sys.exit()
-
 def print_input_args(optional_args):
     config_properties_label = "=====Configuration Properties====="
     print(len(config_properties_label) * "=" 
