@@ -29,16 +29,14 @@ import validate_geodesy_conversion as gct
 
 def prompt_input():
     """Prompt user for necessary filenames and parameters"""
-    bagFilePath = get_bag_location()
-    print("Chosen bag location is: ", bagFilePath)
-
     optional_args = get_cmd_input()
+    bagFilePath = get_bag_location()
 
     return bagFilePath, optional_args
 
 def get_bag_location():
     Tk().withdraw()
-    bagFilePath = askopenfilename()
+    bagFilePath = askopenfilename(initialdir="~", title="Chose bag file location", filetypes=(("Bag files", "*.bag"), ("All files", "*.*")))
 
     return bagFilePath
 
@@ -63,12 +61,12 @@ def get_cmd_input():
         Chosen fixed altitude of lat/lon data
     """
     
-    parser = argparse.ArgumentParser(description="Get file names")
+    parser = argparse.ArgumentParser(description="Tool to convert ENU data to latitude/longitude GPSVisualizer data")
     parser.add_argument("-f", "--frequency", 
-                        help="Filtering frequency",
+                        help="How many points to skip before saving a point in the input data",
                         default=100,
                         type=int,
-                        dest="filteringRate")
+                        dest="filteringFreq")
     parser.add_argument("-t", "--path-output-file", 
                         help="File name to output file storing converted lat/lon values in '.csv' format",
                         default="enuToLatLon_fromBag.txt",
@@ -97,22 +95,26 @@ def get_cmd_input():
 
     optional_args = vars(parser.parse_args())
 
-    ##### Validate a valid value for filtering rate is chosen #####
-    while optional_args["filteringRate"] < 1 and optional_args["filteringRate"] != None:
+    _validate_filtering_rate(optional_args)
+
+    return optional_args
+
+def _validate_filtering_rate(optional_args):
+    """Validate a valid value for filtering rate is chosen"""
+    
+    while optional_args["filteringFreq"] < 1 and optional_args["filteringFreq"] != None:
         try:
             print("Please enter a frequency value of 'None' (to specify no filtering)" +
                    "or an integer value greater than 0: ", end="")
             new_filtering_rate = unicode(sys.stdin.readline().strip(), "utf-8")
             print("Input value is: ", new_filtering_rate)
             if new_filtering_rate == "None":
-                optional_args["filteringRate"] = None
+                optional_args["filteringFreq"] = None
             elif new_filtering_rate.isnumeric():
-                optional_args["filteringRate"] = int(math.floor(float(new_filtering_rate)))
+                optional_args["filteringFreq"] = int(math.floor(float(new_filtering_rate)))
         except KeyboardInterrupt:
             print("\nNow exitting the ENU-to-latlon validator...")
             sys.exit()
-
-    return optional_args
 
 def generate_latlon_files(bagFilePath, properties):
     """Parses bag file for ENU data and writes recorded data as lat/lon
@@ -164,20 +166,22 @@ def parse_gps_data(bagFilePath, radarPoint):
     NOTE: First point in path will be used as 'radar' point for ENU calculations"""
     pass
 
-def main():
-    bagFilePath, optional_args = prompt_input()
-
+def print_input_args(bagFilePath, optional_args):
     config_properties_label = "=====Configuration Properties====="
-    print(config_properties_label)
+    print(config_properties_label, end="")
 
     print("\n" + len(config_properties_label) * "=")
     print("Bag File Location:\n{}".format(bagFilePath))
 
     print("\n" + len(config_properties_label) * "=")
-    print()
     
     for arg, val in optional_args.iteritems():
         print("{} = {}".format(arg, val))
+    
+def main():
+    bagFilePath, optional_args = prompt_input()
+
+    print_input_args(bagFilePath, optional_args)
 
     # generate_latlon_files(bagFilePath, optional_args)
 
