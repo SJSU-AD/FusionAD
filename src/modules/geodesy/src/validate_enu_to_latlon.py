@@ -188,11 +188,11 @@ def generate_latlon_files(properties):
 
     bagFilePath = properties["bagFilePath"]
 
-    # eData, nData, uData = parse_path_enu_data(properties, bagFilePath, properties["pathTopic"])
-    # latData, lonData = enu_to_latlon(properties, eData, nData, uData)
-    # # write '.txt' for path data
-    # with open(properties["pathFileName"], "wb") as pathFile:
-    #     write_latlon_data(latData, lonData, pathFile)
+    eData, nData, uData = parse_path_enu_data(properties, bagFilePath, properties["pathTopic"])
+    latData, lonData = enu_to_latlon(properties, eData, nData, uData)
+    # write '.txt' for path data
+    with open(properties["pathFileName"], "wb") as pathFile:
+        write_latlon_data(latData, lonData, pathFile)
         
     eData, nData, uData = parse_path_enu_data(properties, bagFilePath, properties["gpsTopic"])
     latData, lonData = enu_to_latlon(properties, eData, nData, uData)
@@ -246,6 +246,26 @@ def parse_path_enu_data(properties, bagFilePath, chosenTopic):
                     messageCounter += 1
                     if messageCounter == frequency:
                         messageCounter = 0
+        bag.close()
+    else: # path message
+        for topic, msg, t in bag.read_messages(topics=[chosenTopic]):
+            if frequency == None:
+                for poseStamped in msg.poses:
+                    eData.append(poseStamped.pose.position.x)
+                    nData.append(poseStamped.pose.position.y)
+                    uData.append(poseStamped.pose.position.z)
+            else:
+                for poseStamped in msg.poses:
+                    if messageCounter == 0:
+                        eData.append(poseStamped.pose.position.x)
+                        nData.append(poseStamped.pose.position.y)
+                        uData.append(poseStamped.pose.position.z)
+                    if frequency != None:
+                        messageCounter += 1
+                        if messageCounter == frequency:
+                            messageCounter = 0
+            
+            break # only take 1 instance of the path
         bag.close()
 
     return eData, nData, uData
