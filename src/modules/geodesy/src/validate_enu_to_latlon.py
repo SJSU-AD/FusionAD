@@ -115,8 +115,6 @@ def get_cmd_input():
 
 def _validate_bag_location(optional_args):
     """Validate a valid path to bag file is chosen"""
-    if optional_args["bagFilePath"] == None:
-        optional_args["bagFilePath"] = ""
 
     while optional_args["bagFilePath"] != None and optional_args["bagFilePath"][-4:] != ".bag":
         try:
