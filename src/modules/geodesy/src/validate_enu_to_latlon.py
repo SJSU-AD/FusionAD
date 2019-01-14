@@ -64,7 +64,7 @@ def get_cmd_input():
     default_path_filename = "enuToLatLon_path_fromBag.txt"
     default_gps_filename = "enuToLatLon_gpsData_fromBag.txt"
     default_path_topic = "/planning/trajectory"
-    default_gps_topic = "/localization/state"
+    default_gps_topic = "/gps/geodesy_odom"
     
     # optional args
     parser.add_argument("-b", "--bag-file-path", 
@@ -167,7 +167,7 @@ def _validate_ouput_visualizer_filename(optional_args, arg, default_filename):
             sys.exit()
 
 def print_input_args(optional_args):
-    config_properties_label = "=====Configuration Properties====="
+    config_properties_label = "===== Configuration Properties ====="
     print(len(config_properties_label) * "=" 
         + "\n{}\n".format(config_properties_label)
         + len(config_properties_label) * "=")
@@ -188,13 +188,12 @@ def generate_latlon_files(properties):
 
     bagFilePath = properties["bagFilePath"]
 
-    eData, nData, uData = parse_path_enu_data(properties, bagFilePath, properties["pathTopic"])
-    latData, lonData = enu_to_latlon(properties, eData, nData, uData)
-    # write '.txt' for path data
-    with open(properties["pathFileName"], "wb") as pathFile:
-        write_latlon_data(latData, lonData, pathFile)
+    # eData, nData, uData = parse_path_enu_data(properties, bagFilePath, properties["pathTopic"])
+    # latData, lonData = enu_to_latlon(properties, eData, nData, uData)
+    # # write '.txt' for path data
+    # with open(properties["pathFileName"], "wb") as pathFile:
+    #     write_latlon_data(latData, lonData, pathFile)
         
-
     eData, nData, uData = parse_path_enu_data(properties, bagFilePath, properties["gpsTopic"])
     latData, lonData = enu_to_latlon(properties, eData, nData, uData)
     # write '.txt' for gps data
@@ -212,20 +211,42 @@ def parse_path_enu_data(properties, bagFilePath, chosenTopic):
     nData = []
     uData = []
 
-    for topic, msg, t in bag.read_messages(topics=[chosenTopic]):
-        if frequency == None:
-            for seq in range(len(msg.poses) - 1):
-                eData.append(msg.poses[seq].pose.position.x)
-                nData.append(msg.poses[seq].pose.position.y)
-                uData.append(msg.poses[seq].pose.position.z)
-        else:
-            for seq in range(len(msg.poses) - 1):
-                if seq % frequency == 0:
-                    eData.append(msg.poses[seq].pose.position.x)
-                    nData.append(msg.poses[seq].pose.position.x)
-                    uData.append(msg.poses[seq].pose.position.z)
+    messageCounter = 0
 
-    bag.close()
+    if chosenTopic == "/localization/state":
+        for topic, msg, t in bag.read_messages(topics=[chosenTopic]):
+            if frequency == None:
+                eData.append(msg.Position.pose.position.x)
+                nData.append(msg.Position.pose.position.y)
+                uData.append(msg.Position.pose.position.z)
+            else:
+                if messageCounter == 0:
+                    eData.append(msg.Position.pose.position.x)
+                    nData.append(msg.Position.pose.position.y)
+                    uData.append(msg.Position.pose.position.z)
+                if frequency != None:
+                    messageCounter += 1
+                    if messageCounter == frequency:
+                        messageCounter = 0
+            # messageCounter += 1
+
+        bag.close()
+    elif chosenTopic == "/gps/geodesy_odom":
+        for topic, msg, t in bag.read_messages(topics=[chosenTopic]):
+            if frequency == None:
+                eData.append(msg.pose.pose.position.x)
+                nData.append(msg.pose.pose.position.y)
+                uData.append(msg.pose.pose.position.z)
+            else:
+                if messageCounter == 0:
+                    eData.append(msg.pose.pose.position.x)
+                    nData.append(msg.pose.pose.position.y)
+                    uData.append(msg.pose.pose.position.z)
+                if frequency != None:
+                    messageCounter += 1
+                    if messageCounter == frequency:
+                        messageCounter = 0
+        bag.close()
 
     return eData, nData, uData
     
@@ -249,11 +270,11 @@ def enu_to_latlon(properties, eData, nData, uData):
 def write_latlon_data(latData, lonData, pathFile):
     """Writes lat/lon data to GPSVisualizer '.txt' file"""
 
-    pathFile.write("type	latitude	longitude	name")
+    pathFile.write("type	latitude	longitude	name\n")
 
     waypointCounter = 1
-    for _ in latData:
-        pathFile.write("W\t{}\t{}\t{}\n".format(latData[0], lonData[1].strip(), str(waypointCounter)))
+    for latPoint, lonPoint in zip(latData, lonData):
+        pathFile.write("W\t{}\t{}\t{}\n".format(latPoint, lonPoint, str(waypointCounter)))
         waypointCounter += 1
     
 def main():
