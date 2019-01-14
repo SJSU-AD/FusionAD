@@ -9,6 +9,11 @@ and '.txt' GPSVisualizer format.
 Data from the '.txt' file can then be plotted at http://www.gpsvisualizer.com/draw/
 
 Output files can be found in the /geodesy/geodesy_data/data_validation directory
+
+USAGE:
+    python validate_enu_to_latlon.py INITIAL_LATITUDE INITIAL_LONGITUDE INITIAL_HEIGHT
+- where INITIAL_LATITUDE, INITIAL_LONGITUDE, and INITIAL_HEIGHT must be supplied for
+valid ENU conversions. This supplies the 'radar' point reference.
 """
 
 from __future__ import print_function
@@ -39,28 +44,7 @@ def get_bag_location():
     return bagFilePath
 
 def get_cmd_input():
-    """Get optional commmand line inputs for conversion
-    
-    Returns
-    -------
-    str
-        Path to input bagfile
-    int
-        Filtering rate (on ENU data)
-    str
-        Name of output lat/lon path file
-    str
-        Name of output lat/lon GPS data file
-    str
-        Name of path topic
-    str
-        Name of GPS ENU data output topic
-    float
-        Chosen fixed altitude of lat/lon data
-    """
-
-    default_path_filename = "enuToLatLon_path_fromBag.txt"
-    default_gps_filename = "enuToLatLon_gpsData_fromBag.txt"
+    """Get commmand line inputs for conversion"""
     
     parser = argparse.ArgumentParser(description="Tool to convert ENU bag data to lat/lon GPSVisualizer data")
 
@@ -75,35 +59,48 @@ def get_cmd_input():
                         help="Chosen fixed altitude of lat/lon data",
                         type=float,)
 
+    default_bag_filepath = None
+    default_filter_freq = 100
+    default_path_filename = "enuToLatLon_path_fromBag.txt"
+    default_gps_filename = "enuToLatLon_gpsData_fromBag.txt"
+    default_path_topic = "/planning/trajectory"
+    default_gps_topic = "/localization/state"
+    
     # optional args
     parser.add_argument("-b", "--bag-file-path", 
-                        help="Path to input bag file",
-                        default=None,
+                        help="Path to input bag file"\
+                            + " Default={}".format(default_bag_filepath),
+                        default=default_bag_filepath,
                         type=str,
                         dest="bagFilePath")
     parser.add_argument("-f", "--frequency", 
-                        help="How many points to skip before saving a point in the input data",
-                        default=100,
+                        help="How many points to skip before saving a point in the input data."\
+                            + " Default={}".format(default_filter_freq),
+                        default=default_filter_freq,
                         type=int,
                         dest="filteringFreq")
     parser.add_argument("-o", "--path-output-file", 
-                        help="File name to output file storing converted lat/lon values in GPSVisualizer format",
+                        help="File name to output file storing converted lat/lon values in GPSVisualizer format"\
+                           + " Default={}".format(default_path_filename),
                         default=default_path_filename,
                         type=str,
                         dest="pathFileName")
     parser.add_argument("-s", "--gps-output-file", 
-                        help="File name to output file storing converted lat/lon values in GPSVisualizer format",
+                        help="File name to output file storing converted lat/lon values in GPSVisualizer format"\
+                            + " Default={}".format(default_gps_filename),
                         default=default_gps_filename,
                         type=str,
                         dest="gpsFileName")
     parser.add_argument("-p", "--path-topic", 
-                        help="Name of topic publishing path",
-                        default="/planning/trajectory",
+                        help="Name of topic publishing path"\
+                            + " Default={}".format(default_path_topic),
+                        default=default_path_topic,
                         type=str,
                         dest="pathTopic")
     parser.add_argument("-g", "--gps-topic", 
-                        help="Name of topic GPS ENU data",
-                        default="/localization/state",
+                        help="Name of topic GPS ENU data"\
+                            + " Default={}".format(default_gps_topic),
+                        default=default_gps_topic,
                         type=str,
                         dest="gpsTopic")
 
@@ -180,7 +177,7 @@ def print_input_args(optional_args):
     
     print()
 
-def generate_latlon_files(bagFilePath, properties):
+def generate_latlon_files(properties):
     """Parses bag file for ENU data and writes recorded data as lat/lon
     
     Path data and GPS data are written to '.txt' files 
@@ -188,6 +185,8 @@ def generate_latlon_files(bagFilePath, properties):
     
     NOTE: First point in path will be used as 'radar' point for ENU calculations
     """
+
+    bagFilePath = properties["bagFilePath"]
 
     eData, nData, uData = parse_path_enu_data(properties, bagFilePath, properties["pathTopic"])
     latData, lonData = enu_to_latlon(properties, eData, nData, uData)
@@ -262,7 +261,7 @@ def main():
 
     print_input_args(optional_args)
 
-    # generate_latlon_files(bagFilePath, optional_args)
+    generate_latlon_files(optional_args)
 
 if __name__ == "__main__":
     main()
