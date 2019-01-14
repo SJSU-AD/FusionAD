@@ -22,10 +22,7 @@ import sys
 
 import rosbag
 
-import validate_geodesy_conversion as gct
-
-# TODO: Input ENU data is mandatory
-# TODO: Output file names, freq are optional
+from geodesy_conversion_ENU import GeodesyConverterENU
 
 def prompt_input():
     """Prompt user for necessary filenames and parameters"""
@@ -64,9 +61,21 @@ def get_cmd_input():
 
     default_path_filename = "enuToLatLon_path_fromBag.txt"
     default_gps_filename = "enuToLatLon_gpsData_fromBag.txt"
-    default_chosen_altitude = -6.0 # meters
     
     parser = argparse.ArgumentParser(description="Tool to convert ENU bag data to lat/lon GPSVisualizer data")
+
+    # positional args
+    parser.add_argument("initialLatitude", 
+                        help="Initial latitude (radar location) from planned path",
+                        type=float)
+    parser.add_argument("initialLongitude", 
+                        help="Initial longitude (radar location) from planned path",
+                        type=float)
+    parser.add_argument("initialAltitude", 
+                        help="Chosen fixed altitude of lat/lon data",
+                        type=float,)
+
+    # optional args
     parser.add_argument("-b", "--bag-file-path", 
                         help="Path to input bag file",
                         default=None,
@@ -77,12 +86,12 @@ def get_cmd_input():
                         default=100,
                         type=int,
                         dest="filteringFreq")
-    parser.add_argument("-t", "--path-output-file", 
+    parser.add_argument("-o", "--path-output-file", 
                         help="File name to output file storing converted lat/lon values in GPSVisualizer format",
                         default=default_path_filename,
                         type=str,
                         dest="pathFileName")
-    parser.add_argument("-m", "--gps-output-file", 
+    parser.add_argument("-s", "--gps-output-file", 
                         help="File name to output file storing converted lat/lon values in GPSVisualizer format",
                         default=default_gps_filename,
                         type=str,
@@ -97,11 +106,6 @@ def get_cmd_input():
                         default="/localization/state",
                         type=str,
                         dest="gpsTopic")
-    parser.add_argument("-a", "--altitude", 
-                        help="Chosen fixed altitude of lat/lon data",
-                        default=default_chosen_altitude,
-                        type=float,
-                        dest="chosenAltitude")
 
     optional_args = vars(parser.parse_args())
 
@@ -179,52 +183,79 @@ def print_input_args(optional_args):
 def generate_latlon_files(bagFilePath, properties):
     """Parses bag file for ENU data and writes recorded data as lat/lon
     
-    Path data is written to '.csv' file, GPS data written to '.txt' file"""
+    Path data and GPS data are written to '.txt' files 
+    - both are compatible with GPSVisualizer format
     
+    NOTE: First point in path will be used as 'radar' point for ENU calculations
+    """
 
+    eData, nData, uData = parse_path_enu_data(properties, bagFilePath, properties["pathTopic"])
+    latData, lonData = enu_to_latlon(properties, eData, nData, uData)
     # write '.txt' for path data
     with open(properties["pathFileName"], "wb") as pathFile:
-        eData, nData = parse_path_enu_data(bagFilePath, properties["frequency"])
+        write_latlon_data(latData, lonData, pathFile)
         
 
-    # for topic, msg, t in bag.read_messages(topic=["/localization/state"]):
-    #     for seq in range(len(msg))
+    eData, nData, uData = parse_path_enu_data(properties, bagFilePath, properties["gpsTopic"])
+    latData, lonData = enu_to_latlon(properties, eData, nData, uData)
+    # write '.txt' for gps data
+    with open(properties["gpsFileName"], "wb") as pathFile:
+        write_latlon_data(latData, lonData, pathFile)
 
-    # write '.txt' for GPS data
-    with open(properties["gpsFileName"], "wb") as gpsFile:
-        parse_gps_data(bagFilePath, [eData[0], nData[0]])
-
-def parse_path_enu_data(bagFilePath, frequency):
-    """Writes ENU data from path to bag
-    
-    NOTE: First point in path will be used as 'radar' point for ENU calculations"""
+def parse_path_enu_data(properties, bagFilePath, chosenTopic):
+    """Collects ENU data from bag"""
 
     bag = rosbag.Bag(bagFilePath)
 
+    frequency = properties["filteringFreq"]
+
     eData = []
     nData = []
+    uData = []
 
-    for topic, msg, t in bag.read_messages(topics=["/planning/trajectory"]):
-
+    for topic, msg, t in bag.read_messages(topics=[chosenTopic]):
         if frequency == None:
             for seq in range(len(msg.poses) - 1):
                 eData.append(msg.poses[seq].pose.position.x)
-                nData.append(msg.poses[seq].pose.position.x)    
+                nData.append(msg.poses[seq].pose.position.y)
+                uData.append(msg.poses[seq].pose.position.z)
         else:
             for seq in range(len(msg.poses) - 1):
                 if seq % frequency == 0:
                     eData.append(msg.poses[seq].pose.position.x)
                     nData.append(msg.poses[seq].pose.position.x)
-    
+                    uData.append(msg.poses[seq].pose.position.z)
+
     bag.close()
 
-    return eData, nData
+    return eData, nData, uData
     
-def parse_gps_data(bagFilePath, radarPoint):
-    """Writes ENU data from path to bag
-    
-    NOTE: First point in path will be used as 'radar' point for ENU calculations"""
-    pass
+def enu_to_latlon(properties, eData, nData, uData):
+    """Convert ENU data to lat/lon data"""
+
+    latData = []
+    lonData = []
+
+    enuConverter = GeodesyConverterENU(eData, nData, uData)
+
+    xData, yData, zData = enuConverter.ENU_data_to_ECEF_data(eData, nData, uData, 
+                                                             lat0=properties["initialLatitude"],
+                                                             lon0=properties["initialLongitude"],
+                                                             h0=properties["initialAltitude"])
+
+    latData, lonData = enuConverter.ECEF_data_to_geodetic_data(xData, yData, zData)
+
+    return latData, lonData
+
+def write_latlon_data(latData, lonData, pathFile):
+    """Writes lat/lon data to GPSVisualizer '.txt' file"""
+
+    pathFile.write("type	latitude	longitude	name")
+
+    waypointCounter = 1
+    for _ in latData:
+        pathFile.write("W\t{}\t{}\t{}\n".format(latData[0], lonData[1].strip(), str(waypointCounter)))
+        waypointCounter += 1
     
 def main():
     optional_args = prompt_input()
@@ -235,4 +266,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
