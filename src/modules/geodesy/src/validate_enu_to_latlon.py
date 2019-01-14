@@ -62,8 +62,8 @@ def get_cmd_input():
         Chosen fixed altitude of lat/lon data
     """
 
-    default_path_filename = "enuToLatLon_fromBag.txt"
-    default_gps_filename = "enuToLatLon_fromBag.txt"
+    default_path_filename = "enuToLatLon_path_fromBag.txt"
+    default_gps_filename = "enuToLatLon_gpsData_fromBag.txt"
     default_chosen_altitude = -6.0 # meters
     
     parser = argparse.ArgumentParser(description="Tool to convert ENU bag data to lat/lon GPSVisualizer data")
@@ -123,7 +123,7 @@ def _validate_bag_location(optional_args):
                 + " (complete path is preferred): ", end="")
             optional_args["bagFilePath"] = sys.stdin.readline().strip()
 
-            if optional_args["bagFilePath"] == "None":
+            if optional_args["bagFilePath"].lower() == "none":
                 optional_args["bagFilePath"] = None
             
             print("Chosen bag location is: {}\n".format(optional_args["bagFilePath"]))
@@ -137,14 +137,14 @@ def _validate_filtering_rate(optional_args):
     while optional_args["filteringFreq"] != None and optional_args["filteringFreq"] < 1:
         try:
             print("Please enter an integer frequency value greater than 0"
-                + "(or 'None' to specify no filtering) : ", end="")
-            new_filtering_rate = unicode(sys.stdin.readline().strip(), "utf-8")
-            print("Chosen filtering rate is: {}\n".format(new_filtering_rate))
+                + " (or 'None' to specify no filtering) : ", end="")
+            optional_args["filteringFreq"] = unicode(sys.stdin.readline().strip(), "utf-8")
+            print("Chosen filtering rate is: {}\n".format(optional_args["filteringFreq"]))
 
-            if new_filtering_rate == "None":
+            if optional_args["filteringFreq"].lower() == "none":
                 optional_args["filteringFreq"] = None
-            elif new_filtering_rate.isnumeric():
-                optional_args["filteringFreq"] = int(math.floor(float(new_filtering_rate)))
+            elif optional_args["filteringFreq"].isnumeric():
+                optional_args["filteringFreq"] = int(math.floor(float(optional_args["filteringFreq"])))
         except KeyboardInterrupt:
             print("\nNow exitting the ENU-to-latlon validator...")
             sys.exit()
@@ -159,7 +159,7 @@ def _validate_ouput_visualizer_filename(optional_args, arg, default_filename):
             new_output_filename = sys.stdin.readline().strip()
             print("Chosen output GPSVisualizer file ({}) name is: {}\n".format(arg, optional_args[arg]))
 
-            if new_output_filename == "None":
+            if new_output_filename.lower() == "none":
                 optional_args[arg] = default_filename
         except KeyboardInterrupt:
             print("\nNow exitting the ENU-to-latlon validator...")
@@ -168,14 +168,14 @@ def _validate_ouput_visualizer_filename(optional_args, arg, default_filename):
 def _validate_chosen_alitude(optional_args):
     """Validate a value for chosen fixed altitude"""
 
-    while optional_args["chosenAltitude"] < 1 and optional_args["chosenAltitude"] != None:
+    while optional_args["chosenAltitude"] != None and optional_args["chosenAltitude"] < 1:
         try:
             print("Please enter a chosen altitude value of 'None' (to specify no filtering)" +
                    "or a floating point value: ", end="")
             optional_args["chosenAltitude"] = unicode(sys.stdin.readline().strip(), "utf-8")
             print("Chosen filtering rate is: {}\n".format(optional_args["chosenAltitude"]))
 
-            if optional_args["chosenAltitude"] == "None":
+            if optional_args["chosenAltitude"].lower() == "none":
                 optional_args["chosenAltitude"] = None
             elif optional_args["chosenAltitude"].isnumeric():
                 optional_args["chosenAltitude"] = float(optional_args["chosenAltitude"])
