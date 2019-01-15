@@ -179,7 +179,7 @@ namespace lat_controller{
 
     unfilteredSteeringAngle = headingDelta + 
                               std::atan(((p_gain*crossTrackError) + 
-                              (d_gain * crossTrackError_dot))/ vehSpeed);
+                              (d_gain * crossTrackError_dot))/ (0.001 + vehSpeed));
 
     float steeringAngle = 0;
 
