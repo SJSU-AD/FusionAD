@@ -125,13 +125,13 @@ class GeodesyConverterENU(GeodesyConverterECEF):
 
         return x, y, z
 
-    def ENU_data_to_ECEF_data(self, eData, nData, uData):
+    def ENU_data_to_ECEF_data(self, eData, nData, uData, lat0=None, lon0=None, h0=None):
         xData = []
         yData = []
         zData = []
 
         for i in range(min(len(eData), len(nData), len(uData))):
-            x, y, z = self.ENU_to_ECEF_point(eData[i], nData[i], uData[i])
+            x, y, z = self.ENU_to_ECEF_point(eData[i], nData[i], uData[i], lat0, lon0, h0)
             xData.append(x)
             yData.append(y)
             zData.append(z)
