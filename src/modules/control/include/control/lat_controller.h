@@ -29,8 +29,8 @@ class Stanley
     float control_interval;
     float computeSteeringAngle(const Eigen::Vector2f &vehPos,const std::vector<float> &routeX,
                                 const std::vector<float> &routeY,const float &vehSpeed,
-                                const int &wpIndex, const float &vehTheta,const float &p_gain,
-                                const float &d_gain , const int &pathSize);
+                                const int &wpIndex, const float &vehTheta,const float p_gain,
+                                const float d_gain , const int &pathSize);
   private:
     float pathSlope;
     typedef Eigen::Matrix<float, 4, 2> pathMatrix42f; 
