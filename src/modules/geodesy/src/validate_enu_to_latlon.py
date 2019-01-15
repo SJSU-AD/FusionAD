@@ -171,8 +171,14 @@ def print_input_args(optional_args):
         + "\n{}\n".format(config_properties_label)
         + len(config_properties_label) * "=")
     
+    printArgs = []
     for arg, val in optional_args.iteritems():
-        print("{} = {}".format(arg, val))
+        printArgs.append([arg, val])
+
+    printArgs.sort(key=lambda x: x[0])
+
+    for pair in printArgs:
+        print("{} = {}".format(pair[0], pair[1]))
     
     print()
 
