@@ -233,10 +233,10 @@ def parse_enu_data(properties, bagFilePath, chosenTopic):
                     eData.append(msg.Position.pose.position.x)
                     nData.append(msg.Position.pose.position.y)
                     uData.append(msg.Position.pose.position.z)
-                if frequency != None:
-                    messageCounter += 1
-                    if messageCounter == frequency:
-                        messageCounter = 0
+                
+                messageCounter += 1
+                if messageCounter == frequency:
+                    messageCounter = 0
             # messageCounter += 1
 
         bag.close()
@@ -251,10 +251,10 @@ def parse_enu_data(properties, bagFilePath, chosenTopic):
                     eData.append(msg.pose.pose.position.x)
                     nData.append(msg.pose.pose.position.y)
                     uData.append(msg.pose.pose.position.z)
-                if frequency != None:
-                    messageCounter += 1
-                    if messageCounter == frequency:
-                        messageCounter = 0
+                
+                messageCounter += 1
+                if messageCounter == frequency:
+                    messageCounter = 0
         bag.close()
     else: # path message
         for topic, msg, t in bag.read_messages(topics=[chosenTopic]):
@@ -269,10 +269,10 @@ def parse_enu_data(properties, bagFilePath, chosenTopic):
                         eData.append(poseStamped.pose.position.x)
                         nData.append(poseStamped.pose.position.y)
                         uData.append(poseStamped.pose.position.z)
-                    if frequency != None:
-                        messageCounter += 1
-                        if messageCounter == frequency:
-                            messageCounter = 0
+                    
+                    messageCounter += 1
+                    if messageCounter == frequency:
+                        messageCounter = 0
             
             break # only take 1 instance of the path
         bag.close()
