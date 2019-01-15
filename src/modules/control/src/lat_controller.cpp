@@ -188,7 +188,7 @@ namespace lat_controller{
     // Saturation function for limiting steering output
     if(std::abs(unfilteredSteeringAngle) > steering_limit)
     {
-      steeringAngle = (std::abs(unfilteredSteeringAngle)/unfilteredSteeringAngle) * steering_limit;
+      steeringAngle = ((std::signbit(unfilteredSteeringAngle)) ? (-1) : (1))   * steering_limit;
     }
     else
     {
