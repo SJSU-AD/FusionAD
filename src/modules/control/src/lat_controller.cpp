@@ -118,7 +118,7 @@ namespace lat_controller{
 
   //A positive steering angle denotes the vehicle to turn its steering wheel CCW (left)
   float Stanley::computeSteeringAngle(const Eigen::Vector2f &vehPos, const std::vector<float> &routeX, const std::vector<float> &routeY,
-                                      const float &vehSpeed, const int &wpIndex, const float& vehTheta, const float p_gain, const float d_gain
+                                      const float &vehSpeed, const int &wpIndex, const float& vehTheta, const float& p_gain, const float& d_gain
                                       ,const int &pathSize)
   {
     //obtain the path heading
