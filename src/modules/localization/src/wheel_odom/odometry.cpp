@@ -160,8 +160,8 @@ namespace wheel_odometry_node
         position_estimate.pose.position.y = y_position;
 
         // position covariances from a straight-line test at constant velocity
-        float x_pose_covariance = 0.0021878/2; // [m^2]
-        float y_pose_covariance = 0.0021878/2; // [m^2]
+        float x_pose_covariance = 0.05; // [m^2]
+        float y_pose_covariance = 0.05; // [m^2]
 
         position_estimate.covariance[0] = x_pose_covariance;
         position_estimate.covariance[7] = y_pose_covariance;
