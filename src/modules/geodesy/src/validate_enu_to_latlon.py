@@ -26,6 +26,7 @@ import math
 import sys
 
 import rosbag
+import rospkg
 
 from geodesy_conversion_ENU import GeodesyConverterENU
 
@@ -186,16 +187,20 @@ def generate_latlon_files(properties):
 
     bagFilePath = properties["bagFilePath"]
 
+    rospack = rospkg.RosPack()
+
     eData, nData, uData = parse_path_enu_data(properties, bagFilePath, properties["pathTopic"])
     latData, lonData = enu_to_latlon(properties, eData, nData, uData)
     # write '.txt' for path data
-    with open(properties["pathFileName"], "wb") as pathFile:
+    with open(rospack.get_path("geodesy") + "/geodesy_data/data_validation/"\
+            + properties["pathFileName"], "wb") as pathFile:
         write_latlon_data(latData, lonData, pathFile)
         
     eData, nData, uData = parse_path_enu_data(properties, bagFilePath, properties["gpsTopic"])
     latData, lonData = enu_to_latlon(properties, eData, nData, uData)
     # write '.txt' for gps data
-    with open(properties["gpsFileName"], "wb") as pathFile:
+    with open(rospack.get_path("geodesy") + "/geodesy_data/data_validation/"\
+            + properties["gpsFileName"], "wb") as pathFile:
         write_latlon_data(latData, lonData, pathFile)
 
 def parse_path_enu_data(properties, bagFilePath, chosenTopic):
