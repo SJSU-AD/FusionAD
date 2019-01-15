@@ -188,26 +188,26 @@ def generate_latlon_files(properties):
     bagFilePath = properties["bagFilePath"]
 
     rospack = rospkg.RosPack()
+    output_filepath_path_validation = rospack.get_path("geodesy") + "/geodesy_data/data_validation/" + properties["pathFileName"]
+    output_filepath_gps_validation = rospack.get_path("geodesy") + "/geodesy_data/data_validation/" + properties["gpsFileName"]
 
-    eData, nData, uData = parse_path_enu_data(properties, bagFilePath, properties["pathTopic"])
+    eData, nData, uData = parse_enu_data(properties, bagFilePath, properties["pathTopic"])
     latData, lonData = enu_to_latlon(properties, eData, nData, uData)
     # write '.txt' for path data
-    with open(rospack.get_path("geodesy") + "/geodesy_data/data_validation/"\
-            + properties["pathFileName"], "wb") as pathFile:
-        write_latlon_data(latData, lonData, pathFile)
+    with open(output_filepath_path_validation, "wb") as pathFile:
+        write_latlon_data(latData, lonData, pathFile, output_filepath_path_validation)
         
-    eData, nData, uData = parse_path_enu_data(properties, bagFilePath, properties["gpsTopic"])
+    eData, nData, uData = parse_enu_data(properties, bagFilePath, properties["gpsTopic"])
     latData, lonData = enu_to_latlon(properties, eData, nData, uData)
     # write '.txt' for gps data
-    with open(rospack.get_path("geodesy") + "/geodesy_data/data_validation/"\
-            + properties["gpsFileName"], "wb") as pathFile:
-        write_latlon_data(latData, lonData, pathFile)
+    with open(output_filepath_gps_validation, "wb") as pathFile:
+        write_latlon_data(latData, lonData, pathFile, output_filepath_gps_validation)
 
-def parse_path_enu_data(properties, bagFilePath, chosenTopic):
+def parse_enu_data(properties, bagFilePath, chosenTopic):
     """Collects ENU data from bag"""
 
+    print("Now parsing ENU data from topic: {}".format(chosenTopic))
     bag = rosbag.Bag(bagFilePath)
-
     frequency = properties["filteringFreq"]
 
     eData = []
@@ -276,6 +276,8 @@ def parse_path_enu_data(properties, bagFilePath, chosenTopic):
 def enu_to_latlon(properties, eData, nData, uData):
     """Convert ENU data to lat/lon data"""
 
+    print("Now converting ENU data to lat/lon data")
+
     latData = []
     lonData = []
 
@@ -290,8 +292,10 @@ def enu_to_latlon(properties, eData, nData, uData):
 
     return latData, lonData
 
-def write_latlon_data(latData, lonData, pathFile):
+def write_latlon_data(latData, lonData, pathFile, outputFileLocation):
     """Writes lat/lon data to GPSVisualizer '.txt' file"""
+
+    print("Now writing GPSVisualizer output at location '{}'\n".format(outputFileLocation))
 
     pathFile.write("type	latitude	longitude	name\n")
 
