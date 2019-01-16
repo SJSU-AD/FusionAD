@@ -161,12 +161,14 @@ namespace node
       ROS_WARN("Obstacle Ahead, Vehicle Stopped!");
     }
 
+    // Timestamp debug message
+    lat_control.debug_info.header.stamp = ros::Time::now();
+
     float steering_angle = 0;
     float cmd_linear_vel = 0;   
 
     if((stateInitialized) && (pathInitialized) && (!obstacleDetected) && (!internalFailFlag) && (!goalReached) && (autonomousDrivingFlag) && (!externalFailFlag))
     {
-      std::cout << "Entered Timer loop " << std::endl;
       //TODO: Add new backward search prevention algo
       //Compute the closest waypoint
       std::vector<float> distance;
@@ -221,7 +223,6 @@ namespace node
       //IF DEBUG IS TRUE
       if(debug)
       {
-        control_core_command.debugControl = true;
         lat_control.debug_info.stanleyGain_p = controlGain_p;
         lat_control.debug_info.stanleyGain_d = controlGain_d;
         //lat_control.debug_info.estimated_heading = estimated_orientation;
