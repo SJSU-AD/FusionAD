@@ -200,7 +200,7 @@ TEST(gain_test_1, ShouldPass)
   vector<float> pathX(pathArrayX, pathArrayX + sizeof(pathArrayX)/sizeof(pathArrayX[0]));
   vector<float> pathY(pathArrayY, pathArrayY + sizeof(pathArrayY)/sizeof(pathArrayY[0]));
 
-  stanley_test_6.previous_crossTrackError = -0.05;
+  stanley_test_6.previous_crossTrackError = -0.01;
 
   // Set the position of the vehicle at (93.33, 10.7)
   Eigen::Vector2f veh_pos(93.33,10.7);
@@ -212,7 +212,7 @@ TEST(gain_test_1, ShouldPass)
 
   // Setting gain to 0
   float k_hard = 0;
-  float k_d = 0.3;
+  float k_d = 0;
 
   //ASSERT_EQ(pathX.size() , pathY.size());
 
