@@ -1,5 +1,8 @@
 #!/usr/bin/env python
-'''
+"""
+Takes steering and throttle input from the high level control and then generates the appropriate CAN
+messages to send to the steering and propulsion motors.
+
 NOTE: Must be plugged into the CAN device with a completed CAN network to work
 
 Hardware Included: USB2CAN Device
@@ -18,16 +21,25 @@ NOTE: bus = can.interface.Bus(channel='can0', bustype='socketcan_ctypes')
       The SME Propulsion Motor Controller requires 5 seconds of power messages until operation can begin
       Afterwards, the controller must receive power messages and propulsion control messages with a 50 ms time delay
       between the two different messages
-'''
+
+NOTE: Uses interface/chassis_state.msg
+
+        Subscribes
+        ----------
+        Topic: /control/controlcmd
+            Msg: Chassis_state.msg
+    
+"""
 import rospy
 from interface.msg import Controlcmd
+from interface.msg import Chassis_state
 import can
 import time
 import os
 
 
 class CanDriver:
-    """Converts joy input into appropriate CAN Message and sends the message"""
+    """Converts high-lvl input into appropriate CAN Message and sends the message"""
     # initializing the node
     def __init__(self):
         rospy.init_node('can_controller', anonymous = True)
@@ -72,9 +84,16 @@ class CanDriver:
 
         # subscriber to the high level control
         rospy.Subscriber('/control/controlcmd', Controlcmd, self.high_lvl_callback, queue_size = 100)
+        # subscriber to the can_listener
+        rospy.Subscriber('/control/autonomous_status', Chassis_state, self.manual_override_callback, queue_size = 100)
         
+        # autonomous operation state
+        self.autonomous_mode = True
         # cyclic time cycle of 5 milliseconds required
         self.main()
+
+    def manual_override_callback(self, Chassis_state):
+        self.autonomous_mode = Chassis_state.inAutonomousMode
 
     def high_lvl_callback(self, Controlcmd):
         rev_input = Controlcmd.steeringAngle
