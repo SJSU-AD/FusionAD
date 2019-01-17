@@ -56,9 +56,7 @@ class CanListener(object):
             steering_data = steering_msg.data
             unpacked_steering_data = struct.unpack('>I', bytes(steering_data))
             self.feedback_msg.steeringAngle = unpacked_steering_data * steering_conversion
-            self.steeringFeedbackPub.publish(self.feedback_msg)
-
-            
+            self.steeringFeedbackPub.publish(self.feedback_msg)   
 
     def torque_feedback_conversion(self):
         """Function to convert the data from the input torque message from bits to N*m"""
@@ -75,7 +73,6 @@ class CanListener(object):
                 manual_takeover_msg = Chassis_state()
                 manual_takeover_msg.inAutonomousMode = False
                 self.manualTakeoverPub.publish(manual_takeover_msg)
-
 
     def main(self):
         while not rospy.is_shutdown():
