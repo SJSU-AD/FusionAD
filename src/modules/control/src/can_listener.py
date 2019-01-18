@@ -26,8 +26,8 @@ class CanListener(object):
         self.torque_sensor_bus = can.interface.Bus(channel='vcan0', bustype='socketcan_ctypes')
         
         # create the filters for the CAN network
-        steering_filter = [{"can_id":0x18FF0113, "extended":True}]
-        torque_filter = [{"can_id":0x18FF0313, "extended":True}]
+        steering_filter = [{"can_id":0x18FF0113, "can_mask":0x00, "extended":True}]
+        torque_filter = [{"can_id":0x18FF0313, "can_mask":0x00, "extended":True}]
 
         self.steering_sensor_bus.set_filters(steering_filter)
         self.torque_sensor_bus.set_filters(torque_filter)
@@ -44,6 +44,8 @@ class CanListener(object):
         # declare publisher for steering feedback
         self.steeringFeedbackPub = rospy.Publisher("/control/controlcmd", Controlcmd, queue_size = 100)
         self.manualTakeoverPub = rospy.Publisher("/control/autonomous_status", Chassis_state, queue_size = 100)
+
+        self.main()
 
     def steering_feedback_conversion(self):
         """Function to convert the data from the steering message from bits to revolutions"""
