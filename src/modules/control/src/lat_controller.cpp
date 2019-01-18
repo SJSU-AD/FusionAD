@@ -105,7 +105,7 @@ namespace lat_controller{
 
     if(std::isfinite(lateralError))
     {
-      debug_info.CTE = lateralError;
+      debug_info.CrosstrackError = lateralError;
       return lateralError;
     }
     else
@@ -118,7 +118,7 @@ namespace lat_controller{
 
   //A positive steering angle denotes the vehicle to turn its steering wheel CCW (left)
   float Stanley::computeSteeringAngle(const Eigen::Vector2f &vehPos, const std::vector<float> &routeX, const std::vector<float> &routeY,
-                                      const float &vehSpeed, const int &wpIndex, const float& vehTheta, const float &p_gain, const float &d_gain
+                                      const float &vehSpeed, const int &wpIndex, const float& vehTheta, const float& p_gain, const float& d_gain
                                       ,const int &pathSize)
   {
     //obtain the path heading
@@ -135,10 +135,15 @@ namespace lat_controller{
     //Follows the convention of left turn is positive 
     float headingDelta = pathTheta - vehTheta;
 
-    
+    // Vehicle State Debug Message
+    debug_info.vehicle_Position.x = vehPos(0);
+    debug_info.vehicle_Position.y = vehPos(1);
+    debug_info.vehicle_Position.z = 0;
+    debug_info.vehicle_heading = vehTheta;
+
     /**************************NaN Check*****************************/
     if(std::isfinite(headingDelta))
-    {
+    { 
       debug_info.headingError = headingDelta;
     }
     else
@@ -164,7 +169,7 @@ namespace lat_controller{
 
     if(std::isfinite(crossTrackError_dot))
     {
-      debug_info.CTE_dot = crossTrackError_dot;
+      debug_info.CrosstrackError_dot = crossTrackError_dot;
     }
     else
     {
@@ -172,16 +177,9 @@ namespace lat_controller{
       ROS_FATAL("CTE derivative Calculation Is Not Finite!");
     }
 
-    // Check if gain is zero, only report heading delta if gain is zero.
-    if((p_gain != 0) && (d_gain != 0))
-    {
-      unfilteredSteeringAngle = headingDelta + 
-                                std::atan(((p_gain*crossTrackError) + (d_gain * crossTrackError_dot))/ vehSpeed);
-    }
-    else
-    {
-      unfilteredSteeringAngle = headingDelta;
-    }
+    unfilteredSteeringAngle = headingDelta + 
+                              std::atan(((p_gain*crossTrackError) + 
+                              (d_gain * crossTrackError_dot))/ (0.001 + vehSpeed));
 
     float steeringAngle = 0;
 
@@ -190,7 +188,7 @@ namespace lat_controller{
     // Saturation function for limiting steering output
     if(std::abs(unfilteredSteeringAngle) > steering_limit)
     {
-      steeringAngle = (std::abs(unfilteredSteeringAngle)/unfilteredSteeringAngle) * steering_limit;
+      steeringAngle = ((std::signbit(unfilteredSteeringAngle)) ? (-1) : (1))   * steering_limit;
     }
     else
     {
