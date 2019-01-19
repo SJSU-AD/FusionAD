@@ -49,7 +49,8 @@ class GPSDataConverter(object):
 
         filePath = rospy.get_param("~file_path")
         
-        height = 7.493 # meters, for north garage
+        height = rospy.get_param("~fixed_height")
+
         self.lat0, self.lon0, self.h0 = map(float, gps_parser.read_file_coarse_points(filePath, height, oneLineOnly=True))
         self.toENUConverter = GeodesyConverterENU(self.lat0, self.lon0, self.h0)
         rospy.loginfo("Found and initialized intial lat/lon/altitude values")
