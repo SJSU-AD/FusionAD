@@ -44,10 +44,10 @@ class CanDriver:
     def __init__(self):
         rospy.init_node('can_controller', anonymous = True)
         # establishing the CAN connection and setting bitrate to 250 kbps
-        # os.system('sudo /sbin/ip link set can0 up type can bitrate 250000')
+        os.system('sudo /sbin/ip link set can0 up type can bitrate 250000')
 
         # initializing the bus to channel 0 and bustype 'socketcan_ctypes'
-        self.bus = can.interface.Bus(channel='vcan0', bustype='socketcan_ctypes')
+        self.bus = can.interface.Bus(channel='ccan0', bustype='socketcan_ctypes')
 
         self.steering_arbitration_id = 0x18FF00F9
         self.braking_arbitration_id = 0xFF0000
@@ -174,7 +174,7 @@ class CanDriver:
         if steering_input < NEG_ANGLE:
             steering_input = NEG_ANGLE
 
-        if steering_input <= MAX_ANGLE and steering_input >= NEG_ANGLE:
+        if (steering_input <= MAX_ANGLE) and (steering_input >= NEG_ANGLE):
             steering_map = int(round(((-1)*steering_input-ZERO_ANGLE)*(POS_FULL_LOCK-ZERO_FULL_LOCK)/(MAX_ANGLE-ZERO_ANGLE)+ZERO_FULL_LOCK))
             self.steering_data[5] = int(steering_map >> 24 & self.MASKER)    
             self.steering_data[4] = int(steering_map >> 16 & self.MASKER)    

@@ -22,12 +22,12 @@ class CanListener(object):
         # os.system('sudo /sbin/ip link set can0 up type can bitrate 250000')
 
         # initializing the buses to channel 0 and bustype 'socketcan_ctypes'
-        self.steering_sensor_bus = can.interface.Bus(channel='vcan0', bustype='socketcan_ctypes')
-        self.torque_sensor_bus = can.interface.Bus(channel='vcan0', bustype='socketcan_ctypes')
+        self.steering_sensor_bus = can.interface.Bus(channel='can0', bustype='socketcan_ctypes')
+        self.torque_sensor_bus = can.interface.Bus(channel='can0', bustype='socketcan_ctypes')
         
         # create the filters for the CAN network
-        steering_filter = [{"can_id":0x18FF0113, "can_mask":0x00, "extended":True}]
-        torque_filter = [{"can_id":0x18FF0313, "can_mask":0x00, "extended":True}]
+        steering_filter = [{"can_id":0x18FF0113, "can_mask":0x1FFFFFFF, "extended":True}]
+        torque_filter = [{"can_id":0x18FF0313, "can_mask":0x1FFFFFFF, "extended":True}]
 
         self.steering_sensor_bus.set_filters(steering_filter)
         self.torque_sensor_bus.set_filters(torque_filter)
@@ -42,7 +42,7 @@ class CanListener(object):
         self.manual_takeover_threshold = 15
 
         # declare publisher for steering feedback
-        self.steeringFeedbackPub = rospy.Publisher("/control/controlcmd", Controlcmd, queue_size = 100)
+        self.steeringFeedbackPub = rospy.Publisher("/control/steering_response", Controlcmd, queue_size = 100)
         self.manualTakeoverPub = rospy.Publisher("/control/autonomous_status", Chassis_state, queue_size = 100)
 
         self.main()
@@ -56,7 +56,7 @@ class CanListener(object):
 
         if(steering_msg is not None):
             steering_data = steering_msg.data
-            unpacked_steering_data = struct.unpack('>I', bytes(steering_data))
+            unpacked_steering_data = self.bytearray_to_float(0, 3, steering_data)
             self.feedback_msg.steeringAngle = unpacked_steering_data * steering_conversion
             self.steeringFeedbackPub.publish(self.feedback_msg)   
 
@@ -69,12 +69,18 @@ class CanListener(object):
 
         if(torque_msg is not None):
             torque_data = torque_msg.data
-            unpacked_torque_data = struct.unpack('>I', bytes(torque_data))
+            unpacked_torque_data = self.bytearray_to_float(0, 3, torque_data)
             input_torque = unpacked_torque_data * torque_conversion
             if(input_torque >= self.manual_takeover_threshold):
                 manual_takeover_msg = Chassis_state()
                 manual_takeover_msg.inAutonomousMode = False
                 self.manualTakeoverPub.publish(manual_takeover_msg)
+    
+    def bytearray_to_float(self, first_byte, last_byte, input_message):
+        process_data = 0
+        for i in range(first_byte, last_byte+1):
+            process_data = process_data | (input_message[i] << (i*8))
+        return process_data
 
     def main(self):
         while not rospy.is_shutdown():
