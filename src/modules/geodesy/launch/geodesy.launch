@@ -2,6 +2,8 @@
   <!-- Get GPS Coordinates parameter file in .txt format from here: http://www.gpsvisualizer.com/draw/ -->
   
   <node type="path_interpolation.py" pkg="geodesy" name="path_interpolator" output="screen">
+    <!-- ATM machines = -6.0, North Garage = 7.493 -->
+    <param name="~fixed_height" value="-6.0" /> <!-- Measured in meters -->
     <param name="~file_path" value="$(find geodesy)/geodesy_data/gps_coarse_points/campus_uPath.txt" />
     <param name="~conversion_type" value="ENU" />
   </node>
