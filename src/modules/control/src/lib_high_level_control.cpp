@@ -15,7 +15,7 @@ namespace fusionad
 {
 namespace control
 {
-namespace libraries
+namespace library
 {
 
 Waypoints::Waypoints()

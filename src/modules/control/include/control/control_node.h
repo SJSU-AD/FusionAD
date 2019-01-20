@@ -20,6 +20,8 @@
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <tf2/convert.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <stdexcept>
+#include "lib_high_level_control.h"
 
 
 namespace fusionad
@@ -52,24 +54,24 @@ class ControlNode
     bool autonomousDrivingFlag, obstacleDetected;
 
     // Declare control gain variable
-    float controlGain_p, controlGain_d;
+    float controlGain_p, controlGain_d, controlGain_soft;
     
     // Vehicle State Variables
-    typedef Eigen::Matrix<float, 4, 2> pathMatrix42f; 
-    Eigen::Vector2f position;    
-    double roll, pitch, yaw;    
-    float linear_velocity, vehicle_heading;
+    interface::Chassis_state vehicle_state_msg;  
+
     
     // Waypoint Selection variables
     int targetPointIndex;
     
     // Control Timer and timer variables
     ros::Timer control_cmd_timer;
-    const float control_loop_rate = 10;                 // Hertz
+    const float control_loop_rate = 25;                 // Hertz
     float control_loop_time = 1/control_loop_rate;
 
     // Lateral controller objects
     fusionad::control::lat_controller::Stanley lat_control{control_loop_time};
+    // Initialize the path object
+    fusionad::control::library::Waypoints path;
 
     //TODO: Safety Mechanism bool
     //bool isWorking;
@@ -78,8 +80,11 @@ class ControlNode
     std::vector<float> pathPointListX;
     std::vector<float> pathPointListY;
     std::vector<float>::size_type dynamicArraySize;
+    float waypoint_proximity_range;
+    float waypoint_heading_error_range;
 
     int getTargetWaypoint(const interface::Chassis_state& current_position);
+    bool CheckAutonomousMode()const;
 
     void pathCallback(const nav_msgs::Path& trajectory_msg);
     void stateCallback(const interface::Chassis_state& veh_state_msg);

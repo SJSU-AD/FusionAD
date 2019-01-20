@@ -15,13 +15,13 @@ namespace node
   internalFailFlag(false),
   externalFailFlag(false)
   {
-    roll = 0;
-    pitch = 0;
-    yaw = 0;
     controlGain_p = 0;
     controlGain_d = 0;
     targetPointIndex = 0;
     dynamicArraySize = 0;
+    waypoint_proximity_range = 0;
+    waypoint_heading_error_range = 0;
+    controlGain_soft = 0;
   }
 
   ControlNode::~ControlNode()
@@ -79,6 +79,21 @@ namespace node
       ROS_WARN("Param control derivative gain not set, using default - 1");
       return false;
     }
+    if(!control_nh.param<float>(node_name+"/control_soft_gain",controlGain_soft, 0.5))
+    {
+      ROS_WARN("Param control soft gain not set, using default - 0.5");
+      return false;
+    }    
+    if(!control_nh.param<float>(node_name+"/waypoint_proximity_range", waypoint_proximity_range, 1))
+    {
+      ROS_WARN("Param Waypoint Proximity Range not set, using default - 1 meter");
+      return false;
+    }    
+    if(!control_nh.param<float>(node_name+"/waypoint_heading_error_range", waypoint_heading_error_range, M_PI_2))
+    {
+      ROS_WARN("Param Waypoint Heading Error Range not set, using default - PI/2 Radians");
+      return false;
+    }        
     ROS_INFO_ONCE("-------- Param Retrieved - Good --------");
     return true;    
   }
@@ -87,27 +102,7 @@ namespace node
 
   void ControlNode::pathCallback(const nav_msgs::Path& trajectory_msg)
   {
-    //Flush all vectors at the end
-    pathPointListX.clear();
-    pathPointListY.clear(); 
-    dynamicArraySize = trajectory_msg.poses.size();
-    
-    lat_control.debug_info.pathSize = dynamicArraySize;
-    //pathPointListX.resize(dynamicArraySize);
-    //pathPointListY.resize(dynamicArraySize);
-    if(pathPointListX.empty())
-    {
-      for(size_t i = 0; i < trajectory_msg.poses.size(); i++)
-      {
-        pathPointListX.push_back(trajectory_msg.poses[i].pose.position.x);
-        pathPointListY.push_back(trajectory_msg.poses[i].pose.position.y);
-      }
-    }
-    else
-    {
-      internalFailFlag = true;
-      ROS_FATAL("Path List not flushed! Abort!");
-    }
+    path.SetPath(trajectory_msg);
 
     if(!pathInitialized)
     {
@@ -117,20 +112,9 @@ namespace node
 
   void ControlNode::stateCallback(const interface::Chassis_state& veh_state_msg)
   {
-    // Unpack orientation of the vehicle
-    tf2::Quaternion quaternion;
-    tf2::convert(veh_state_msg.Position.pose.orientation, quaternion);
-    tf2::Matrix3x3 quaternion_matrix(quaternion);
-    quaternion_matrix.getRPY(roll, pitch, yaw);
-    vehicle_heading = static_cast<float>(yaw);
 
-    // Unpack linear velocity
-    linear_velocity = sqrt(std::pow(veh_state_msg.Speed.twist.linear.x, 2) 
-                           + std::pow(veh_state_msg.Speed.twist.linear.y,2));
-    
-    // Unpack vehicle planar position
-    position(0) = veh_state_msg.Position.pose.position.x;
-    position(1) = veh_state_msg.Position.pose.position.y;  
+    vehicle_state_msg = veh_state_msg;
+
   
     if(!stateInitialized)
     {
@@ -148,9 +132,77 @@ namespace node
     autonomousDrivingFlag = autonomous_mode_msg.data;
   }
 
-  int getTargetWaypoint(const nav_msgs::Path& current_path, const interface::Chassis_state& current_position)
+  int ControlNode::getTargetWaypoint(const interface::Chassis_state& current_position)
   {
-    //TODO: Implement node side logic and clean up after selector algorithm PR is approved.
+    double roll, pitch, yaw;    
+    // Unpack orientation of the vehicle
+    tf2::Quaternion quaternion;
+    tf2::convert(current_position.Position.pose.orientation, quaternion);
+    tf2::Matrix3x3 quaternion_matrix(quaternion);
+    quaternion_matrix.getRPY(roll, pitch, yaw);
+    float vehicle_heading = static_cast<float>(yaw);
+
+    if(!path.IsPathEmpty())
+    {
+      std::vector<int> filtered_index;
+
+      for(size_t i = 0; i < path.GetPathSize(); i++)
+      {
+        // Check if the waypoint is within proximity
+        float waypoint_distance = path.GetWaypointRelativePlaneDistance(i, current_position.Position.pose.position);
+        if(waypoint_distance <= waypoint_proximity_range)
+        {
+          // Check if the waypoint is ahead of the vehicle
+          if(path.IsWaypointAhead(i, current_position.Position.pose))
+          {
+            // Check if the waypoint is aligned with the vehicle
+            if(path.IsWaypointAligned(i, vehicle_heading, waypoint_heading_error_range))
+            {
+              filtered_index.push_back(i);
+            }
+          }
+        }
+        else
+        {
+          ROS_FATAL("There is no waypoint within the proximity search space for target waypoint!");
+          throw std::runtime_error("No waypoint within search proximity.");
+        }
+      }
+
+      int targetPointIndex = 0;
+      float least_distance = 0;
+
+      // Now search within the filtered out points for the closest waypoint
+      if(filtered_index.size() == 0)
+      {
+        ROS_FATAL("There is no waypoint that meets all the requirement of the waypoint selector");
+        throw std::runtime_error("No waypoint meets the waypoint selector requirement.");
+      }
+      else
+      {
+        least_distance = path.GetWaypointRelativePlaneDistance(filtered_index[0], current_position.Position.pose.position);
+
+        for(size_t j=0; j < filtered_index.size(); j++)
+        {
+          float current_wp_distance = path.GetWaypointRelativePlaneDistance(filtered_index[j], current_position.Position.pose.position);
+          if(least_distance > current_wp_distance)
+          {
+            least_distance = current_wp_distance;
+            targetPointIndex = filtered_index[j];
+          }
+        }        
+      }
+
+      lat_control.debug_info.currentWPIndex = targetPointIndex;
+      lat_control.debug_info.distance_to_wp = least_distance;
+
+      return targetPointIndex;
+    }
+  }
+
+  bool ControlNode::CheckAutonomousMode() const
+  {
+    return (stateInitialized) && (pathInitialized) && (!obstacleDetected) && (!internalFailFlag) && (!goalReached) && (autonomousDrivingFlag) && (!externalFailFlag) && (!path.IsPathEmpty());
   }
 
   void ControlNode::masterTimerCallback(const ros::TimerEvent& controlTimeEvent)
@@ -164,61 +216,66 @@ namespace node
     // Timestamp debug message
     lat_control.debug_info.header.stamp = ros::Time::now();
 
+    // Initialize the steering angle and linear velocity variables
     float steering_angle = 0;
     float cmd_linear_vel = 0;   
 
-    if((stateInitialized) && (pathInitialized) && (!obstacleDetected) && (!internalFailFlag) && (!goalReached) && (autonomousDrivingFlag) && (!externalFailFlag))
+    // Initilaize path selection process flag
+    bool is_path_good = false;
+
+    // Check if autonomous mode is on:
+    if(CheckAutonomousMode())
     {
-      //TODO: Add new backward search prevention algo
-      //Compute the closest waypoint
-      std::vector<float> distance;
-      for(size_t i = 0; i < pathPointListX.size(); i++)
+      int target_waypoint_index = 0;
+      
+      // Try getting the target waypoint
+      try
       {
-        distance.push_back(std::sqrt(std::pow((position(0) - pathPointListX[i]),2)
-                               + std::pow((position(1) - pathPointListY[i]),2)));
+        target_waypoint_index = getTargetWaypoint(vehicle_state_msg);
+        is_path_good = true;
+      }
+      catch(const std::runtime_error& runtime_err)
+      {
+        ROS_FATAL("%s", runtime_err.what());
+        is_path_good = false;
       }
 
-      float least_distance = distance[0];
-
-      for(size_t j=0; j < distance.size(); j++)
+      // Perform path tracking if the path selection process is successful
+      if(is_path_good)
       {
-        if(least_distance > distance[j])
+        //Check if goal is reached
+        /* Goal reached definition:
+            - Reference index is last index
+            - Vehicle's relative distance to the last index waypoint is less than 2 meters
+        */
+        if((target_waypoint_index == (path.GetPathSize() - 1)) && (path.GetWaypointRelativePlaneDistance(targetPointIndex, vehicle_state_msg.Position.pose.position) <= 1))
         {
-          least_distance = distance[j];
-          targetPointIndex = j;
+          //Goal reached
+          goalReached = true;
+          ROS_INFO("Goal reached. End of Path. Autonomy mode set to manual.");
+          autonomousDrivingFlag = false;
+          steering_angle = 0;
+          cmd_linear_vel = 0;
+        }
+        else    // If goal is not reached, do regular path tracking
+        {
+          try
+          {
+            steering_angle = lat_control.computeSteeringAngle(path.GetWaypointPose(target_waypoint_index),
+                                                              vehicle_state_msg, controlGain_p, controlGain_soft,
+                                                              controlGain_d);
+          }
+          catch(const std::domain_error& domain_err)
+          {
+            ROS_FATAL("%s", domain_err.what());
+          }
+          
+          //TODO: Implement longitudinal Control --> blocker: Planning
+          //TODO: Replace throttle function with a lamda function --> lamda(throttle, brake)
+          cmd_linear_vel = 50; //In percentage
         }
       }
-
-      lat_control.debug_info.currentWPIndex = targetPointIndex;
-      lat_control.debug_info.distance_to_wp = least_distance;
-
-      //Check if goal is reached
-      /* Goal reached definition:
-          - Reference index is last index
-          - Vehicle's relative distance to the last index waypoint is less than 20 cm
-      */
-      if((targetPointIndex == (distance.size() - 1)) && (least_distance <= 20))
-      {
-        //Goal reached
-        goalReached = true;
-        ROS_INFO("Goal reached. End of Path. Autonomy mode set to manual.");
-        autonomousDrivingFlag = false;
-        return;
-      }
-
-      steering_angle = lat_control.computeSteeringAngle(position,
-                                                        pathPointListX,
-                                                        pathPointListY,
-                                                        linear_velocity,
-                                                        targetPointIndex,
-                                                        vehicle_heading,
-                                                        controlGain_p,
-                                                        controlGain_d,
-                                                        dynamicArraySize
-                                                        );
-      //TODO: Implement longitudinal Control --> blocker: Planning
-      //TODO: Replace throttle function with a lamda function --> lamda(throttle, brake)
-      cmd_linear_vel = 50; //In percentage
+      
 
       //IF DEBUG IS TRUE
       if(debug)
@@ -230,8 +287,7 @@ namespace node
       }   
 
         // Check calculation integrity of lateral controller, invalid calculation will bring vehicle to halt
-      if(lat_control.debug_info.pathHeadingCalcInvalid     || 
-         lat_control.debug_info.crossTrackErrorCalcInvalid ||
+      if(lat_control.debug_info.crossTrackErrorCalcInvalid ||
          lat_control.debug_info.headingErrorCalcInvalid    || 
          lat_control.debug_info.steeringAngleCalcInvalid)
       {
