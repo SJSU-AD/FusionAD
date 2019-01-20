@@ -37,6 +37,7 @@ import can
 import time
 import os
 
+# os.system('sudo /sbin/ip link set can0 up type can bitrate 250000')
 
 class CanDriver:
     """Converts high-lvl input into appropriate CAN Message and sends the message"""
@@ -44,10 +45,9 @@ class CanDriver:
     def __init__(self):
         rospy.init_node('can_controller', anonymous = True)
         # establishing the CAN connection and setting bitrate to 250 kbps
-        os.system('sudo /sbin/ip link set can0 up type can bitrate 250000')
 
         # initializing the bus to channel 0 and bustype 'socketcan_ctypes'
-        self.bus = can.interface.Bus(channel='ccan0', bustype='socketcan_ctypes')
+        self.bus = can.interface.Bus(channel='can0', bustype='socketcan_ctypes')
 
         self.steering_arbitration_id = 0x18FF00F9
         self.braking_arbitration_id = 0xFF0000
@@ -214,7 +214,7 @@ class CanDriver:
             
             self.bus.send(steering_msg)
             # self.bus.send(braking_msg)
-            self.bus.send(power_propulsion_msg)
+            # self.bus.send(power_propulsion_msg)
             
             control_state = False
 			# only allow messages to go through if cyclic delay is met
@@ -224,7 +224,7 @@ class CanDriver:
                     control_time = time.clock()
                     # regulate the 25 ms period offset required
                     if abs(power_time - control_time) >= POWER_CONTROL_PERIOD:
-                        self.bus.send(propulsion_msg)
+                        # self.bus.send(propulsion_msg)
                         # exiting the send control message loop
                         control_state = True
                         power_time = control_time

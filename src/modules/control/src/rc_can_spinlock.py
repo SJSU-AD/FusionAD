@@ -27,7 +27,7 @@ import os
 
 
 # establishing the CAN connection and setting bitrate to 250 kbps
-os.system('sudo /sbin/ip link set can0 up type can bitrate 250000')
+# os.system('sudo /sbin/ip link set can0 up type can bitrate 250000')
 
 # initializing the bus to channel 0 and bustype 'socketcan_ctypes'
 bus = can.interface.Bus(channel='can0', bustype='socketcan_ctypes')
@@ -96,31 +96,31 @@ class CanDriver:
             ####################
             ## Steering Logic ##
             ####################
-            # rev = joy_steering_input
-            # # positive full lock bytes
-            # POS_FULL_LOCK = 0x00180000
-            # # zero full lock bytes
-            # ZERO_FULL_LOCK = 0x00000000
-            # # negative full lock bytes
-            # #NEG_FULL_LOCK = 0xFFE80000
-            # # maximum number of revolutions (positive)
-            # MAX_REV = 1
-            # # 0 REVOLUTIONS
-            # ZERO_REV = 0
-            # # minimum number of revolutions (negative)
-            # NEG_REV = -1
-            # #establishing the limits of the joy node (from -1 to 1)
-            # if rev > MAX_REV:
-            #     rev = MAX_REV
-            # if rev < NEG_REV:
-            #     rev = NEG_REV
-            # # turn right
-            # if rev <= MAX_REV and rev >= NEG_REV:
-            #     steering_map = int(round(((-1)*rev-ZERO_REV)*(POS_FULL_LOCK-ZERO_FULL_LOCK)/(MAX_REV-ZERO_REV)+ZERO_FULL_LOCK))
-            #     steering_data[5] = int(steering_map >> 24 & MASKER)    
-            #     steering_data[4] = int(steering_map >> 16 & MASKER)    
-            #     steering_data[3]= int(steering_map >> 8 & MASKER)
-            #     steering_data[2] = int(steering_map & MASKER)
+            rev = joy_steering_input
+            # positive full lock bytes
+            POS_FULL_LOCK = 0x00180000
+            # zero full lock bytes
+            ZERO_FULL_LOCK = 0x00000000
+            # negative full lock bytes
+            #NEG_FULL_LOCK = 0xFFE80000
+            # maximum number of revolutions (positive)
+            MAX_REV = 1
+            # 0 REVOLUTIONS
+            ZERO_REV = 0
+            # minimum number of revolutions (negative)
+            NEG_REV = -1
+            #establishing the limits of the joy node (from -1 to 1)
+            if rev > MAX_REV:
+                rev = MAX_REV
+            if rev < NEG_REV:
+                rev = NEG_REV
+            # turn right
+            if rev <= MAX_REV and rev >= NEG_REV:
+                steering_map = int(round(((-1)*rev-ZERO_REV)*(POS_FULL_LOCK-ZERO_FULL_LOCK)/(MAX_REV-ZERO_REV)+ZERO_FULL_LOCK))
+                steering_data[5] = int(steering_map >> 24 & MASKER)    
+                steering_data[4] = int(steering_map >> 16 & MASKER)    
+                steering_data[3]= int(steering_map >> 8 & MASKER)
+                steering_data[2] = int(steering_map & MASKER)
 
             # ###################
               ## Braking Logic ##
@@ -185,10 +185,10 @@ class CanDriver:
 
     def main(self):
         start_time = time.clock()
-        # steering_zero_msg = can.Message(arbitration_id = steering_arbitration_id, data = zero_steering_data, extended_id = True)
+        steering_zero_msg = can.Message(arbitration_id = steering_arbitration_id, data = zero_steering_data, extended_id = True)
         # braking_zero_msg = can.Message(arbitration_id = braking_arbitration_id, data = zero_braking_data, extended_id = True)
 
-        # bus.send(steering_zero_msg)
+        bus.send(steering_zero_msg)
         # bus.send(braking_zero_msg)
 
         TIME_DELAY = 5
@@ -204,7 +204,7 @@ class CanDriver:
             steering_msg = can.Message(arbitration_id = steering_arbitration_id, data = steering_data, extended_id = True)
             braking_msg = can.Message(arbitration_id = braking_arbitration_id, data = braking_data, extended_id = True)
             propulsion_msg = can.Message(arbitration_id = propulsion_arbitration_id, data = propulsion_data, extended_id = False)
-            # bus.send(steering_msg)
+            bus.send(steering_msg)
             # bus.send(braking_msg)
             bus.send(power_propulsion_msg)
             control_state = False
