@@ -1,13 +1,17 @@
 <launch>
   <!-- Get GPS Coordinates parameter file in .txt format from here: http://www.gpsvisualizer.com/draw/ -->
-  <include file="$(find swiftnav_ros)/launch/swiftnav_ros.launch" />
-  
+
+  <!-- ATM machines = -6.0, North Garage = 7.493 -->
+  <arg name="height" value="-6.0"/>
+
   <node type="path_interpolation.py" pkg="geodesy" name="path_interpolator" output="screen">
-    <param name="~file_path" value="$(find geodesy)/geodesy_data/gps_coarse_points/north_garage_straight.txt" />
+    <param name="~fixed_height" value="$(arg height)" /> <!-- Measured in meters -->
+    <param name="~file_path" value="$(find geodesy)/geodesy_data/gps_coarse_points/campus_uPath.txt" />
     <param name="~conversion_type" value="ENU" />
   </node>
 
   <node type="gps_pose.py" pkg="geodesy" name="gps_pose_converter" output="screen">
-    <param name="~file_path" value="$(find geodesy)/geodesy_data/gps_coarse_points/north_garage_straight.txt" />
+    <param name="~fixed_height" value="$(arg height)" />
+    <param name="~file_path" value="$(find geodesy)/geodesy_data/gps_coarse_points/campus_uPath.txt" />
   </node>
 </launch>
