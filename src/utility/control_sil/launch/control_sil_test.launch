@@ -1,0 +1,15 @@
+<!-- Launch file for the control software in the loop testing node -->
+
+
+<launch>
+  <!-- type-> executable , pkg->package, name-> node name-->
+  <node type="control_sil_sim" pkg="control_sil" name="control_sil_sim" output="screen" >
+    <param name="simulation_time_step" value="0.001"/>
+    <param name="vehicle_wheelbase" value="2.3622"/>
+    <param name="initial_x_position" value="0"/>
+    <param name="initial_y_position" value="0"/>
+    <param name="initial_vehicle_heading" value="2.063"/>
+  </node>
+
+  <node type="rviz" name="rviz" pkg="rviz" args="-d $(find control_sil)/rviz/control_sil_rviz.rviz" />
+</launch>

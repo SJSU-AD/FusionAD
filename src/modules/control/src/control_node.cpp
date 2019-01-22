@@ -57,7 +57,6 @@ namespace node
 
     mode_sub = control_nh.subscribe("/control/mode", 100, &ControlNode::modeCallback, this);
     ROS_INFO_ONCE("Control Node Mode Subscriber Set!");
-    
   }
 
   bool ControlNode::getParameter()
@@ -162,11 +161,6 @@ namespace node
             }
           }
         }
-        else
-        {
-          ROS_FATAL("There is no waypoint within the proximity search space for target waypoint!");
-          throw std::runtime_error("No waypoint within search proximity.");
-        }
       }
 
       int targetPointIndex = 0;
@@ -189,6 +183,7 @@ namespace node
           {
             least_distance = current_wp_distance;
             targetPointIndex = filtered_index[j];
+            
           }
         }        
       }
