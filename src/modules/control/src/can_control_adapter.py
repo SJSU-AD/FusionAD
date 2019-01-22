@@ -78,7 +78,7 @@ class CanDriver:
         self.braking_data = [0x0F, 0x4A, 0xF4, 0xC1, 0x00, 0x00, 0x00, 0x00]
         # 8 byte message for zeroing the linear actuator
         self.zero_braking_data = [0x7E, 0x02, 0x12, 0x34, 0x56, 0xAB, 0xCD, 0xEF]
-        
+
         # mask for hex
         self.MASKER = 0xFF
 
@@ -86,7 +86,7 @@ class CanDriver:
         rospy.Subscriber('/control/controlcmd', Controlcmd, self.high_lvl_callback, queue_size = 100)
         # subscriber to the can_listener
         rospy.Subscriber('/control/autonomous_status', Chassis_state, self.manual_override_callback, queue_size = 100)
-        
+    
         # autonomous operation state
         self.autonomous_mode = True
         # cyclic time cycle of 5 milliseconds required
@@ -100,7 +100,7 @@ class CanDriver:
         prop_input = Controlcmd.throttle
         
         self.steering_control(rev_input)
-        self.prop_control(prop_input)  
+        self.prop_control(prop_input)
 
     def braking_control(self, desired_braking):
         """TODO: Add braking logic"""
@@ -161,12 +161,19 @@ class CanDriver:
         # zero full lock bytes
         ZERO_FULL_LOCK = 0x00000000
 
+        # # maximum number of radians (positive)
+        # MAX_ANGLE = 0.33
+        # # 0 REVOLUTIONS
+        # ZERO_ANGLE = 0
+        # # minimum number of radians (negative)
+        # NEG_ANGLE = -0.33
+
         # maximum number of radians (positive)
-        MAX_ANGLE = 0.33
+        MAX_ANGLE = 1.5
         # 0 REVOLUTIONS
         ZERO_ANGLE = 0
         # minimum number of radians (negative)
-        NEG_ANGLE = -0.33
+        NEG_ANGLE = -1.5
 
         # establishing the limits of the joy node (from -0.33 to 0.33)
         if steering_input > MAX_ANGLE:
@@ -202,6 +209,8 @@ class CanDriver:
         # regulate at 20 Hz
         OVERALL_PERIOD = 0.05
 
+        previous_steering_data = self.steering_data
+
         while not rospy.is_shutdown():
             frequency_start_time = time.clock()
             frequency_state = False
@@ -213,8 +222,9 @@ class CanDriver:
             propulsion_msg = can.Message(arbitration_id = self.propulsion_arbitration_id, data = self.prop_data, extended_id = False)
             
             self.bus.send(steering_msg)
+            
             # self.bus.send(braking_msg)
-            # self.bus.send(power_propulsion_msg)
+            self.bus.send(power_propulsion_msg)
             
             control_state = False
 			# only allow messages to go through if cyclic delay is met
@@ -224,7 +234,7 @@ class CanDriver:
                     control_time = time.clock()
                     # regulate the 25 ms period offset required
                     if abs(power_time - control_time) >= POWER_CONTROL_PERIOD:
-                        # self.bus.send(propulsion_msg)
+                        self.bus.send(propulsion_msg)
                         # exiting the send control message loop
                         control_state = True
                         power_time = control_time
@@ -236,6 +246,8 @@ class CanDriver:
                     frequency_start_time = frequency_time
                     # exiting the while loop
                     frequency_state = True
+            
+            previous_steering_data = self.steering_data
 
 if __name__ == '__main__':
     try:
