@@ -70,11 +70,11 @@ class CanDriver:
         self.prop_data = [0x00, 0x00, 0xFF, 0x7F, 0x00, 0x0D, 0x00, 0x00]
 
         # 8 byte message for moving the linear actuator
-        '''
+        """
         NOTE: byte #3 (0-7) contains a nibble 
             The first bit, C must stay present
             The math is done with byte #2 and the other nibble of byte #3
-        '''
+        """
         self.braking_data = [0x0F, 0x4A, 0xF4, 0xC1, 0x00, 0x00, 0x00, 0x00]
         # 8 byte message for zeroing the linear actuator
         self.zero_braking_data = [0x7E, 0x02, 0x12, 0x34, 0x56, 0xAB, 0xCD, 0xEF]
@@ -93,14 +93,24 @@ class CanDriver:
         self.main()
 
     def manual_override_callback(self, Chassis_state):
+        """Callback handler from the CAN listener"""
         self.autonomous_mode = Chassis_state.inAutonomousMode
 
     def high_lvl_callback(self, Controlcmd):
-        rev_input = Controlcmd.steeringAngle
-        prop_input = Controlcmd.throttle
-        
-        self.steering_control(rev_input)
-        self.prop_control(prop_input)
+        """Callback handler from high level control, linear fit from experimental data according to ISS-72"""
+        # left turn
+        positive_steering_slope = 0.2224731787
+        # right turn
+        negative_steering_slope = 0.2733129308
+
+        # remap the steering input
+        if (Controlcmd.steeringAngle >= 0):
+            remapped_rev_input = Controlcmd.steeringAngle/positive_steering_slope
+        else:
+            remapped_rev_input = Controlcmd.steeringAngle/negative_steering_slope
+
+        self.steering_control(remapped_rev_input)
+        self.prop_control(Controlcmd.throttle)
 
     def braking_control(self, desired_braking):
         """TODO: Add braking logic"""
@@ -156,24 +166,19 @@ class CanDriver:
         ## Steering Logic ##
         ####################
         steering_input = desired_steering
+
         # positive full lock bytes
         POS_FULL_LOCK = 0x00180000
         # zero full lock bytes
         ZERO_FULL_LOCK = 0x00000000
 
-        # # maximum number of radians (positive)
-        # MAX_ANGLE = 0.33
-        # # 0 REVOLUTIONS
-        # ZERO_ANGLE = 0
-        # # minimum number of radians (negative)
-        # NEG_ANGLE = -0.33
-
+        # steering limits determined experimentally
         # maximum number of radians (positive)
-        MAX_ANGLE = 1.5
+        MAX_ANGLE = 1.4833248751
         # 0 REVOLUTIONS
         ZERO_ANGLE = 0
         # minimum number of radians (negative)
-        NEG_ANGLE = -1.5
+        NEG_ANGLE = -1.2074071982
 
         # establishing the limits of the joy node (from -0.33 to 0.33)
         if steering_input > MAX_ANGLE:
@@ -204,10 +209,15 @@ class CanDriver:
 
         # 5 seconds of power messages until control can be sent
         TIME_DELAY = 5
-        # 25 ms between power and control messages
-        POWER_CONTROL_PERIOD = 0.025
-        # regulate at 20 Hz
-        OVERALL_PERIOD = 0.05
+
+        # desired frequency
+        FREQUENCY_DESIRED = 20
+        
+        # period between each set of messages
+        OVERALL_PERIOD = 1/FREQUENCY_DESIRED
+
+        # period between power and control messages
+        POWER_CONTROL_PERIOD = OVERALL_PERIOD/2
 
         previous_steering_data = self.steering_data
 
