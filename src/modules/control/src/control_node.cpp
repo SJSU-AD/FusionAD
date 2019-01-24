@@ -141,10 +141,12 @@ namespace node
     quaternion_matrix.getRPY(roll, pitch, yaw);
     float vehicle_heading = static_cast<float>(yaw);
 
+    // Create vector to store the filtered list
+    std::vector<int> filtered_index;
+
+    // If the path class is not empty
     if(!path.IsPathEmpty())
     {
-      std::vector<int> filtered_index;
-
       for(size_t i = 0; i < path.GetPathSize(); i++)
       {
         // Check if the waypoint is within proximity
@@ -162,7 +164,6 @@ namespace node
           }
         }
       }
-
       int targetPointIndex = 0;
       float least_distance = 0;
 
@@ -174,7 +175,9 @@ namespace node
       }
       else
       {
+        // Find the closest waypoint from the list of filtered waypoint.
         least_distance = path.GetWaypointRelativePlaneDistance(filtered_index[0], current_position.Position.pose.position);
+        targetPointIndex = filtered_index[0];
 
         for(size_t j=0; j < filtered_index.size(); j++)
         {
@@ -183,11 +186,9 @@ namespace node
           {
             least_distance = current_wp_distance;
             targetPointIndex = filtered_index[j];
-            
           }
         }        
       }
-
       lat_control.debug_info.currentWPIndex = targetPointIndex;
       lat_control.debug_info.distance_to_wp = least_distance;
 
@@ -228,6 +229,8 @@ namespace node
       {
         target_waypoint_index = getTargetWaypoint(vehicle_state_msg);
         is_path_good = true;
+        lat_control.debug_info.pathSize = path.GetPathSize();
+
       }
       catch(const std::runtime_error& runtime_err)
       {
@@ -239,18 +242,19 @@ namespace node
       if(is_path_good)
       {
         //Check if goal is reached
-        /* Goal reached definition:
-            - Reference index is last index
-            - Vehicle's relative distance to the last index waypoint is less than 2 meters
+        /* 
+        Goal reached definition:
+          - Vehicle's relative distance to the last waypoint is less than 0.3 meters
         */
-        if((target_waypoint_index == (path.GetPathSize() - 1)) && (path.GetWaypointRelativePlaneDistance(targetPointIndex, vehicle_state_msg.Position.pose.position) <= 1))
+        float distance_to_last_waypoint = path.GetWaypointRelativePlaneDistance(path.GetPathSize() - 1, vehicle_state_msg.Position.pose.position);
+        if(distance_to_last_waypoint <= 0.5)    
         {
           //Goal reached
           goalReached = true;
           ROS_INFO("Goal reached. End of Path. Autonomy mode set to manual.");
           autonomousDrivingFlag = false;
           steering_angle = 0;
-          cmd_linear_vel = 0;
+          cmd_linear_vel = 0; 
         }
         else    // If goal is not reached, do regular path tracking
         {
@@ -262,6 +266,8 @@ namespace node
           }
           catch(const std::domain_error& domain_err)
           {
+            steering_angle = 0;
+            cmd_linear_vel = 0; 
             ROS_FATAL("%s", domain_err.what());
           }
           

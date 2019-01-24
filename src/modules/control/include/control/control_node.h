@@ -58,7 +58,6 @@ class ControlNode
     
     // Vehicle State Variables
     interface::Chassis_state vehicle_state_msg;  
-
     
     // Waypoint Selection variables
     int targetPointIndex;

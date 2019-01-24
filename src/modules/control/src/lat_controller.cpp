@@ -65,6 +65,7 @@ namespace lat_controller{
     //Find heading difference between vehicle orientation and the path
     //Follows the convention of left turn is positive 
     float headingDelta = pathTheta - vehicle_theta;
+    debug_info.headingError = headingDelta;
 
     // Vehicle State Debug Message
     debug_info.vehicle_Position = vehicle_state.Position.pose.position;

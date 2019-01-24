@@ -90,7 +90,7 @@ void SIL_control_node::ModelSILCallback(const ros::TimerEvent& sil_timer_event)
   // Publish the new pose
   // Create the chassis_state message object
   interface::Chassis_state sil_state;
-  sil_state.header.stamp = ros::Time::now();
+  sil_state.header.stamp = ros::Time::now();  
   sil_state.header.frame_id = "map";
   sil_state.Position.pose = model_process_value;
   sil_state.Speed.twist.linear.x = command_velocity;
