@@ -84,7 +84,7 @@ Current computation architecture mimics a distributed system for distributing ta
 
 ## Maintainers
 ### The Core FusionAD team
-![SeniorProjectTeam](https://i.imgur.com/p01eKH3.png)
+![SeniorProjectTeam](https://i.imgur.com/6nWVhY2.png)
     
 FusionAD also appreciate the help of other passionate SJSU students!  
 We would like to acknowledge the following FusionADers:
