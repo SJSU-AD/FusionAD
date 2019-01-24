@@ -71,7 +71,7 @@ Current computation architecture mimics a distributed system for distributing ta
     * FusionAD do not recommend performing development from this branch
 * **develop**
     * Contains __tested__ features
-    * FusionAD recommend to perform development on this branch
+    * **__FusionAD recommends performing development on this branch__**
 * **test_deployment**
     * Contains features that are pending to be tested on the vehicle
     * FusionAD do not recommend performing development from this branch
