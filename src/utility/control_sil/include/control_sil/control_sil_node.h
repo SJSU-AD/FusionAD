@@ -1,3 +1,12 @@
+/** control_sil_node.h
+ * @author Menson Li
+ * 
+ * @email menson168@gmail.com
+ * 
+ * @desc The header file for Control SIL's ROS node.
+ * 
+ */
+
 #ifndef CONTROL_SIL_NODE_H_
 #define CONTROL_SIL_NODE_H_
 

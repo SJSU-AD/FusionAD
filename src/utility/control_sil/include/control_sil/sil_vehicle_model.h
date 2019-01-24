@@ -1,3 +1,12 @@
+/** sil_vehicle_model.h
+ * @author Menson Li
+ * 
+ * @email menson168@gmail.com
+ * 
+ * @desc The header file for Control SIL's library functions.
+ * 
+ */
+
 #ifndef SIL_VEHICLE_MODEL_H_
 #define SIL_VEHICLE_MODEL_H_
 
@@ -11,6 +20,7 @@
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <tf2/convert.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+
 
 namespace fusionad
 {

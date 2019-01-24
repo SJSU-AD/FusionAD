@@ -1,3 +1,13 @@
+/** sil_vehicle_model.cpp
+ * @author Menson Li
+ * 
+ * @email menson168@gmail.com
+ * 
+ * @desc The source code file for Control SIL's library functions.
+ * 
+ */
+
+
 #include "control_sil/sil_vehicle_model.h"
 
 using namespace fusionad::control::vehicle_model;

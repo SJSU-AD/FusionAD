@@ -1,3 +1,13 @@
+/** control_sil_node.cpp
+ * @author Menson Li
+ * 
+ * @email menson168@gmail.com
+ * 
+ * @desc The source code file for Control SIL's ROS node.
+ * 
+ */
+
+
 #include "control_sil/control_sil_node.h"
 
 using namespace fusionad::control::sil_test;
@@ -73,6 +83,7 @@ bool SIL_control_node::getParameter()
   tf2::Quaternion initial_vehicle_rotation;
   initial_vehicle_rotation.setRPY(0, 0, initial_vehicle_heading);
   tf2::convert(initial_vehicle_rotation, initial_position.orientation);
+  // Store the initial conditions into the ros message
   initial_position.position.x = initial_x;
   initial_position.position.y = initial_y;
 
@@ -84,7 +95,10 @@ bool SIL_control_node::getParameter()
 void SIL_control_node::ModelSILCallback(const ros::TimerEvent& sil_timer_event)
 {
   // Perform Model Calculation here
+
+  // Steering Model
   float servo_response = steering_servo.ComputeSteeringModel(command_steering_angle, sil_time_step);
+  // Vehicle Kinematic Model
   geometry_msgs::Pose model_process_value = vehicle_kinematic.ComputeModel(servo_response, command_velocity, sil_time_step);
 
   // Publish the new pose
@@ -102,6 +116,7 @@ void SIL_control_node::ModelSILCallback(const ros::TimerEvent& sil_timer_event)
 
 void SIL_control_node::ControlCommandCallback(const interface::Controlcmd &command_msg)
 {
+  // Receives control setpoint from high level controller
   command_steering_angle = command_msg.steeringAngle;
   // For now, we will just assume an on-off velocity command
   if(command_msg.throttle > 0)
@@ -116,8 +131,11 @@ void SIL_control_node::ControlCommandCallback(const interface::Controlcmd &comma
 
 void SIL_control_node::PlannerCallback(const ros::TimerEvent& sil_timer_event)
 {
+  // Timed planner publisher callback
   nav_msgs::Path planned_path;
+  // Optain size of hardcoded path
   size_t size_of_path = sizeof(sil_pathArrayX)/sizeof(sil_pathArrayX[0]);
+  // Parse the path into the path message
   for(int i = 0; i < size_of_path; i++)
   {
     geometry_msgs::PoseStamped path_point;
@@ -125,7 +143,9 @@ void SIL_control_node::PlannerCallback(const ros::TimerEvent& sil_timer_event)
     path_point.pose.position.y = sil_pathArrayY[i];
     planned_path.poses.push_back(path_point);
   }
+  // Declare coordinate frame of the path
   planned_path.header.frame_id = "map";
+  // Publish the path message
   planner_pub.publish(planned_path);
 }
 
