@@ -47,7 +47,7 @@ class CanDriver:
         # establishing the CAN connection and setting bitrate to 250 kbps
 
         # initializing the bus to channel 0 and bustype 'socketcan_ctypes'
-        self.bus = can.interface.Bus(channel='can0', bustype='socketcan_ctypes')
+        self.bus = can.interface.Bus(channel='vcan0', bustype='socketcan_ctypes')
 
         self.steering_arbitration_id = 0x18FF00F9
         self.braking_arbitration_id = 0xFF0000
@@ -210,17 +210,14 @@ class CanDriver:
         # 5 seconds of power messages until control can be sent
         TIME_DELAY = 5
 
-        # desired frequency
-        FREQUENCY_DESIRED = 20
+        # # desired frequency
+        # FREQUENCY_DESIRED = 20
         
         # period between each set of messages
-        OVERALL_PERIOD = 1/FREQUENCY_DESIRED
-
+        OVERALL_PERIOD = 0.05
         # period between power and control messages
-        POWER_CONTROL_PERIOD = OVERALL_PERIOD/2
-
-        previous_steering_data = self.steering_data
-
+        POWER_CONTROL_PERIOD = 0.025
+        
         while not rospy.is_shutdown():
             frequency_start_time = time.clock()
             frequency_state = False
@@ -257,8 +254,6 @@ class CanDriver:
                     # exiting the while loop
                     frequency_state = True
             
-            previous_steering_data = self.steering_data
-
 if __name__ == '__main__':
     try:
         CanDriver()
