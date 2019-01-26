@@ -86,14 +86,14 @@ namespace master_tf_node
         Black Car Sensor Locations
 
         GPS to front axle:
-            x-position = 
-            y-position = 
+            x-position = 1.47955 [m]
+            y-position = 0 [m]
 
         Lidar to front axle
             x-position = 
             y-position = 
         */
-        float x_position_rot = 0.8763;
+        float x_position_rot = 1.47955;
         float y_position_rot = 0;
 
         geodesy_broadcaster.sendTransform(
