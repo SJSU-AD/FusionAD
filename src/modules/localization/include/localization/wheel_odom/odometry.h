@@ -76,8 +76,12 @@ class WheelOdometryNode
         geometry_msgs::TwistWithCovariance velocity_estimate;
         geometry_msgs::PoseWithCovariance position_estimate;
         
-        // wheel radius in meters
-        const float WHEEL_RADIUS = 0.1397;
+        // red car wheel radius in meters
+        // const float WHEEL_RADIUS = 0.1397;
+        
+        // black car wheel radius in meters
+        const float WHEEL_RADIUS = 0.28675; 
+
         // time interval
         const float DT = 0.02;
         // left angular velocity
