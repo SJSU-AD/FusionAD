@@ -147,7 +147,7 @@ namespace node
     // If the path class is not empty
     if(!path.IsPathEmpty())
     {
-      for(size_t i = 0; i < path.GetPathSize(); i++)
+      for(size_t i = 0; i < path.GetPathSize(); i++)      // Note: Consider a faster or smarter search algo in the future
       {
         // Check if the waypoint is within proximity
         float waypoint_distance = path.GetWaypointRelativePlaneDistance(i, current_position.Position.pose.position);
