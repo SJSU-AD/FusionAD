@@ -55,5 +55,5 @@ void SendDebugMessages();
 
 // Timer Callbacks
 void TimerPropulsionPowerCallback();
-
+void TimerRosSpinCallback();
 #endif //OSV_CAN_GATEWAY_MAIN_H_

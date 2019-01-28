@@ -107,7 +107,8 @@ propulsion_can_frame = (0x00, 0x00, 0xFF, 0x7F, 0x00, 0x0D, 0x00, 0x00)
 test_control_msgs.steering_can_data = steering_can_frame
 test_control_msgs.propulsion_can_data = propulsion_can_frame
 ```
-
+#### ROS Spin Speed
+*Currently, the ROS spin frequency is set at 100 Hz, or at a 10 ms interval.*
   
    
 

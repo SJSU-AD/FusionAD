@@ -53,6 +53,7 @@ uint8_t propulsion_message_data[8] = {0x00, 0x00, 0xFF, 0x7F, 0x00, 0x0D, 0x00, 
 void setup() 
 {
   InitializeCommunication();
+  can_timer.every(10, TimerRosSpinCallback);
 }
 
 void loop() 
@@ -74,8 +75,7 @@ void loop()
   // Debug messages
   SendDebugMessages();     
 
-  // ROS Spin and Update Timer
-  can_ros_nh.spinOnce();  
+  //Update Timer
   can_timer.update();
 }
 
@@ -162,4 +162,9 @@ void SendDebugMessages()
   can_debug_message.isGatewayInitialized = IsDBWInitialized;
   can_debug_message.canMode = GatewayMode;
   can_relay_debug_pub.publish(&can_debug_message);
+}
+
+void TimerRosSpinCallback()
+{
+  can_ros_nh.spinOnce();  
 }
