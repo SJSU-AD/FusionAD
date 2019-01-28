@@ -120,7 +120,8 @@ class PathInterpolatorENU(GeodesyConverterENU):
 
         while not rospy.is_shutdown():
             path = Path()
-        
+            path.header.frame_id = "map"
+
             for i in range(len(nInterpolatedPositions)):
                 # # Attempting to add points directly in one line without creating point object first
                 # path.poses.append(path.poses[i].pose.position.x = 0.0) # finePointsE[i]

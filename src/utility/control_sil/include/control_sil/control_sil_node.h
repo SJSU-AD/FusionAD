@@ -66,6 +66,8 @@ class SIL_control_node
     geometry_msgs::Pose initial_position;
     const float initial_steering_angle = 0;
 
+    // Use hardcoded planner
+    bool useHardcodedPlanner;
     // Simulation Callback
     void ModelSILCallback(const ros::TimerEvent& sil_timer_event);
     // Control command callback

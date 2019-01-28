@@ -77,6 +77,16 @@ geometry_msgs::Pose SIL_KinematicBicycleModel::ComputeModel(const float &steerin
     current_pose.position.x = (velocity*std::cos(last_sai+beta))*time_step+last_pose.position.x; 
     current_pose.position.y = (velocity*std::sin(last_sai+beta))*time_step+last_pose.position.y;  
     float current_sai = ((velocity/(0.5 * vehicle_wheelbase)) * std::sin(beta)) * time_step + last_sai;
+    // Wrap the sai into 180 to -180 range
+    if(current_sai > 3.1416)
+    {
+      current_sai = (-3.1416) + (current_sai - 3.1416);
+    }
+    else if(current_sai < -3.1416)
+    {
+      current_sai = 3.1416 + (current_sai + 3.1416);
+    }
+    
     model_quaternion.setRPY(0 , 0, current_sai);
     tf2::convert(model_quaternion, current_pose.orientation);
 

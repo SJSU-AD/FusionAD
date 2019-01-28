@@ -50,7 +50,7 @@ namespace node
 
     //Control State Subscriber
     localization_sub = control_nh.subscribe("/localization/state", 100, &ControlNode::stateCallback, this);
-    ROS_INFO_ONCE("Control Node Path Subscriber Set!");
+    ROS_INFO_ONCE("Control Node State Subscriber Set!");
 
     obstacle_sub = control_nh.subscribe("/localization/obstacle", 100, &ControlNode::obstacleCallback, this);
     ROS_INFO_ONCE("Control Node Obstacle Subscriber Set!");
@@ -101,7 +101,7 @@ namespace node
 
   void ControlNode::pathCallback(const nav_msgs::Path& trajectory_msg)
   {
-    path.SetPath(trajectory_msg);
+    path.setPath(trajectory_msg);
 
     if(!pathInitialized)
     {
@@ -145,19 +145,19 @@ namespace node
     std::vector<int> filtered_index;
 
     // If the path class is not empty
-    if(!path.IsPathEmpty())
+    if(!path.isPathEmpty())
     {
-      for(size_t i = 0; i < path.GetPathSize(); i++)
+      for(size_t i = 0; i < path.getPathSize(); i++)      // Note: Consider a faster or smarter search algo in the future
       {
         // Check if the waypoint is within proximity
-        float waypoint_distance = path.GetWaypointRelativePlaneDistance(i, current_position.Position.pose.position);
+        float waypoint_distance = path.getWaypointRelativePlaneDistance(i, current_position.Position.pose.position);
         if(waypoint_distance <= waypoint_proximity_range)
         {
           // Check if the waypoint is ahead of the vehicle
-          if(path.IsWaypointAhead(i, current_position.Position.pose))
+          if(path.isWaypointAhead(i, current_position.Position.pose))
           {
             // Check if the waypoint is aligned with the vehicle
-            if(path.IsWaypointAligned(i, vehicle_heading, waypoint_heading_error_range))
+            if(path.isWaypointAligned(i, vehicle_heading, waypoint_heading_error_range))
             {
               filtered_index.push_back(i);
             }
@@ -176,12 +176,12 @@ namespace node
       else
       {
         // Find the closest waypoint from the list of filtered waypoint.
-        least_distance = path.GetWaypointRelativePlaneDistance(filtered_index[0], current_position.Position.pose.position);
+        least_distance = path.getWaypointRelativePlaneDistance(filtered_index[0], current_position.Position.pose.position);
         targetPointIndex = filtered_index[0];
 
         for(size_t j=0; j < filtered_index.size(); j++)
         {
-          float current_wp_distance = path.GetWaypointRelativePlaneDistance(filtered_index[j], current_position.Position.pose.position);
+          float current_wp_distance = path.getWaypointRelativePlaneDistance(filtered_index[j], current_position.Position.pose.position);
           if(least_distance > current_wp_distance)
           {
             least_distance = current_wp_distance;
@@ -196,9 +196,9 @@ namespace node
     }
   }
 
-  bool ControlNode::CheckAutonomousMode() const
+  bool ControlNode::checkAutonomousMode() const
   {
-    return (stateInitialized) && (pathInitialized) && (!obstacleDetected) && (!internalFailFlag) && (!goalReached) && (autonomousDrivingFlag) && (!externalFailFlag) && (!path.IsPathEmpty());
+    return (stateInitialized) && (pathInitialized) && (!obstacleDetected) && (!internalFailFlag) && (!goalReached) && (autonomousDrivingFlag) && (!externalFailFlag) && (!path.isPathEmpty());
   }
 
   void ControlNode::masterTimerCallback(const ros::TimerEvent& controlTimeEvent)
@@ -220,7 +220,7 @@ namespace node
     bool is_path_good = false;
 
     // Check if autonomous mode is on:
-    if(CheckAutonomousMode())
+    if(checkAutonomousMode())
     {
       int target_waypoint_index = 0;
       
@@ -229,7 +229,7 @@ namespace node
       {
         target_waypoint_index = getTargetWaypoint(vehicle_state_msg);
         is_path_good = true;
-        lat_control.debug_info.pathSize = path.GetPathSize();
+        lat_control.debug_info.pathSize = path.getPathSize();
 
       }
       catch(const std::runtime_error& runtime_err)
@@ -246,7 +246,7 @@ namespace node
         Goal reached definition:
           - Vehicle's relative distance to the last waypoint is less than 0.3 meters
         */
-        float distance_to_last_waypoint = path.GetWaypointRelativePlaneDistance(path.GetPathSize() - 1, vehicle_state_msg.Position.pose.position);
+        float distance_to_last_waypoint = path.getWaypointRelativePlaneDistance(path.getPathSize() - 1, vehicle_state_msg.Position.pose.position);
         if(distance_to_last_waypoint <= 0.5)    
         {
           //Goal reached
@@ -260,7 +260,7 @@ namespace node
         {
           try
           {
-            steering_angle = lat_control.computeSteeringAngle(path.GetWaypointPose(target_waypoint_index),
+            steering_angle = lat_control.computeSteeringAngle(path.getWaypointPose(target_waypoint_index),
                                                               vehicle_state_msg, controlGain_p, controlGain_soft,
                                                               controlGain_d);
           }

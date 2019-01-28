@@ -2,7 +2,7 @@
 <package format="2">
   <name>control_sil</name>
   <version>0.0.0</version>
-  <description>The cntrol test software in the loop package</description>
+  <description>The control test software in the loop package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
