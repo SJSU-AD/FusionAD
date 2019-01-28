@@ -50,7 +50,7 @@ namespace node
 
     //Control State Subscriber
     localization_sub = control_nh.subscribe("/localization/state", 100, &ControlNode::stateCallback, this);
-    ROS_INFO_ONCE("Control Node Path Subscriber Set!");
+    ROS_INFO_ONCE("Control Node State Subscriber Set!");
 
     obstacle_sub = control_nh.subscribe("/localization/obstacle", 100, &ControlNode::obstacleCallback, this);
     ROS_INFO_ONCE("Control Node Obstacle Subscriber Set!");
