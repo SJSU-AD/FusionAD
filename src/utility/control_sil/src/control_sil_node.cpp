@@ -17,6 +17,7 @@ SIL_control_node::SIL_control_node()
   initial_position.position.x = 0;
   initial_position.position.y = 0;
   initial_position.position.z = 0;
+  useHardcodedPlanner = true;
 }
 
 SIL_control_node::~SIL_control_node()
@@ -33,8 +34,11 @@ void SIL_control_node::initRosComm()
   // Initialize all publishers
   sim_vehicle_state_pub = control_sil_nh.advertise<interface::Chassis_state>("/localization/state", 100);
   ROS_INFO_ONCE("[Control] Software in the loop state publisher set!");
-  planner_pub = control_sil_nh.advertise<nav_msgs::Path>("/planning/trajectory", 100);
-  ROS_INFO_ONCE("[Control] Software in the loop path publisher set!");
+  if(useHardcodedPlanner)
+  {
+    planner_pub = control_sil_nh.advertise<nav_msgs::Path>("/planning/trajectory", 100);
+    ROS_INFO_ONCE("[Control] Software in the loop path publisher set!");
+  }
   rviz_pub = control_sil_nh.advertise<geometry_msgs::PoseStamped>("/localization/rviz", 100);
   ROS_INFO_ONCE("[Control] Software in the loop state rviz publisher set!");
 
@@ -79,6 +83,11 @@ bool SIL_control_node::getParameter()
     ROS_WARN("[Control_SIL] Initial heading of the vehicle not set, using default 0");
     return false;    
   }    
+  if(!control_sil_nh.param<bool>(node_name+"/use_sil_hardcoded_planner", useHardcodedPlanner, true))
+  {
+    ROS_WARN("[Control_SIL] Option on using internal hardcoded planner not set, using default TRUE");
+    return false;    
+  }      
   // Set up the initial position ros message type
   tf2::Quaternion initial_vehicle_rotation;
   initial_vehicle_rotation.setRPY(0, 0, initial_vehicle_heading);
@@ -131,22 +140,25 @@ void SIL_control_node::ControlCommandCallback(const interface::Controlcmd &comma
 
 void SIL_control_node::PlannerCallback(const ros::TimerEvent& sil_timer_event)
 {
-  // Timed planner publisher callback
-  nav_msgs::Path planned_path;
-  // Optain size of hardcoded path
-  size_t size_of_path = sizeof(sil_pathArrayX)/sizeof(sil_pathArrayX[0]);
-  // Parse the path into the path message
-  for(int i = 0; i < size_of_path; i++)
+  if(useHardcodedPlanner)
   {
-    geometry_msgs::PoseStamped path_point;
-    path_point.pose.position.x = sil_pathArrayX[i];
-    path_point.pose.position.y = sil_pathArrayY[i];
-    planned_path.poses.push_back(path_point);
+    // Timed planner publisher callback
+    nav_msgs::Path planned_path;
+    // Optain size of hardcoded path
+    size_t size_of_path = sizeof(sil_pathArrayX)/sizeof(sil_pathArrayX[0]);
+    // Parse the path into the path message
+    for(int i = 0; i < size_of_path; i++)
+    {
+      geometry_msgs::PoseStamped path_point;
+      path_point.pose.position.x = sil_pathArrayX[i];
+      path_point.pose.position.y = sil_pathArrayY[i];
+      planned_path.poses.push_back(path_point);
+    }
+    // Declare coordinate frame of the path
+    planned_path.header.frame_id = "map";
+    // Publish the path message
+    planner_pub.publish(planned_path);
   }
-  // Declare coordinate frame of the path
-  planned_path.header.frame_id = "map";
-  // Publish the path message
-  planner_pub.publish(planned_path);
 }
 
 int main(int argc, char **argv)
