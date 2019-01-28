@@ -83,7 +83,7 @@ class ControlNode
     float waypoint_heading_error_range;
 
     int getTargetWaypoint(const interface::Chassis_state& current_position);
-    bool CheckAutonomousMode() const;
+    bool checkAutonomousMode() const;
 
     void pathCallback(const nav_msgs::Path& trajectory_msg);
     void stateCallback(const interface::Chassis_state& veh_state_msg);

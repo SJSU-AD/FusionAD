@@ -43,20 +43,20 @@ Waypoints::~Waypoints()
  * @exception {invalid_argument} Exception will be thrown if the incoming path is empty. 
  *            (does not contain any waypoint information)
  */
-bool Waypoints::SetPath(const nav_msgs::Path& incoming_path_list)
+bool Waypoints::setPath(const nav_msgs::Path& incoming_path_list)
 {
   current_path_list_.poses.clear();
   current_path_list_ = incoming_path_list;
   // Only perform path stuffing if the current path data is empty
   if(!incoming_path_list.poses.empty())
   {
-    for(int i = 0; i < GetPathSize(); i++)
+    for(int i = 0; i < getPathSize(); i++)
     {
       tf2::Quaternion waypoint_quaternion;
       float waypoint_theta = 0;
       try
       {
-        waypoint_theta = ComputeWaypointTheta(i);
+        waypoint_theta = computeWaypointTheta(i);
       }
       catch(std::exception& _exception)
       {
@@ -87,9 +87,9 @@ bool Waypoints::SetPath(const nav_msgs::Path& incoming_path_list)
  * @exception {logic_error} Exception will be thrown if the internal path data member is empty.
  *                               (Implicitly represent the internal path data member was not initialized)
  */
-float Waypoints::GetWaypointTheta(const int& index)
+float Waypoints::getWaypointTheta(const int& index)
 {
-  if(!IsPathEmpty())
+  if(!isPathEmpty())
   {
     double waypoint_roll, waypoint_pitch, waypoint_yaw;
     tf2::Quaternion waypoint_quaternion;
@@ -129,9 +129,9 @@ float Waypoints::GetWaypointTheta(const int& index)
  * 
  * @exception {domain_error} Exception will be thrown if the calculation produced a non-finite value (NaN).
  */
-float Waypoints::ComputeWaypointTheta(const int& index)
+float Waypoints::computeWaypointTheta(const int& index)
 {
-  if(!IsPathEmpty())
+  if(!isPathEmpty())
   {
     Eigen::Matrix3f designMatrix;
     Eigen::Vector3f responseVector;
@@ -147,7 +147,7 @@ float Waypoints::ComputeWaypointTheta(const int& index)
                         current_path_list_.poses[index+2].pose.position.y;
     }
     //Fit with Two points before at the end of list
-    else if(index == (GetPathSize() - 1))                   
+    else if(index == (getPathSize() - 1))                   
     {
       designMatrix <<   std::pow(current_path_list_.poses[index-2].pose.position.x,2)  , current_path_list_.poses[index-2].pose.position.x, 1,
                         std::pow(current_path_list_.poses[index-1].pose.position.x,2),   current_path_list_.poses[index-1].pose.position.x, 1,
@@ -194,7 +194,7 @@ float Waypoints::ComputeWaypointTheta(const int& index)
     float heading_dx = 0;
     float heading_dy = 0;    
 
-    if(index == (GetPathSize() - 1))
+    if(index == (getPathSize() - 1))
     {
       nextXpos = current_path_list_.poses[index].pose.position.x;
       nextYpos = current_path_list_.poses[index].pose.position.y;
@@ -257,9 +257,9 @@ float Waypoints::ComputeWaypointTheta(const int& index)
  * 
  * @exception {domain_error} Exception will be thrown if the calculation produced a non-finite value (NaN).
  */
-float Waypoints::GetWaypointRelativePlaneDistance(const int& index, const geometry_msgs::Point& current_vehicle_position)
+float Waypoints::getWaypointRelativePlaneDistance(const int& index, const geometry_msgs::Point& current_vehicle_position)
 {
-  if(!IsPathEmpty())
+  if(!isPathEmpty())
   {
     float dx = current_path_list_.poses[index].pose.position.x - current_vehicle_position.x;
     float dy = current_path_list_.poses[index].pose.position.y - current_vehicle_position.y;
@@ -294,9 +294,9 @@ float Waypoints::GetWaypointRelativePlaneDistance(const int& index, const geomet
  * 
  * @exception {domain_error} Exception will be thrown if the calculation produced a non-finite value (NaN).
  */
-bool Waypoints::IsWaypointAhead(const int& index, const geometry_msgs::Pose& current_vehicle_pose)
+bool Waypoints::isWaypointAhead(const int& index, const geometry_msgs::Pose& current_vehicle_pose)
 {
-  if(!IsPathEmpty())
+  if(!isPathEmpty())
   { 
     // Extract location of the waypoint from the ROS msg type
     float waypoint_x_position = current_path_list_.poses[index].pose.position.x;
@@ -367,9 +367,9 @@ bool Waypoints::IsWaypointAhead(const int& index, const geometry_msgs::Pose& cur
  * 
  * @exception {domain_error} Exception will be thrown if the calculation produced a non-finite value (NaN).
  */
-bool Waypoints::IsWaypointAligned(const int& index, const float& current_vehicle_heading, const float& heading_thereshold)
+bool Waypoints::isWaypointAligned(const int& index, const float& current_vehicle_heading, const float& heading_thereshold)
 {
-  if(!IsPathEmpty())
+  if(!isPathEmpty())
   {   
     // Extract the yaw value from the path msg
     double waypoint_roll, waypoint_pitch, waypoint_yaw;
@@ -412,7 +412,7 @@ bool Waypoints::IsWaypointAligned(const int& index, const float& current_vehicle
  * 
  * @returns {void}
  */
-void SetROSQuaternionFromRPY(geometry_msgs::Quaternion& ROS_quaternion, const float& roll,const float& pitch,const float& yaw)
+void setROSQuaternionFromRPY(geometry_msgs::Quaternion& ROS_quaternion, const float& roll,const float& pitch,const float& yaw)
 {
   tf2::Quaternion tf_quaternion;
   tf_quaternion.setRPY(roll,pitch,yaw);
