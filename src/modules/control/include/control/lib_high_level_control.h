@@ -40,7 +40,7 @@ namespace fusionad
 {
 namespace control
 {
-namespace libraries
+namespace library
 {
 /** Waypoints Class
  * - An object for storing the path's list of waypoints as well as its class functions.
@@ -49,25 +49,16 @@ namespace libraries
  */
 class Waypoints
 {
-  private:
-    // Internal data member for storing the incoming path from planner 
-    // - Refered as the path data member in later code comments
-    nav_msgs::Path current_path_list_;
-    float ComputeWaypointTheta(const int& index);
-
   public:
     Waypoints();
     ~Waypoints();
-
-    bool SetPath(const nav_msgs::Path& incoming_path_list);
-    
     /** GetPathSize() const
      * 
      * @memberOf_ Waypoints
      * 
      * @returns {size_t} This function returns the size of the internal path data member.
      */    
-    size_t GetPathSize() const
+    size_t getPathSize() const
     {
       return current_path_list_.poses.size();
     }
@@ -78,7 +69,7 @@ class Waypoints
      * 
      * @returns {bool} This function returns true if the internal path data member is empty.
      */   
-    bool IsPathEmpty() const
+    bool isPathEmpty() const
     {
       return current_path_list_.poses.empty();
     }
@@ -90,25 +81,31 @@ class Waypoints
      * @param {index} An int type data that represents the index of the referenced waypoint within the path 
      *                data member.
      * 
-     * @returns {geometry_msgs::Point} This function returns the position component 
+     * @returns {geometry_msgs::Pose} This function returns the pose component 
      *                                 of the specific waypoint.
      */   
-    geometry_msgs::Point GetWaypointPosition(const int& index) const
+    geometry_msgs::Pose getWaypointPose(const int& index) const
     {
-      return current_path_list_.poses[index].pose.position;
+      return current_path_list_.poses[index].pose;
     }    
 
-    float GetWaypointTheta(const int& index);
-    float GetWaypointRelativePlaneDistance(const int& index, const geometry_msgs::Point& current_vehicle_position);
+    bool setPath(const nav_msgs::Path& incoming_path_list);
+    float getWaypointTheta(const int& index);
+    float getWaypointRelativePlaneDistance(const int& index, const geometry_msgs::Point& current_vehicle_position);
     // This function compares the relative location of the current index and the position of the vehicle
     // to determine whether the waypoint is within logical/reachable space ("Aheadness")
-    bool IsWaypointAhead(const int& index, const geometry_msgs::Pose& current_vehicle_pose);
-    bool IsWaypointAligned(const int& index, const float& current_vehicle_heading, const float& heading_thereshold);
+    bool isWaypointAhead(const int& index, const geometry_msgs::Pose& current_vehicle_pose);
+    bool isWaypointAligned(const int& index, const float& current_vehicle_heading, const float& heading_thereshold);
+
+  private:
+    // Internal data member for storing the incoming path from planner 
+    // - Refered as the path data member in later code comments
+    nav_msgs::Path current_path_list_;
+    float computeWaypointTheta(const int& index);
 };
 
-void SetROSQuaternionFromRPY(geometry_msgs::Quaternion& ROS_quaternion, const float& roll,const float& pitch,const float& yaw);
+void setROSQuaternionFromRPY(geometry_msgs::Quaternion& ROS_quaternion, const float& roll,const float& pitch,const float& yaw);
 //float getAbsoluteRelativeAngle(const int& index, const interface::Chassis_state& currentPosition);
-
 }    
 }
 }

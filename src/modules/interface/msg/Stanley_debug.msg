@@ -3,6 +3,7 @@ Header header
 # Vehicle State
 geometry_msgs/Point vehicle_Position
 float64 vehicle_heading
+float64 vehicle_speed
 
 # Controller Parameter
 float64 stanleyGain_p
@@ -22,7 +23,6 @@ float64 distance_to_wp
 int32 currentWPIndex
 
 # Calculation Error Flags
-bool pathHeadingCalcInvalid
 bool crossTrackErrorCalcInvalid
 bool headingErrorCalcInvalid
 bool steeringAngleCalcInvalid

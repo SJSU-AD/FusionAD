@@ -12,90 +12,6 @@ namespace lat_controller{
   {
   }
 
-  float Stanley::computePathHeading(const std::vector<float> &navX, const std::vector<float> &navY ,const int &targetIndex, const int &navSize)
-  {
-    Eigen::Matrix3f designMatrix;
-    Eigen::Vector3f responseVector;
-     //Fit with Two point forward at beginning
-    if(targetIndex == 0)                              
-    {
-      designMatrix <<   std::pow(navX[targetIndex],2)  , navX[targetIndex],     1,
-                        std::pow(navX[targetIndex+1],2), navX[targetIndex+1],   1,
-                        std::pow(navX[targetIndex+2],2), navX[targetIndex+2],   1;                        
-    
-      responseVector << navY[targetIndex],
-                        navY[targetIndex+1],
-                        navY[targetIndex+2];
-    }
-    //Fit with Two points before
-    else if(targetIndex == (navSize - 1))                   
-    {
-      designMatrix <<   std::pow(navX[targetIndex-2],2)  , navX[targetIndex-2], 1,
-                        std::pow(navX[targetIndex-1],2),   navX[targetIndex-1], 1,
-                        std::pow(navX[targetIndex],2),     navX[targetIndex],   1;
-    
-      responseVector << navY[targetIndex-2],
-                        navY[targetIndex-1],
-                        navY[targetIndex]; 
-    }
-    // Normal index fitting
-    else  
-    {
-      designMatrix <<   std::pow(navX[targetIndex-1],2), navX[targetIndex-1], 1,
-                        std::pow(navX[targetIndex],2),   navX[targetIndex],   1,
-                        std::pow(navX[targetIndex+1],2), navX[targetIndex+1], 1;
-    
-      responseVector << navY[targetIndex-1],
-                        navY[targetIndex],
-                        navY[targetIndex+1];                               
-    }
-
-    Eigen::ColPivHouseholderQR<Eigen::Matrix3f> dec(designMatrix);
-    Eigen::Vector3f x = dec.solve(responseVector);  
-    Eigen::Vector2f pathYawCoeff;
-
-    // Taking the derivative of the function
-    pathYawCoeff << x(0)*2,
-                    x(1);     
-              
-    //Calculate pathSlope at index value;
-    pathSlope = pathYawCoeff(0) * navX[targetIndex] +
-                pathYawCoeff(1);   
-
-    float nextXpos = navX[targetIndex + 1];
-    float nextYpos = navY[targetIndex + 1];
-
-    float targetXpos = navX[targetIndex];
-    float targetYpos = navY[targetIndex];
-
-    //Now estimate the direction of the path to generate heading.
-    //Find the linear representation of the slope
-    float b = targetYpos - (pathSlope * targetXpos);
-    
-    //Find the next Y point of the slope to get the linear interpolated vector
-    float nextYslope = (pathSlope*nextXpos) + b;
-
-    //Linear interpolate the vector
-    float heading_dx = nextXpos - targetXpos;
-    float heading_dy = nextYslope - targetYpos;
-
-    float pathHeadingTheta = atan2(heading_dy, heading_dx);
-
-
-    /**************************NaN Check*****************************/
-    if(std::isfinite(pathHeadingTheta))
-    {
-      debug_info.pathHeading = pathHeadingTheta;
-      return pathHeadingTheta;
-    }
-    else
-    {
-      debug_info.pathHeadingCalcInvalid = true;
-      ROS_FATAL("Path Heading Calculation Is Not Finite!");
-      return std::numeric_limits<float>::quiet_NaN();
-    }  
-  }
-
   float Stanley::computeCrossTrackError(const float &routeTheta, const float &dx, const float &dy)
   {
     // See computeCTE.m for proof  @Menson_Li
@@ -117,40 +33,43 @@ namespace lat_controller{
   }
 
   //A positive steering angle denotes the vehicle to turn its steering wheel CCW (left)
-  float Stanley::computeSteeringAngle(const Eigen::Vector2f &vehPos, const std::vector<float> &routeX, const std::vector<float> &routeY,
-                                      const float &vehSpeed, const int &wpIndex, const float& vehTheta, const float& p_gain, const float& d_gain
-                                      ,const int &pathSize)
+  float Stanley::computeSteeringAngle(const geometry_msgs::Pose waypoint_pose, const interface::Chassis_state vehicle_state,
+                                      const float &p_gain, const float &soft_gain, const float &d_gain)
   {
-    //obtain the path heading
-    //float unusedpathTheta = estimatePathHeading(routeX, routeY, wpIndex);
-    //float unused_pathTheta = computePathHeading(trimmedRoute, trimmedIndex);
-    float pathTheta = computePathHeading(routeX, routeY, wpIndex, pathSize);
+    double roll, pitch, yaw;
+
+    // Unpack orientation of the vehicle
+    tf2::Quaternion conv_quaternion;
+    tf2::convert(vehicle_state.Position.pose.orientation, conv_quaternion);
+    tf2::Matrix3x3 veh_quaternion_matrix(conv_quaternion);
+    veh_quaternion_matrix.getRPY(roll, pitch, yaw);
+    float vehicle_theta = static_cast<float>(yaw);    
+
+    // Unpack the orientation of th waypoint
+    tf2::convert(waypoint_pose.orientation, conv_quaternion);
+    tf2::Matrix3x3 wp_quaternion_matrix(conv_quaternion);
+    wp_quaternion_matrix.getRPY(roll, pitch, yaw);
+    float pathTheta = static_cast<float>(yaw);  
+
+    // Get vehicle speed
+    // Unpack linear velocity
+    float vehSpeed = sqrt(std::pow(vehicle_state.Speed.twist.linear.x, 2) 
+                          + std::pow(vehicle_state.Speed.twist.linear.y,2));         
+    
     //Find the global x delta of veh2path
-    float tracking_dx = vehPos(0) - routeX[wpIndex];
+    float tracking_dx = vehicle_state.Position.pose.position.x - waypoint_pose.position.x;
     //Find the global y delta of veh2path
-    float tracking_dy = vehPos(1) - routeY[wpIndex];
+    float tracking_dy = vehicle_state.Position.pose.position.y - waypoint_pose.position.y;
     //Compute Cross track error (lateral error of the veh to the path)
     float crossTrackError = computeCrossTrackError(pathTheta, tracking_dx, tracking_dy);
     //Find heading difference between vehicle orientation and the path
     //Follows the convention of left turn is positive 
-    float headingDelta = pathTheta - vehTheta;
+    float headingDelta = pathTheta - vehicle_theta;
+    debug_info.headingError = headingDelta;
 
     // Vehicle State Debug Message
-    debug_info.vehicle_Position.x = vehPos(0);
-    debug_info.vehicle_Position.y = vehPos(1);
-    debug_info.vehicle_Position.z = 0;
-    debug_info.vehicle_heading = vehTheta;
-
-    /**************************NaN Check*****************************/
-    if(std::isfinite(headingDelta))
-    { 
-      debug_info.headingError = headingDelta;
-    }
-    else
-    {
-      debug_info.headingErrorCalcInvalid = true;
-      ROS_FATAL("Heading Error Calculation Is Not Finite!");
-    }    
+    debug_info.vehicle_Position = vehicle_state.Position.pose.position;
+    debug_info.vehicle_heading = vehicle_theta;
     
     //Apply Stanley kinematic control law
     float unfilteredSteeringAngle = 0;
@@ -162,6 +81,7 @@ namespace lat_controller{
     else
     {
       ROS_FATAL("Control Loop Period Is Not Finite!");
+      throw std::domain_error("Control Loop Period Is Not Finite!");
     } 
 
 
@@ -175,11 +95,12 @@ namespace lat_controller{
     {
       debug_info.headingErrorCalcInvalid = true;
       ROS_FATAL("CTE derivative Calculation Is Not Finite!");
+      throw std::domain_error("CTE derivative Calculation Is Not Finite!");
     }
 
     unfilteredSteeringAngle = headingDelta + 
                               std::atan(((p_gain*crossTrackError) + 
-                              (d_gain * crossTrackError_dot))/ (0.001 + vehSpeed));
+                              (d_gain * crossTrackError_dot))/ (soft_gain + vehSpeed));
 
     float steeringAngle = 0;
 
@@ -205,8 +126,8 @@ namespace lat_controller{
     else
     {
       debug_info.steeringAngleCalcInvalid = true;
-      ROS_FATAL("Steering Angle Calculation Is Not Finite! Returning -69 as steering angle.");
-      return -69;
+      ROS_FATAL("Steering Angle Calculation Is Not Finite!");
+      throw std::domain_error("Steering Angle Calculation Is Not Finite!");
     }
   }
 }
