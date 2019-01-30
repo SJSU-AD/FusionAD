@@ -12,7 +12,7 @@ from path_interpolator_ENU  import PathInterpolatorENU
 def main():
     rospy.init_node('interpolation_node', anonymous = True)
 
-    chosenHeight = -6.0 # meters
+    chosenHeight = rospy.get_param("~fixed_height")
 
     # From https://www.maps.ie/coordinates.html at SJSU
     filePath = rospy.get_param("~file_path")

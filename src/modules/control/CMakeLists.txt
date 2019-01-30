@@ -15,6 +15,8 @@ find_package(catkin REQUIRED COMPONENTS
   nav_msgs
   geometry_msgs
   interface
+  tf2
+  tf2_ros
 )
 find_package(Eigen3 REQUIRED)
 include_directories(${EIGEN3_INCLUDE_DIR})
@@ -141,8 +143,18 @@ add_library(lateral_control
   src/lat_controller.cpp
 )
 
+
 add_dependencies(lateral_control ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(lateral_control
+  ${catkin_LIBRARIES}
+)
+
+add_library(waypoint_selector
+  src/lib_high_level_control.cpp
+)
+
+add_dependencies(waypoint_selector ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(waypoint_selector
   ${catkin_LIBRARIES}
 )
 
@@ -162,7 +174,7 @@ target_link_libraries(lateral_control
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME} src/control_node.cpp)
 
-add_executable(core_control src/control_node.cpp src/lat_controller.cpp)
+add_executable(core_control src/control_node.cpp src/lat_controller.cpp src/lib_high_level_control.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -236,14 +248,16 @@ target_link_libraries(core_control
 
 ################# TESTING #########################
 # add the test file with the main function, and place the testing libraries behind
-catkin_add_gtest(control_test test/control_test.cpp src/lat_controller.cpp)
+catkin_add_gtest(lateral_control_test test/lateral_control_test.cpp src/lat_controller.cpp)
+catkin_add_gtest(control_path_test test/control_path_test.cpp src/lib_high_level_control.cpp)
 
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()
 
 ################# TESTING #########################
-target_link_libraries(control_test ${catkin_LIBRARIES})
+target_link_libraries(lateral_control_test ${catkin_LIBRARIES})
+target_link_libraries(control_path_test ${catkin_LIBRARIES})
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)

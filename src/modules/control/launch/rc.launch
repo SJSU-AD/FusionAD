@@ -12,4 +12,8 @@
     <param name="baud" value="115200"/>
   </node> 
 
+  <include file="$(find geodesy)/launch/geodesy.launch" />
+
+  <include file="$(find razor_imu_9dof)/launch/razor-pub.launch" />
+
 </launch>
