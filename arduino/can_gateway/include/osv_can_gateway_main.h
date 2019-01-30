@@ -31,7 +31,7 @@
 #define EXT_FRAME 1
 #define STD_FRAME 0
 // Communication Params
-#define ROSSERIAL_BAUD 500000
+#define ROSSERIAL_BAUD 115200
 #define SPI_CS_PIN 9
 // CAN ID
 #define STEERING_ARB_ID 0x18FF00F9

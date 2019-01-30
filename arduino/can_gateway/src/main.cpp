@@ -38,7 +38,7 @@ ros::Subscriber<std_msgs::Bool> can_relay_mode_sub("/can_gateway/mode", &ROSGate
 bool GatewayMode = OFF;
 bool IsDBWInitialized = false;
 bool IsPropulsionPowerMessageSent = false;
-bool HoldSteeringValue = false;
+bool HoldSteeringValue = true;
 
 // Declare Global timer value
 unsigned long int next_propulsion_control_event = 0;
