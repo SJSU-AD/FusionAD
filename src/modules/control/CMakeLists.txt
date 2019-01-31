@@ -143,6 +143,7 @@ add_library(lateral_control
   src/lat_controller.cpp
 )
 
+
 add_dependencies(lateral_control ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(lateral_control
   ${catkin_LIBRARIES}

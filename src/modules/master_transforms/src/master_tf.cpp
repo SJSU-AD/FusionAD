@@ -82,11 +82,25 @@ namespace master_tf_node
         Wheelbase: -27.5" = -0.6985 [m]
         */
 
-        // build the geodesy transform message and broadcast it
+        /*
+        Black Car Sensor Locations
+
+        GPS to front axle:
+            x-position = 1.47955 [m]
+            y-position = 0 [m]
+
+        Lidar to front axle
+            x-position = 
+            y-position = 
+        */
+        float x_position_rot = 1.47955;
+        float y_position_rot = 0;
+
         geodesy_broadcaster.sendTransform(
             tf::StampedTransform(
-                tf::Transform(tf::Quaternion(0, 0, 0, 1), tf::Vector3(0.8763*std::cos(rot_yaw), 0.8763*std::sin(rot_yaw), 0)),
-                    ros::Time::now(),"odom", "gps"));
+                tf::Transform(tf::Quaternion(0, 0, 0, 1), tf::Vector3(x_position_rot*std::cos(rot_yaw) - y_position_rot*std::sin(rot_yaw), 
+                    x_position_rot*std::sin(rot_yaw) + y_position_rot*std::cos(rot_yaw), 0)),
+                        ros::Time::now(),"odom", "gps"));
 
         // // if the calibration has been completed, start creating the lidar tf2 message
         // if (calibration_complete)
