@@ -132,40 +132,40 @@ namespace wheel_odometry_node
         // x_velocity = vel_magnitude * cos(yaw_estimate); // [m/s]
         // y_velocity = vel_magnitude * sin(yaw_estimate); // [m/s]
         x_velocity = vel_magnitude;
-        y_velocity = 0;
+        // y_velocity = 0;
         // twist messages
         velocity_estimate.twist.linear.x = x_velocity; // [m/s]
-        velocity_estimate.twist.linear.y = y_velocity; // [m/s]
+        // velocity_estimate.twist.linear.y = y_velocity; // [m/s]
         
         // velocity variances from a straight-line test at constant velocity
         float x_vel_covariance = 0.0021878/2; // [m^2/s^2]
-        float y_vel_covariance = 0.0021878/2; // [m^2/s^2]
+        // float y_vel_covariance = 0.0021878/2; // [m^2/s^2]
 
         velocity_estimate.covariance[0] = x_vel_covariance;
-        velocity_estimate.covariance[7] = y_vel_covariance;
+        // velocity_estimate.covariance[7] = y_vel_covariance;
         
         ///////////////////////
         // Position Estimate //
         ///////////////////////
 
         // position estimate in x and y
-        x_position = previous_x_position + x_velocity*DT; // [m]
-        y_position = previous_y_position + y_velocity*DT; // [m]
+        // x_position = previous_x_position + x_velocity*DT; // [m]
+        // y_position = previous_y_position + y_velocity*DT; // [m]
 
-        // getting the previous x and y positions
-        previous_x_position = x_position; // [m]
-        previous_y_position = y_position; // [m]
+        // // getting the previous x and y positions
+        // previous_x_position = x_position; // [m]
+        // previous_y_position = y_position; // [m]
 
-        // position messages
-        position_estimate.pose.position.x = x_position;
-        position_estimate.pose.position.y = y_position;
+        // // position messages
+        // position_estimate.pose.position.x = x_position;
+        // position_estimate.pose.position.y = y_position;
 
-        // position covariances from a straight-line test at constant velocity
-        float x_pose_covariance = 0.05; // [m^2]
-        float y_pose_covariance = 0.05; // [m^2]
+        // // position covariances from a straight-line test at constant velocity
+        // float x_pose_covariance = 0.05; // [m^2]
+        // float y_pose_covariance = 0.05; // [m^2]
 
-        position_estimate.covariance[0] = x_pose_covariance;
-        position_estimate.covariance[7] = y_pose_covariance;
+        // position_estimate.covariance[0] = x_pose_covariance;
+        // position_estimate.covariance[7] = y_pose_covariance;
     
     }
 
@@ -173,7 +173,7 @@ namespace wheel_odometry_node
     {// publishes the wheel odometry message if the calibration was completed
         odometry_state_estimation();
         full_odom_message.twist = velocity_estimate;
-        full_odom_message.pose = position_estimate;
+        // full_odom_message.pose = position_estimate;
 
         // declaring the header frame of the wheel_odom message
         full_odom_message.header.frame_id = "odom";

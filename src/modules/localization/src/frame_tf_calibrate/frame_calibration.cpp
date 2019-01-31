@@ -66,6 +66,7 @@ namespace frame_calibration_node
 
         rot_msg = imu_msg;
 
+        // rename the imu frame to base_link, which is much more common within ROS
         rot_msg.header.frame_id = "base_link";
 
         tf::Quaternion imu_quaternion(imu_msg.orientation.x,
