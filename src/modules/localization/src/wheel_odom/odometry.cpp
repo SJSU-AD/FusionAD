@@ -3,9 +3,7 @@
 /*
 Takes wheel odometry from Arduino encoders and translates to vehicle velocity and position
 NOTE: This script is to handle the raw wheel odometry values from the Signwise 600 P/R rotary encoder.
-      It also takes in various inputs from topics yaw from the IMU to dead-reckon position and velocity in the X and Y frame.
-      Dead-reckoning requires previous pose to be tracked, we take advantage of this by subscribing to
-      the output of the EKF and using those pose messages as the previous pose of the wheel odometry.
+      It also takes in various inputs from topics yaw from the IMU to calculate velocity in the X and Y frame.
 
 Subscribers:  
 -------------------------------------------
@@ -47,8 +45,8 @@ namespace wheel_odometry_node
         // subscribers for odometry
         left_encoder_sub = odometrynode_nh.subscribe("/localization/left_encoder_reading", 50, &WheelOdometryNode::leftEncoderCallback, this);
         right_encoder_sub = odometrynode_nh.subscribe("/localization/right_encoder_reading", 50, &WheelOdometryNode::rightEncoderCallback, this);
-        imu_sub = odometrynode_nh.subscribe("/localization/rotated_imu", 50, &WheelOdometryNode::imuCallback, this);
-        ekf_odom_sub = odometrynode_nh.subscribe("/odometry/filtered", 50, &WheelOdometryNode::ekfCallback, this);
+        // imu_sub = odometrynode_nh.subscribe("/localization/rotated_imu", 50, &WheelOdometryNode::imuCallback, this);
+        // ekf_odom_sub = odometrynode_nh.subscribe("/odometry/filtered", 50, &WheelOdometryNode::ekfCallback, this);
     }
 
     void WheelOdometryNode::leftEncoderCallback(const std_msgs::Int32& left_encoder_msg)

@@ -3,6 +3,8 @@
 NOTE: This node listens to the tf broadcasts and performs the homogeneous transforms.
       Another major function of this node is to "calibrate" the initial position and orientation
       of the vehicle. The homogeneous transforms are applied and then the result is published.
+      Also contains logic to filter out GPS points that are outside of a certain threshold which is
+      calculated by taking the distance between each GPS point. 
       
 Subscribers
 --------------------------------------------------
@@ -170,6 +172,7 @@ namespace frame_calibration_node
                 // geodesy_tf_msg.child_frame_id = temp_geodesy_tf_point.header.frame_id;
                 geodesy_tf_msg.header.stamp = ros::Time::now();
 
+                // counter to remove edge case of first data point
                 gps_msg_counter += 1;
                 
                 if(gps_msg_counter == 1)
@@ -178,10 +181,12 @@ namespace frame_calibration_node
                 }
                 else
                 {
+                    // calculate the euclidian distance between point (n) and point (n-1)
                     float distance_comparison;
                     float gps_threshold = 0.5; // [m]
                     distance_comparison = std::sqrt(std::pow(geodesy_tf_msg.pose.pose.position.x - previous_geodesy_tf_msg.pose.pose.position.x, 2) + std::pow(geodesy_tf_msg.pose.pose.position.y - previous_geodesy_tf_msg.pose.pose.position.y, 2));
                     
+                    // if the distance between point (n) and point (n-1) is less than the threshold, then publish the gps msg
                     if(std::abs(distance_comparison) <= gps_threshold)
                     {
                         geodesy_tf_pub.publish(geodesy_tf_msg);
