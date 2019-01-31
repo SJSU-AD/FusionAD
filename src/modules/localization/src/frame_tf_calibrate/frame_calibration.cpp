@@ -65,6 +65,9 @@ namespace frame_calibration_node
         const float yaw_offset = M_PI_2;
 
         rot_msg = imu_msg;
+
+        rot_msg.header.frame_id = "base_link";
+
         tf::Quaternion imu_quaternion(imu_msg.orientation.x,
                                       imu_msg.orientation.y,
                                       imu_msg.orientation.z,
@@ -123,9 +126,22 @@ namespace frame_calibration_node
 
     void FrameCalibrationNode::geodesyCallback(const nav_msgs::Odometry& geodesy_msg)
     {
-        // covariance remains unchanged
-        geodesy_tf_msg.pose.covariance[0] = geodesy_msg.pose.covariance[0];
-        geodesy_tf_msg.pose.covariance[7] = geodesy_msg.pose.covariance[7];
+        // switch up the covariance
+        if (geodesy_msg.pose.covariance[0] == 1)
+        {
+            geodesy_tf_msg.pose.covariance[0] = 25;
+            geodesy_tf_msg.pose.covariance[7] = 25;
+        }
+        else if (geodesy_msg.pose.covariance[0] == 25)
+        {
+            geodesy_tf_msg.pose.covariance[0] = 1;
+            geodesy_tf_msg.pose.covariance[7] = 1;
+        }
+        else
+        {
+            geodesy_tf_msg.pose.covariance[0] = geodesy_msg.pose.covariance[0];
+            geodesy_tf_msg.pose.covariance[7] = geodesy_msg.pose.covariance[7];
+        }
         
         // creating a temporary geometry PoseStamped message to facilitate homogeneous transform
         geometry_msgs::PointStamped temp_geodesy_tf_point;
@@ -136,7 +152,7 @@ namespace frame_calibration_node
 
         // threshold standard deviation for publishing geodesy 
         float THRESHOLD_POSE_STD_DEV = 5; // [m]
-
+        
         if(std::sqrt(geodesy_tf_msg.pose.covariance[0]) <= THRESHOLD_POSE_STD_DEV)
         {
             try
@@ -150,13 +166,34 @@ namespace frame_calibration_node
                 geodesy_tf_msg.pose.pose.position.x = geodesy_tf_point.point.x;
                 geodesy_tf_msg.pose.pose.position.y = geodesy_tf_point.point.y;
                 geodesy_tf_msg.header.frame_id = geodesy_tf_point.header.frame_id;
+                // geodesy_tf_msg.child_frame_id = temp_geodesy_tf_point.header.frame_id;
                 geodesy_tf_msg.header.stamp = ros::Time::now();
 
-                geodesy_tf_pub.publish(geodesy_tf_msg);
+                gps_msg_counter += 1;
+                
+                if(gps_msg_counter == 1)
+                {
+                    geodesy_tf_pub.publish(geodesy_tf_msg);    
+                }
+                else
+                {
+                    float distance_comparison;
+                    float gps_threshold = 0.5; // [m]
+                    distance_comparison = std::sqrt(std::pow(geodesy_tf_msg.pose.pose.position.x - previous_geodesy_tf_msg.pose.pose.position.x, 2) + std::pow(geodesy_tf_msg.pose.pose.position.y - previous_geodesy_tf_msg.pose.pose.position.y, 2));
+                    
+                    if(std::abs(distance_comparison) <= gps_threshold)
+                    {
+                        geodesy_tf_pub.publish(geodesy_tf_msg);
+                    }
+                }
 
                 ROS_INFO("gps: (%.2f, %.2f) -----> odom: (%.2f, %.2f) at time %.2f",
                 temp_geodesy_tf_point.point.x, temp_geodesy_tf_point.point.y,
                 geodesy_tf_point.point.x, geodesy_tf_point.point.y, geodesy_tf_point.header.stamp.toSec());
+                
+                // store previous messages for distance calculation
+                previous_geodesy_tf_msg.pose.pose.position.x = geodesy_tf_msg.pose.pose.position.x;
+                previous_geodesy_tf_msg.pose.pose.position.y = geodesy_tf_msg.pose.pose.position.y;
             }
             catch(tf::TransformException& geodesy_exception)
             {

@@ -129,9 +129,10 @@ namespace wheel_odometry_node
         ///////////////////////
         
         // velocity estimate in x and y
-        x_velocity = vel_magnitude * cos(yaw_estimate); // [m/s]
-        y_velocity = vel_magnitude * sin(yaw_estimate); // [m/s]
-
+        // x_velocity = vel_magnitude * cos(yaw_estimate); // [m/s]
+        // y_velocity = vel_magnitude * sin(yaw_estimate); // [m/s]
+        x_velocity = vel_magnitude;
+        y_velocity = 0;
         // twist messages
         velocity_estimate.twist.linear.x = x_velocity; // [m/s]
         velocity_estimate.twist.linear.y = y_velocity; // [m/s]
@@ -176,6 +177,7 @@ namespace wheel_odometry_node
 
         // declaring the header frame of the wheel_odom message
         full_odom_message.header.frame_id = "odom";
+        full_odom_message.child_frame_id = "base_link";
         // timestamping the message
         full_odom_message.header.stamp = ros::Time::now();
         odometry_pub.publish(full_odom_message);
