@@ -5,7 +5,13 @@ NOTE: This node listens to the tf broadcasts and performs the homogeneous transf
       of the vehicle. The homogeneous transforms are applied and then the result is published.
       Also contains logic to filter out GPS points that are outside of a certain threshold which is
       calculated by taking the distance between each GPS point. 
-      
+
+NOTE: The covariance in the eth-zurich swift package provides a filtered gps signal and a non-filtered gps signal.
+      A covariance of 1 [m^2] is typically done with their "single point estimation" and a covariance of 0.0049 and 
+      25 [m^2] has been filtered. Because the 1 [m^2] covariance is typically noisy due to the lack of filtering and the 
+      25 [m^2] covariance is filtered and smooth, the two covariances are swapped. This allows the EKF to take in the 
+      previously 25 [m^2] measurements and apply a larger Kalman Gain (trusting this measurement more). 
+
 Subscribers
 --------------------------------------------------
 Topic:  /gps/geodesy_odom
@@ -129,7 +135,14 @@ namespace frame_calibration_node
 
     void FrameCalibrationNode::geodesyCallback(const nav_msgs::Odometry& geodesy_msg)
     {
-        // switch up the covariance
+        /*
+        NOTE: The covariance in the eth-zurich swift package provides a filtered gps signal and a non-filtered gps signal.
+        A covariance of 1 [m^2] is typically done with their "single point estimation" and a covariance of 0.0049 and 
+        25 [m^2] has been filtered. Because the 1 [m^2] covariance is typically noisy due to the lack of filtering and the 
+        25 [m^2] covariance is filtered and smooth, the two covariances are swapped. This allows the EKF to take in the 
+        previously 25 [m^2] measurements and apply a larger Kalman Gain (trusting this measurement more). 
+        */
+
         if (geodesy_msg.pose.covariance[0] == 1)
         {
             geodesy_tf_msg.pose.covariance[0] = 25;
