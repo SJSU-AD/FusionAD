@@ -1,9 +1,11 @@
 #include "localization/wheel_odom/odometry.h"
 
 /*
-Takes wheel odometry from Arduino encoders and translates to vehicle velocity and position
-NOTE: This script is to handle the raw wheel odometry values from the Signwise 600 P/R rotary encoder.
-      It also takes in various inputs from topics yaw from the IMU to calculate velocity in the X and Y frame.
+Takes wheel odometry from Arduino encoders and translates to vehicle velocity in the base_link frame
+
+NOTE: This script is to handle the raw wheel odometry values from the Signwise 600 P/R rotary encoder and 
+      calculate velocity in the base_link frame
+      
 
 Subscribers:  
 -------------------------------------------
@@ -11,10 +13,6 @@ Topic:  /localization/right_encoder_reading
             Msg: std_msgs::Int16
 Topic:  /localization/left_encoder_reading
             Msg: std_msgs::Int16
-Topic:  /localization/odometry/filtered
-            Msg: nav_msgs::Odometry
-Topic:  /localization/rotated_imu
-            Msg: sensor_msgs::Imu
 
 Publisher:
 -------------------------------------------  
@@ -45,8 +43,6 @@ namespace wheel_odometry_node
         // subscribers for odometry
         left_encoder_sub = odometrynode_nh.subscribe("/localization/left_encoder_reading", 50, &WheelOdometryNode::leftEncoderCallback, this);
         right_encoder_sub = odometrynode_nh.subscribe("/localization/right_encoder_reading", 50, &WheelOdometryNode::rightEncoderCallback, this);
-        // imu_sub = odometrynode_nh.subscribe("/localization/rotated_imu", 50, &WheelOdometryNode::imuCallback, this);
-        // ekf_odom_sub = odometrynode_nh.subscribe("/odometry/filtered", 50, &WheelOdometryNode::ekfCallback, this);
     }
 
     void WheelOdometryNode::leftEncoderCallback(const std_msgs::Int32& left_encoder_msg)
@@ -61,25 +57,6 @@ namespace wheel_odometry_node
         // negative sign to account for the encoder difference
         right_angular_vel = ((2*M_PI*((-1)*right_encoder_msg.data-previous_right_encoder_msg))/(pulses_per_rotation*DT));
         previous_right_encoder_msg = (-1)*right_encoder_msg.data;
-    }
-
-    void WheelOdometryNode::ekfCallback(const nav_msgs::Odometry& ekf_odom_msg)
-    {
-        previous_x_position = ekf_odom_msg.pose.pose.position.x;
-        previous_y_position = ekf_odom_msg.pose.pose.position.y;
-    }
-
-    void WheelOdometryNode::imuCallback(const sensor_msgs::Imu& yaw_msg)
-    {
-        double roll = 0, pitch = 0, yaw = 0;
-
-        tf::Quaternion imu_quaternion(yaw_msg.orientation.x,
-                                      yaw_msg.orientation.y,
-                                      yaw_msg.orientation.z,
-                                      yaw_msg.orientation.w);
-        tf::Matrix3x3 temporary_rot_matrix(imu_quaternion);
-        temporary_rot_matrix.getRPY(roll, pitch, yaw);
-        yaw_estimate = yaw;
     }
 
     void WheelOdometryNode::wheel_odom_median_filter()
@@ -108,10 +85,6 @@ namespace wheel_odometry_node
 
             // pop the original queue
             vel_deque.pop_front();
-            // NOTE: moving median logic
-            // vel_deque.pop_back();
-            // vel_deque.push_back(vel_magnitude);
-            // 
         }
     }
 
@@ -126,52 +99,19 @@ namespace wheel_odometry_node
         // Velocity Estimate  //
         ///////////////////////
         
-        // velocity estimate in x and y
-        // x_velocity = vel_magnitude * cos(yaw_estimate); // [m/s]
-        // y_velocity = vel_magnitude * sin(yaw_estimate); // [m/s]
-        x_velocity = vel_magnitude;
-        // y_velocity = 0;
-        // twist messages
-        velocity_estimate.twist.linear.x = x_velocity; // [m/s]
-        // velocity_estimate.twist.linear.y = y_velocity; // [m/s]
+        velocity_estimate.twist.linear.x = vel_magnitude; // [m/s]
         
         // velocity variances from a straight-line test at constant velocity
         float x_vel_covariance = 0.0021878/2; // [m^2/s^2]
-        // float y_vel_covariance = 0.0021878/2; // [m^2/s^2]
 
         velocity_estimate.covariance[0] = x_vel_covariance;
         // velocity_estimate.covariance[7] = y_vel_covariance;
-        
-        ///////////////////////
-        // Position Estimate //
-        ///////////////////////
-
-        // position estimate in x and y
-        // x_position = previous_x_position + x_velocity*DT; // [m]
-        // y_position = previous_y_position + y_velocity*DT; // [m]
-
-        // // getting the previous x and y positions
-        // previous_x_position = x_position; // [m]
-        // previous_y_position = y_position; // [m]
-
-        // // position messages
-        // position_estimate.pose.position.x = x_position;
-        // position_estimate.pose.position.y = y_position;
-
-        // // position covariances from a straight-line test at constant velocity
-        // float x_pose_covariance = 0.05; // [m^2]
-        // float y_pose_covariance = 0.05; // [m^2]
-
-        // position_estimate.covariance[0] = x_pose_covariance;
-        // position_estimate.covariance[7] = y_pose_covariance;
-    
     }
 
     void WheelOdometryNode::timerCallback(const ros::TimerEvent& event)
     {// publishes the wheel odometry message if the calibration was completed
         odometry_state_estimation();
         full_odom_message.twist = velocity_estimate;
-        // full_odom_message.pose = position_estimate;
 
         // declaring the header frame of the wheel_odom message
         full_odom_message.header.frame_id = "odom";

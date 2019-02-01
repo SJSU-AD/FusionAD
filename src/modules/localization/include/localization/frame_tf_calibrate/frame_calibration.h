@@ -97,7 +97,7 @@ class FrameCalibrationNode
         sensor_msgs::Imu imu_tf_msg;
         nav_msgs::Odometry previous_geodesy_tf_msg;
 
-        unsigned long gps_msg_counter = 0;
+        bool first_message_sent = false;
 
         nav_msgs::Odometry lidar_tf_msg;
         

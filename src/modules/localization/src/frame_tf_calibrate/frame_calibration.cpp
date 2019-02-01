@@ -167,9 +167,10 @@ namespace frame_calibration_node
         temp_geodesy_tf_point.point.y = geodesy_msg.pose.pose.position.y;
 
         // threshold standard deviation for publishing geodesy 
-        float THRESHOLD_POSE_STD_DEV = 5; // [m]
+        float threshold_pose_std_dev;
+        frameCalibrationNode_nh.getParam("/frame_calibration/threshold_pose_std_dev", threshold_pose_std_dev);
         
-        if(std::sqrt(geodesy_tf_msg.pose.covariance[0]) <= THRESHOLD_POSE_STD_DEV)
+        if(std::sqrt(geodesy_tf_msg.pose.covariance[0]) <= threshold_pose_std_dev)
         {
             try
             {
@@ -184,19 +185,19 @@ namespace frame_calibration_node
                 geodesy_tf_msg.header.frame_id = geodesy_tf_point.header.frame_id;
                 // geodesy_tf_msg.child_frame_id = temp_geodesy_tf_point.header.frame_id;
                 geodesy_tf_msg.header.stamp = ros::Time::now();
-
-                // counter to remove edge case of first data point
-                gps_msg_counter += 1;
                 
-                if(gps_msg_counter == 1)
+                if(!first_message_sent)
                 {
-                    geodesy_tf_pub.publish(geodesy_tf_msg);    
+                    geodesy_tf_pub.publish(geodesy_tf_msg);
+                    first_message_sent = true;    
                 }
                 else
                 {
                     // calculate the euclidian distance between point (n) and point (n-1)
                     float distance_comparison;
-                    float gps_threshold = 0.5; // [m]
+                    float gps_threshold;
+
+                    frameCalibrationNode_nh.getParam("/frame_calibration/gps_threshold", gps_threshold);
                     distance_comparison = std::sqrt(std::pow(geodesy_tf_msg.pose.pose.position.x - previous_geodesy_tf_msg.pose.pose.position.x, 2) + std::pow(geodesy_tf_msg.pose.pose.position.y - previous_geodesy_tf_msg.pose.pose.position.y, 2));
                     
                     // if the distance between point (n) and point (n-1) is less than the threshold, then publish the gps msg
