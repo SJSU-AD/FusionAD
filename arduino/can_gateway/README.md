@@ -76,7 +76,7 @@ The CAR gateway's role is a message delivery gateway. The input topic is designe
 __Propulsion Control Command__:
 * Send a size of 8, byte type array to ```${control_msg}.propulsion_can_data```
 
-__How to Stuff the array__:
+__How to Stuff the array__:  
 C++
 ```
 char steering_can_frame[8] = {0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
