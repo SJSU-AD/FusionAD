@@ -55,7 +55,31 @@ namespace can_ardu_interface_node
 
     float CanArduInterfaceNode::steering_desired_to_can(float steering_desired)
     {
-              
+        byte steering_data[8] = {0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x33, 0x00};
+
+        int pos_full_lock = 0x00180000;
+        int zero_full_lock = 0x00000000;
+
+        // steering limits which are determined experimentally
+        // maximum number of radians (positive)
+        float max_angle = 1.4833248751;
+        float zero_angle = 0;
+        float neg_angle = -1.2074071982;
+
+        if(steering_desired > max_angle)
+        {
+            steering_desired = max_angle;
+        }
+        if(steering_desired < neg_angle)
+        {
+            steering_desired = neg_angle;
+        }
+
+        if((steering_desired <= max_angle) and (steering_desired >= neg_angle))
+        {
+            float steering_map = ((-1)*steering_input-zero_angle)*(pos_full_lock-zero_full_lock)/(max_angle-zero_angle)+zero_full_lock;
+            
+        }
     }
 
     float CanArduInterfaceNode::throttle_desired_to_can(float throttle_desired)
