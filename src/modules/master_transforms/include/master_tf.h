@@ -59,6 +59,7 @@ class MasterTfNode
         
         tf::TransformBroadcaster geodesy_broadcaster;
         tf::TransformBroadcaster lidar_broadcaster;
+        tf::TransformBroadcaster map_to_odom;
 
         float calibrated_yaw = 0;
         float rot_yaw = 0;

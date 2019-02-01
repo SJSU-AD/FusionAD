@@ -39,6 +39,7 @@ Topic: /localization/lidar_tf
 #include "geometry_msgs/Point.h"
 #include "tf/transform_broadcaster.h"
 #include "tf/transform_listener.h"
+#include <cmath>
 
 namespace fusionad
 {
@@ -94,6 +95,10 @@ class FrameCalibrationNode
         // messages after transform
         nav_msgs::Odometry geodesy_tf_msg;
         sensor_msgs::Imu imu_tf_msg;
+        nav_msgs::Odometry previous_geodesy_tf_msg;
+
+        bool first_message_sent = false;
+
         nav_msgs::Odometry lidar_tf_msg;
         
         tf::TransformListener geodesy_listener;
