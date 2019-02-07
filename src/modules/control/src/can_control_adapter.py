@@ -139,7 +139,7 @@ class CanDriver:
         # Propulsion Logic ##
         #####################
         
-        propulsion_input_limiter = 0.5
+        propulsion_input_limiter = 1
         prop_input = desired_propulsion * propulsion_input_limiter
         # 250 RPM
         # MAX_PROP_MESSAGE = 0x00FA
