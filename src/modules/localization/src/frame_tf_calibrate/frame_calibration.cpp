@@ -3,7 +3,15 @@
 NOTE: This node listens to the tf broadcasts and performs the homogeneous transforms.
       Another major function of this node is to "calibrate" the initial position and orientation
       of the vehicle. The homogeneous transforms are applied and then the result is published.
-      
+      Also contains logic to filter out GPS points that are outside of a certain threshold which is
+      calculated by taking the distance between each GPS point. 
+
+NOTE: The covariance in the eth-zurich swift package provides a filtered gps signal and a non-filtered gps signal.
+      A covariance of 1 [m^2] is typically done with their "single point estimation" and a covariance of 0.0049 and 
+      25 [m^2] has been filtered. Because the 1 [m^2] covariance is typically noisy due to the lack of filtering and the 
+      25 [m^2] covariance is filtered and smooth, the two covariances are swapped. This allows the EKF to take in the 
+      previously 25 [m^2] measurements and apply a larger Kalman Gain (trusting this measurement more). 
+
 Subscribers
 --------------------------------------------------
 Topic:  /gps/geodesy_odom
@@ -65,6 +73,10 @@ namespace frame_calibration_node
         const float yaw_offset = M_PI_2;
 
         rot_msg = imu_msg;
+
+        // rename the imu frame to base_link, which is much more common within ROS
+        rot_msg.header.frame_id = "base_link";
+
         tf::Quaternion imu_quaternion(imu_msg.orientation.x,
                                       imu_msg.orientation.y,
                                       imu_msg.orientation.z,
@@ -123,9 +135,29 @@ namespace frame_calibration_node
 
     void FrameCalibrationNode::geodesyCallback(const nav_msgs::Odometry& geodesy_msg)
     {
-        // covariance remains unchanged
-        geodesy_tf_msg.pose.covariance[0] = geodesy_msg.pose.covariance[0];
-        geodesy_tf_msg.pose.covariance[7] = geodesy_msg.pose.covariance[7];
+        /*
+        NOTE: The covariance in the eth-zurich swift package provides a filtered gps signal and a non-filtered gps signal.
+        A covariance of 1 [m^2] is typically done with their "single point estimation" and a covariance of 0.0049 and 
+        25 [m^2] has been filtered. Because the 1 [m^2] covariance is typically noisy due to the lack of filtering and the 
+        25 [m^2] covariance is filtered and smooth, the two covariances are swapped. This allows the EKF to take in the 
+        previously 25 [m^2] measurements and apply a larger Kalman Gain (trusting this measurement more). 
+        */
+
+        if (geodesy_msg.pose.covariance[0] == 1)
+        {
+            geodesy_tf_msg.pose.covariance[0] = 25;
+            geodesy_tf_msg.pose.covariance[7] = 25;
+        }
+        else if (geodesy_msg.pose.covariance[0] == 25)
+        {
+            geodesy_tf_msg.pose.covariance[0] = 1;
+            geodesy_tf_msg.pose.covariance[7] = 1;
+        }
+        else
+        {
+            geodesy_tf_msg.pose.covariance[0] = geodesy_msg.pose.covariance[0];
+            geodesy_tf_msg.pose.covariance[7] = geodesy_msg.pose.covariance[7];
+        }
         
         // creating a temporary geometry PoseStamped message to facilitate homogeneous transform
         geometry_msgs::PointStamped temp_geodesy_tf_point;
@@ -135,9 +167,10 @@ namespace frame_calibration_node
         temp_geodesy_tf_point.point.y = geodesy_msg.pose.pose.position.y;
 
         // threshold standard deviation for publishing geodesy 
-        float THRESHOLD_POSE_STD_DEV = 5; // [m]
-
-        if(std::sqrt(geodesy_tf_msg.pose.covariance[0]) <= THRESHOLD_POSE_STD_DEV)
+        float threshold_pose_std_dev;
+        frameCalibrationNode_nh.getParam("/frame_calibration/threshold_pose_std_dev", threshold_pose_std_dev);
+        
+        if(std::sqrt(geodesy_tf_msg.pose.covariance[0]) <= threshold_pose_std_dev)
         {
             try
             {
@@ -150,13 +183,37 @@ namespace frame_calibration_node
                 geodesy_tf_msg.pose.pose.position.x = geodesy_tf_point.point.x;
                 geodesy_tf_msg.pose.pose.position.y = geodesy_tf_point.point.y;
                 geodesy_tf_msg.header.frame_id = geodesy_tf_point.header.frame_id;
+                // geodesy_tf_msg.child_frame_id = temp_geodesy_tf_point.header.frame_id;
                 geodesy_tf_msg.header.stamp = ros::Time::now();
+                
+                if(!first_message_sent)
+                {
+                    geodesy_tf_pub.publish(geodesy_tf_msg);
+                    first_message_sent = true;    
+                }
+                else
+                {
+                    // calculate the euclidian distance between point (n) and point (n-1)
+                    float distance_comparison;
+                    float gps_threshold;
 
-                geodesy_tf_pub.publish(geodesy_tf_msg);
+                    frameCalibrationNode_nh.getParam("/frame_calibration/gps_threshold", gps_threshold);
+                    distance_comparison = std::sqrt(std::pow(geodesy_tf_msg.pose.pose.position.x - previous_geodesy_tf_msg.pose.pose.position.x, 2) + std::pow(geodesy_tf_msg.pose.pose.position.y - previous_geodesy_tf_msg.pose.pose.position.y, 2));
+                    
+                    // if the distance between point (n) and point (n-1) is less than the threshold, then publish the gps msg
+                    if(std::abs(distance_comparison) <= gps_threshold)
+                    {
+                        geodesy_tf_pub.publish(geodesy_tf_msg);
+                    }
+                }
 
                 ROS_INFO("gps: (%.2f, %.2f) -----> odom: (%.2f, %.2f) at time %.2f",
                 temp_geodesy_tf_point.point.x, temp_geodesy_tf_point.point.y,
                 geodesy_tf_point.point.x, geodesy_tf_point.point.y, geodesy_tf_point.header.stamp.toSec());
+                
+                // store previous messages for distance calculation
+                previous_geodesy_tf_msg.pose.pose.position.x = geodesy_tf_msg.pose.pose.position.x;
+                previous_geodesy_tf_msg.pose.pose.position.y = geodesy_tf_msg.pose.pose.position.y;
             }
             catch(tf::TransformException& geodesy_exception)
             {

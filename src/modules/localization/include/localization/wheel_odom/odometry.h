@@ -2,11 +2,10 @@
 #define ODOMETRY_H
 
 /*
-Takes wheel odometry from Arduino encoders and translates to vehicle velocity and position
-NOTE: This script is to handle the raw wheel odometry values from the Signwise 600 P/R rotary encoder.
-      It also takes in various inputs from topics yaw from the IMU to dead-reckon position and velocity in the X and Y frame.
-      Dead-reckoning requires previous pose to be tracked, we take advantage of this by subscribing to
-      the output of the EKF and using those pose messages as the previous pose of the wheel odometry.
+Takes wheel odometry from Arduino encoders and translates to vehicle velocity in the base_link frame
+
+NOTE: This script is to handle the raw wheel odometry values from the Signwise 600 P/R rotary encoder and 
+      calculate velocity in the base_link frame
 
 Subscribers:  
 -------------------------------------------
@@ -14,10 +13,6 @@ Topic:  /localization/right_encoder_reading
             Msg: std_msgs::Int16
 Topic:  /localization/left_encoder_reading
             Msg: std_msgs::Int16
-Topic:  /localization/odometry/filtered
-            Msg: nav_msgs::Odometry
-Topic:  /localization/rotated_imu
-            Msg: sensor_msgs::Imu
 
 Publisher:
 -------------------------------------------  
@@ -67,8 +62,6 @@ class WheelOdometryNode
         // initialize subscriber
         ros::Subscriber left_encoder_sub;
         ros::Subscriber right_encoder_sub;
-        ros::Subscriber imu_sub;
-        ros::Subscriber ekf_odom_sub;
                 
         // Kalman Filter Preparation
         // Odometry messages
@@ -98,21 +91,10 @@ class WheelOdometryNode
         
         // odometry_state_estimation() variables for dead-reckoning
         float vel_magnitude = 0;
-        float x_velocity = 0;
-        float y_velocity = 0;
-        
-        float x_position = 0;
-        float y_position = 0;
-        float previous_x_position = 0;
-        float previous_y_position = 0;
-        
-        float yaw_estimate = 0;
-        float previous_yaw = 0;
 
         // initialize subscriber messages
         long left_odometry_msg = 0;
         long right_odometry_msg = 0;
-        float steering_msg = 0;
 
         bool calibration_completed = false;
 
@@ -128,8 +110,6 @@ class WheelOdometryNode
         // declare the callbacks
         void leftEncoderCallback(const std_msgs::Int32& left_encoder_msg);
         void rightEncoderCallback(const std_msgs::Int32& right_encoder_msg);
-        void ekfCallback(const nav_msgs::Odometry& ekf_odom_msg);
-        void imuCallback(const sensor_msgs::Imu& yaw_msg);
         void timerCallback(const ros::TimerEvent& event);
         
 

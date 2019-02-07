@@ -101,6 +101,11 @@ namespace master_tf_node
                 tf::Transform(tf::Quaternion(0, 0, 0, 1), tf::Vector3(x_position_rot*std::cos(rot_yaw) - y_position_rot*std::sin(rot_yaw), 
                     x_position_rot*std::sin(rot_yaw) + y_position_rot*std::cos(rot_yaw), 0)),
                         ros::Time::now(),"odom", "gps"));
+        
+        map_to_odom.sendTransform(
+            tf::StampedTransform(
+                tf::Transform(tf::Quaternion(0, 0, 0, 1), tf::Vector3(0, 0, 0)),
+                    ros::Time::now(), "map", "odom"));
 
         // // if the calibration has been completed, start creating the lidar tf2 message
         // if (calibration_complete)
