@@ -22,12 +22,12 @@ class CanListener(object):
         # os.system('sudo /sbin/ip link set can0 up type can bitrate 250000')
 
         # initializing the buses to channel 0 and bustype 'socketcan_ctypes'
-        self.steering_sensor_bus = can.interface.Bus(channel='vcan0', bustype='socketcan_ctypes')
-        # self.torque_sensor_bus = can.interface.Bus(channel='vcan0', bustype='socketcan_ctypes')
+        self.steering_sensor_bus = can.interface.Bus(channel='can0', bustype='socketcan_ctypes')
+        # self.torque_sensor_bus = can.interface.Bus(channel='can0', bustype='socketcan_ctypes')
         
         # create the filters for the CAN network
-        # steering_filter = [{"can_id":0x18FF0113, "can_mask":0x1FFFFFFF, "extended":True}]
-        steering_filter = [{"can_id":0x18FF00F9, "can_mask":0x1FFFFFFF, "extended":True}]
+        steering_filter = [{"can_id":0x18FF0113, "can_mask":0x1FFFFFFF, "extended":True}]
+        # steering_filter = [{"can_id":0x18FF00F9, "can_mask":0x1FFFFFFF, "extended":True}]
         # torque_filter = [{"can_id":0x18FF0313, "can_mask":0x1FFFFFFF, "extended":True}]
 
         self.steering_sensor_bus.set_filters(steering_filter)

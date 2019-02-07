@@ -8,7 +8,7 @@
     <param name="debug" value="true"/>
   </node>
 
-  <node type="ardu_adapter.py" pkg="control" name="Control_Adapter" output="screen">
+  <node type="can_control_adapter" pkg="control" name="can_controller" output="screen">
   </node>
   
   <!-- Commented out because this is for red car-->

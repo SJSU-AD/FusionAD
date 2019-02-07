@@ -47,7 +47,7 @@ class CanDriver:
         # establishing the CAN connection and setting bitrate to 250 kbps
 
         # initializing the bus to channel 0 and bustype 'socketcan_ctypes'
-        self.bus = can.interface.Bus(channel='vcan0', bustype='socketcan_ctypes')
+        self.bus = can.interface.Bus(channel='can0', bustype='socketcan_ctypes')
 
         self.steering_arbitration_id = 0x18FF00F9
         self.braking_arbitration_id = 0xFF0000
@@ -138,9 +138,12 @@ class CanDriver:
         #####################
         # Propulsion Logic ##
         #####################
-        prop_input = desired_propulsion
+        
+        propulsion_input_limiter = 0.5
+        prop_input = desired_propulsion * propulsion_input_limiter
         # 250 RPM
-        MAX_PROP_MESSAGE = 0x00FA
+        # MAX_PROP_MESSAGE = 0x00FA
+        MAX_PROP_MESSAGE = 0x007D
         MIN_PROP_MESSAGE = 0x0000
 
         MAX_PROP_INPUT = 100
