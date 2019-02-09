@@ -77,34 +77,34 @@ namespace frame_calibration_node
         // rename the imu frame to base_link, which is much more common within ROS
         rot_msg.header.frame_id = "base_link";
 
-        tf::Quaternion imu_quaternion(imu_msg.orientation.x,
-                                      imu_msg.orientation.y,
-                                      imu_msg.orientation.z,
-                                      imu_msg.orientation.w);
-        tf::Matrix3x3 temporary_rot_matrix(imu_quaternion);
-        temporary_rot_matrix.getRPY(roll, pitch, yaw);
+        // tf::Quaternion imu_quaternion(imu_msg.orientation.x,
+        //                               imu_msg.orientation.y,
+        //                               imu_msg.orientation.z,
+        //                               imu_msg.orientation.w);
+        // tf::Matrix3x3 temporary_rot_matrix(imu_quaternion);
+        // temporary_rot_matrix.getRPY(roll, pitch, yaw);
 
-        float adjusted_yaw = yaw + yaw_offset + imu_residual_offset;
+        // float adjusted_yaw = yaw + yaw_offset + imu_residual_offset;
 
-        if(adjusted_yaw > M_PI)
-        {
-            vehicle_heading = adjusted_yaw - 2*M_PI;
-        }
-        else if(adjusted_yaw < (-1)*M_PI)
-        {
-            vehicle_heading = (2*M_PI) + adjusted_yaw;
-        }
-        else
-        {
-            vehicle_heading = adjusted_yaw;
-        }
+        // if(adjusted_yaw > M_PI)
+        // {
+        //     vehicle_heading = adjusted_yaw - 2*M_PI;
+        // }
+        // else if(adjusted_yaw < (-1)*M_PI)
+        // {
+        //     vehicle_heading = (2*M_PI) + adjusted_yaw;
+        // }
+        // else
+        // {
+        //     vehicle_heading = adjusted_yaw;
+        // }
 
-        tf::Quaternion new_imu_quaternion = tf::createQuaternionFromRPY(roll, pitch, vehicle_heading);
+        // tf::Quaternion new_imu_quaternion = tf::createQuaternionFromRPY(roll, pitch, vehicle_heading);
 
-        rot_msg.orientation.x = new_imu_quaternion[0];
-        rot_msg.orientation.y = new_imu_quaternion[1];
-        rot_msg.orientation.z = new_imu_quaternion[2];
-        rot_msg.orientation.w = new_imu_quaternion[3];
+        // rot_msg.orientation.x = new_imu_quaternion[0];
+        // rot_msg.orientation.y = new_imu_quaternion[1];
+        // rot_msg.orientation.z = new_imu_quaternion[2];
+        // rot_msg.orientation.w = new_imu_quaternion[3];
 
         imu_tf_pub.publish(rot_msg);
 
@@ -147,16 +147,19 @@ namespace frame_calibration_node
         {
             geodesy_tf_msg.pose.covariance[0] = 25;
             geodesy_tf_msg.pose.covariance[7] = 25;
+            geodesy_tf_msg.pose.covariance[35] = 04.;
         }
         else if (geodesy_msg.pose.covariance[0] == 25)
         {
             geodesy_tf_msg.pose.covariance[0] = 1;
             geodesy_tf_msg.pose.covariance[7] = 1;
+            geodesy_tf_msg.pose.covariance[35] = 0.05;
         }
         else
         {
             geodesy_tf_msg.pose.covariance[0] = geodesy_msg.pose.covariance[0];
             geodesy_tf_msg.pose.covariance[7] = geodesy_msg.pose.covariance[7];
+            geodesy_tf_msg.pose.covariance[35] = 0.005;
         }
         
         // creating a temporary geometry PoseStamped message to facilitate homogeneous transform
@@ -193,18 +196,60 @@ namespace frame_calibration_node
                 }
                 else
                 {
-                    // calculate the euclidian distance between point (n) and point (n-1)
                     float distance_comparison;
                     float gps_threshold;
+                    float vehicle_heading_from_gps;
+                    float lpf_coeff;
+                    int sample_size;
 
+                    frameCalibrationNode_nh.getParam("/frame_calibration/lpf_coeff", lpf_coeff);
                     frameCalibrationNode_nh.getParam("/frame_calibration/gps_threshold", gps_threshold);
-                    distance_comparison = std::sqrt(std::pow(geodesy_tf_msg.pose.pose.position.x - previous_geodesy_tf_msg.pose.pose.position.x, 2) + std::pow(geodesy_tf_msg.pose.pose.position.y - previous_geodesy_tf_msg.pose.pose.position.y, 2));
+                    frameCalibrationNode_nh.getParam("/frame_calibration/sample_size", sample_size);
+                    // calculate the euclidian distance between point (n) and point (n-1)
+                    distance_comparison = std::sqrt(std::pow(geodesy_tf_msg.pose.pose.position.x - previous_geodesy_tf_msg.pose.pose.position.x, 2) + std::pow(geodesy_tf_msg.pose.pose.position.y - previous_geodesy_tf_msg.pose.pose.position.y, 2));                    
                     
+                    // calculating vehicle heading from gps point n and gps point n-1
+                    vehicle_heading_from_gps = std::atan2((geodesy_msg.pose.pose.position.y - previous_geodesy_point.y), (geodesy_msg.pose.pose.position.x - previous_geodesy_point.x));
+
+                    // applying a low-pass filter and creating quaternion message to stuff into the geodesy_tf message
+                    if(second_message_sent)
+                    {
+                        vehicle_heading_from_gps = lpf_coeff * vehicle_heading_from_gps + (1 - lpf_coeff) * previous_vehicle_heading;
+
+                        // heading_deque.push_back(vehicle_heading_from_gps);
+                        // if(heading_deque.size() >= sample_size)
+                        // {
+                        //     float heading_array[sample_size];
+
+                        //     for(int i = 0; i < sample_size; i++)
+                        //     {
+                        //         heading_array[i] = heading_deque[i];
+                        //     }
+
+                        //     int n = sizeof(heading_array)/sizeof(heading_array[0]);
+                        //     std::sort(heading_array, heading_array+n);
+
+                        //     vehicle_heading_from_gps = heading_array[sample_size/2];
+
+                        //     heading_deque.pop_front();
+                        // }
+
+                        tf::Quaternion vehicle_heading_quaternion = tf::createQuaternionFromRPY(0, 0, vehicle_heading_from_gps);
+
+                        geodesy_tf_msg.pose.pose.orientation.x = vehicle_heading_quaternion[0];
+                        geodesy_tf_msg.pose.pose.orientation.y = vehicle_heading_quaternion[1];
+                        geodesy_tf_msg.pose.pose.orientation.z = vehicle_heading_quaternion[2];
+                        geodesy_tf_msg.pose.pose.orientation.w = vehicle_heading_quaternion[3];
+                    }
+
                     // if the distance between point (n) and point (n-1) is less than the threshold, then publish the gps msg
                     if(std::abs(distance_comparison) <= gps_threshold)
                     {
                         geodesy_tf_pub.publish(geodesy_tf_msg);
                     }
+
+                    previous_vehicle_heading = vehicle_heading_from_gps;
+                    second_message_sent = true;
                 }
 
                 ROS_INFO("gps: (%.2f, %.2f) -----> odom: (%.2f, %.2f) at time %.2f",
@@ -214,6 +259,10 @@ namespace frame_calibration_node
                 // store previous messages for distance calculation
                 previous_geodesy_tf_msg.pose.pose.position.x = geodesy_tf_msg.pose.pose.position.x;
                 previous_geodesy_tf_msg.pose.pose.position.y = geodesy_tf_msg.pose.pose.position.y;
+                
+                // store previous geodesy messages for heading calculation
+                previous_geodesy_point.x = geodesy_msg.pose.pose.position.x;
+                previous_geodesy_point.y = geodesy_msg.pose.pose.position.y;
             }
             catch(tf::TransformException& geodesy_exception)
             {

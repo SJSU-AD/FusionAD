@@ -5,6 +5,8 @@
     <node type="frame_calibration" pkg="localization" name="frame_calibration" output="screen">
         <param name="threshold_pose_std_dev" value="5" />
         <param name="gps_threshold" value="0.5" />
+        <param name="lpf_coeff" value="1" />
+        <param name="sample_size" value="4" />
     </node>
     
     <node type="master_tf" pkg="master_transforms" name="master_tf" output="screen">

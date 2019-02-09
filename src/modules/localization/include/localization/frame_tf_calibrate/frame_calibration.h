@@ -40,6 +40,8 @@ Topic: /localization/lidar_tf
 #include "tf/transform_broadcaster.h"
 #include "tf/transform_listener.h"
 #include <cmath>
+#include <queue>
+#include <algorithm>
 
 namespace fusionad
 {
@@ -97,13 +99,20 @@ class FrameCalibrationNode
         sensor_msgs::Imu imu_tf_msg;
         nav_msgs::Odometry previous_geodesy_tf_msg;
 
+        float previous_vehicle_heading;
+        geometry_msgs::Point previous_geodesy_point;
+
         bool first_message_sent = false;
+        bool second_message_sent = false;
 
         nav_msgs::Odometry lidar_tf_msg;
         
         tf::TransformListener geodesy_listener;
         tf::TransformListener lidar_listener;
         
+        // initializing a deque for a running median
+        std::deque<float> heading_deque;
+
         // message threshold for calibration
         const int MSG_THRESHOLD = 100;
 
