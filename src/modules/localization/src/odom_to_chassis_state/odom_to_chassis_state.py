@@ -24,7 +24,7 @@ from sensor_msgs.msg import Imu
 from interface.msg import Chassis_state
 
 class MsgConverter(object):
-    """Takes odometry data from robot_localization and imu data from frame_calibration publishes as a chassis_state message"""
+    """Takes odometry data from robot_localization and wheel odom data and publishes as a chassis_state message"""
 
     def __init__(self):
         """Initializing Chassis_state message publisher"""

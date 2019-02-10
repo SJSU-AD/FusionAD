@@ -40,19 +40,19 @@ namespace master_tf_node
         master_tf_timer = masterTfNode_nh.createTimer(ros::Duration(0.02), &MasterTfNode::timerCallback, this);
 
         // initializing the subscribers
-        imu_sub = masterTfNode_nh.subscribe("/localization/rotated_imu", 50, &MasterTfNode::imuCallback, this);
+        imu_sub = masterTfNode_nh.subscribe("/odometry/filtered", 50, &MasterTfNode::ekfCallback, this);
         // calibrated_sub = masterTfNode_nh.subscribe("/localization/calibrated_yaw", 10, &MasterTfNode::calibrationCallback, this);
     }
 
-    void MasterTfNode::imuCallback(const sensor_msgs::Imu& imu_msg)
+    void MasterTfNode::ekfCallback(const nav_msgs::Odometry& ekf_msg)
     {
         double roll = 0, pitch = 0, yaw = 0;
 
-        tf::Quaternion imu_quaternion(imu_msg.orientation.x,
-                                      imu_msg.orientation.y,
-                                      imu_msg.orientation.z,
-                                      imu_msg.orientation.w);
-        tf::Matrix3x3 temporary_rot_matrix(imu_quaternion);
+        tf::Quaternion ekf_quaternion(ekf_msg.pose.pose.orientation.x,
+                                      ekf_msg.pose.pose.orientation.y,
+                                      ekf_msg.pose.pose.orientation.z,
+                                      ekf_msg.pose.pose.orientation.w);
+        tf::Matrix3x3 temporary_rot_matrix(ekf_quaternion);
         temporary_rot_matrix.getRPY(roll, pitch, yaw);
         rot_yaw = yaw;
     }
@@ -90,8 +90,8 @@ namespace master_tf_node
             y-position = 0 [m]
 
         Lidar to front axle
-            x-position = 
-            y-position = 
+            x-position = 0
+            y-position = 0
         */
         float x_position_rot = 1.47955;
         float y_position_rot = 0;
