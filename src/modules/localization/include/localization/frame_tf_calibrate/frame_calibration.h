@@ -117,20 +117,16 @@ class FrameCalibrationNode
         geometry_msgs::Point previous_geodesy_point;
 
         bool first_message_sent = false;
-        bool second_message_sent = false;
 
         nav_msgs::Odometry lidar_tf_msg;
         
         tf::TransformListener geodesy_listener;
         tf::TransformListener lidar_listener;
-        
-        // initializing a deque
-        std::deque<float> heading_deque;
 
         // message threshold for calibration
         const int MSG_THRESHOLD = 100;
-
         unsigned int heading_sample_counter = 0;
+        
         // declaring callbacks
         void geodesyCallback(const nav_msgs::Odometry& geodesy_msg);
         void yawCallback(const sensor_msgs::Imu& imu_msg);

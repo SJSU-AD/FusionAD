@@ -172,65 +172,37 @@ namespace frame_calibration_node
                     float distance_comparison;
                     float gps_threshold;
                     float vehicle_heading_from_gps;
-                    float lpf_coeff;
-                    int sample_size;
 
-                    frameCalibrationNode_nh.getParam("/frame_calibration/lpf_coeff", lpf_coeff);
                     frameCalibrationNode_nh.getParam("/frame_calibration/gps_threshold", gps_threshold);
-                    frameCalibrationNode_nh.getParam("/frame_calibration/sample_size", sample_size);
                     // calculate the euclidian distance between point (n) and point (n-1)
                     distance_comparison = std::sqrt(std::pow(geodesy_tf_msg.pose.pose.position.x - previous_geodesy_tf_msg.pose.pose.position.x, 2) + std::pow(geodesy_tf_msg.pose.pose.position.y - previous_geodesy_tf_msg.pose.pose.position.y, 2));                    
                     
                     // calculating vehicle heading from gps point n and gps point n-1
                     vehicle_heading_from_gps = std::atan2((geodesy_msg.pose.pose.position.y - previous_geodesy_point.y), (geodesy_msg.pose.pose.position.x - previous_geodesy_point.x));
 
-                    // applying a low-pass filter and creating quaternion message to stuff into the geodesy_tf message
-                    if(second_message_sent)
+                    // if the vehicle heading estimate is drastically different from the previous heading estimate, then make the current estimate equal to the previous estimate
+                    heading_sample_counter++;
+                    
+                    // if 200 samples have been collected, then start applying the heading threshold
+                    if(heading_sample_counter >= 200)
                     {
-                        vehicle_heading_from_gps = lpf_coeff * vehicle_heading_from_gps + (1 - lpf_coeff) * previous_vehicle_heading;
-
-                        // heading_deque.push_back(vehicle_heading_from_gps);
-                        // if(heading_deque.size() >= sample_size)
-                        // {
-                        //     float heading_array[sample_size];
-
-                        //     for(int i = 0; i < sample_size; i++)
-                        //     {
-                        //         heading_array[i] = heading_deque[i];
-                        //     }
-
-                        //     int n = sizeof(heading_array)/sizeof(heading_array[0]);
-                        //     std::sort(heading_array, heading_array+n);
-
-                        //     vehicle_heading_from_gps = heading_array[sample_size/2];
-
-                        //     heading_deque.pop_front();
-                        // }
-
-                        // if the vehicle heading estimate is drastically different from the previous heading estimate, then make the current estimate equal to the previous estimate
-                        heading_sample_counter++;
-                        
-                        // if 200 samples have been collected, then start applying the heading threshold
-                        if(heading_sample_counter >= 200)
+                        float heading_threshold;
+                        frameCalibrationNode_nh.getParam("/frame_calibration/heading_threshold", heading_threshold);
+                        if(std::abs(std::abs(previous_vehicle_heading) - std::abs(vehicle_heading_from_gps)) >= heading_threshold)                            
                         {
-                            float heading_threshold;
-                            frameCalibrationNode_nh.getParam("/frame_calibration/heading_threshold", heading_threshold);
-                            if(std::abs(std::abs(previous_vehicle_heading) - std::abs(vehicle_heading_from_gps)) >= heading_threshold)                            
-                            {
-                                vehicle_heading_from_gps = previous_vehicle_heading;
-                                ROS_INFO("Rejected Heading Estimate");
-                            }
+                            vehicle_heading_from_gps = previous_vehicle_heading;
+                            ROS_INFO("Rejected Heading Estimate");
                         }
-
-                        // pack the new vehicle heading into a temporary quaternion message
-                        tf::Quaternion vehicle_heading_quaternion = tf::createQuaternionFromRPY(0, 0, vehicle_heading_from_gps);
-
-                        // place the temporary quaternion message into the geodesy_tf_msg 
-                        geodesy_tf_msg.pose.pose.orientation.x = vehicle_heading_quaternion[0];
-                        geodesy_tf_msg.pose.pose.orientation.y = vehicle_heading_quaternion[1];
-                        geodesy_tf_msg.pose.pose.orientation.z = vehicle_heading_quaternion[2];
-                        geodesy_tf_msg.pose.pose.orientation.w = vehicle_heading_quaternion[3];
                     }
+
+                    // pack the new vehicle heading into a temporary quaternion message
+                    tf::Quaternion vehicle_heading_quaternion = tf::createQuaternionFromRPY(0, 0, vehicle_heading_from_gps);
+
+                    // place the temporary quaternion message into the geodesy_tf_msg 
+                    geodesy_tf_msg.pose.pose.orientation.x = vehicle_heading_quaternion[0];
+                    geodesy_tf_msg.pose.pose.orientation.y = vehicle_heading_quaternion[1];
+                    geodesy_tf_msg.pose.pose.orientation.z = vehicle_heading_quaternion[2];
+                    geodesy_tf_msg.pose.pose.orientation.w = vehicle_heading_quaternion[3];
 
                     // if the distance between point (n) and point (n-1) is less than the threshold, then publish the gps msg
                     if(std::abs(distance_comparison) <= gps_threshold)
@@ -239,7 +211,6 @@ namespace frame_calibration_node
                     }
 
                     previous_vehicle_heading = vehicle_heading_from_gps;
-                    second_message_sent = true;
                 }
 
                 ROS_INFO("gps: (%.2f, %.2f) -----> odom: (%.2f, %.2f) at time %.2f",
