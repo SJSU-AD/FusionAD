@@ -66,7 +66,7 @@ class MasterTfNode
         bool calibration_complete = false;
 
         // initialize callback functions for calibrated messages from the frame_calibration node
-        void imuCallback(const sensor_msgs::Imu& imu_msg);
+        void ekfCallback(const nav_msgs::Odometry& ekf_msg);
         // void calibrationCallback(const geometry_msgs::Pose& pose_msg);
         void timerCallback(const ros::TimerEvent& event);
 
