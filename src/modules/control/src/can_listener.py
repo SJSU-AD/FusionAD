@@ -4,7 +4,8 @@ Monitors the CAN Network messages and parses the steering encoder and torque fee
 
 Publisher
 ---------
-Topic: /control/controlcmd
+Topic: /control/steering_response
+    Msg: std_msgs/float64
 """
 import rospy
 import can
@@ -83,15 +84,7 @@ class CanListener(object):
     #             self.manualTakeoverPub.publish(manual_takeover_msg)
     
     def bytearray_to_float(self, first_byte, last_byte, input_message):
-        # process_data = 0
-        # counter = 0
-
-        # for i in range(first_byte, last_byte):
-        #     process_data = process_data | (input_message[i] << (counter*8))
-        #     counter += 1
-        
         new_data = struct.unpack('i', input_message[first_byte:(last_byte+1)])
-        # print(new_data[0]*0.00000095367431640625)
         return new_data[0]
 
     def main(self):

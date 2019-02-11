@@ -19,7 +19,7 @@ NOTE: bus = can.interface.Bus(channel='can0', bustype='socketcan_ctypes')
                         or [string,string,string,string,string,string,string,string]
 
       The SME Propulsion Motor Controller requires 5 seconds of power messages until operation can begin
-      Afterwards, the controller must receive power messages and propulsion control messages with a 50 ms time delay
+      Afterwards, the controller must receive power messages and propulsion control messages with a 25 ms time delay
       between the two different messages
 
 NOTE: Uses interface/chassis_state.msg
@@ -28,7 +28,6 @@ NOTE: Uses interface/chassis_state.msg
         ----------
         Topic: /control/controlcmd
             Msg: Chassis_state.msg
-    
 """
 import rospy
 from interface.msg import Controlcmd
@@ -37,18 +36,16 @@ import can
 import time
 import os
 
-# os.system('sudo /sbin/ip link set can0 up type can bitrate 250000')
-
 class CanDriver:
     """Converts high-lvl input into appropriate CAN Message and sends the message"""
-    # initializing the node
     def __init__(self):
         rospy.init_node('can_controller', anonymous = True)
-        # establishing the CAN connection and setting bitrate to 250 kbps
-
         # initializing the bus to channel 0 and bustype 'socketcan_ctypes'
         self.bus = can.interface.Bus(channel='can0', bustype='socketcan_ctypes')
 
+        ###################
+        # Arbitration IDs #
+        ###################
         self.steering_arbitration_id = 0x18FF00F9
         self.braking_arbitration_id = 0xFF0000
 
@@ -57,6 +54,9 @@ class CanDriver:
         # arbitration id for commanding the motor
         self.propulsion_arbitration_id = 0x304
 
+        ############
+        # CAN Data #
+        ############
         # 8 byte message for moving the steering motor
         self.steering_data = [0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x33, 0x00]
         # 8 byte message for zeroing the steering
@@ -82,26 +82,33 @@ class CanDriver:
         # mask for hex
         self.MASKER = 0xFF
 
+        ###############
+        # Subscribers #
+        ###############
         # subscriber to the high level control
         rospy.Subscriber('/control/controlcmd', Controlcmd, self.high_lvl_callback, queue_size = 100)
         # subscriber to the can_listener
-        rospy.Subscriber('/control/autonomous_status', Chassis_state, self.manual_override_callback, queue_size = 100)
+        # rospy.Subscriber('/control/autonomous_status', Chassis_state, self.manual_override_callback, queue_size = 100)
     
         # autonomous operation state
-        self.autonomous_mode = True
+        # self.autonomous_mode = True
         # cyclic time cycle of 5 milliseconds required
         self.main()
 
-    def manual_override_callback(self, Chassis_state):
-        """Callback handler from the CAN listener"""
-        self.autonomous_mode = Chassis_state.inAutonomousMode
+    # def manual_override_callback(self, Chassis_state):
+    #     """Callback handler from the CAN listener"""
+    #     self.autonomous_mode = Chassis_state.inAutonomousMode
 
     def high_lvl_callback(self, Controlcmd):
         """Callback handler from high level control, linear fit from experimental data according to ISS-72"""
         # left turn
-        positive_steering_slope = 0.2224731787
+        # positive_steering_slope = 0.2224731787
         # right turn
-        negative_steering_slope = 0.2733129308
+        # negative_steering_slope = 0.2733129308
+
+        # temporary for steering sweep
+        positive_steering_slope = 1
+        negative_steering_slope = 1
 
         # remap the steering input
         if (Controlcmd.steeringAngle >= 0):
@@ -149,14 +156,17 @@ class CanDriver:
         MAX_PROP_INPUT = 100
         MIN_PROP_INPUT = 0
         
+        # confirm that the input is within bounds
         if prop_input < MIN_PROP_INPUT:
             prop_input = MIN_PROP_INPUT
         if prop_input > MAX_PROP_INPUT:
             prop_input = MAX_PROP_INPUT
 
+        # map the message to the desired range
         if (prop_input >= MIN_PROP_INPUT) and (prop_input <= MAX_PROP_INPUT):
             propulsion_map = int(round((prop_input-MIN_PROP_INPUT)*(MAX_PROP_MESSAGE-MIN_PROP_MESSAGE)/(MAX_PROP_INPUT-MIN_PROP_INPUT)+MIN_PROP_MESSAGE))
 
+            # bit shift and mask to get the most significant bits 
             self.prop_data[1] = int(propulsion_map >> 8 & self.MASKER)
             self.prop_data[0] = int(propulsion_map & self.MASKER)     
         else:
@@ -177,20 +187,27 @@ class CanDriver:
 
         # steering limits determined experimentally
         # maximum number of radians (positive)
-        MAX_ANGLE = 1.4833248751
-        # 0 REVOLUTIONS
-        ZERO_ANGLE = 0
-        # minimum number of radians (negative)
-        NEG_ANGLE = -1.2074071982
+        # MAX_ANGLE = 1.4833248751
+        # # 0 REVOLUTIONS
+        # ZERO_ANGLE = 0
+        # # minimum number of radians (negative)
+        # NEG_ANGLE = -1.2074071982
 
-        # establishing the limits of the joy node (from -0.33 to 0.33)
+        MAX_ANGLE = 1.5
+        ZERO_ANGLE = 0
+        NEG_ANGLE = -1.5
+        
+        # confirm that the input is within bounds
         if steering_input > MAX_ANGLE:
             steering_input = MAX_ANGLE
         if steering_input < NEG_ANGLE:
             steering_input = NEG_ANGLE
 
+        # map the message to the desired range
         if (steering_input <= MAX_ANGLE) and (steering_input >= NEG_ANGLE):
             steering_map = int(round(((-1)*steering_input-ZERO_ANGLE)*(POS_FULL_LOCK-ZERO_FULL_LOCK)/(MAX_ANGLE-ZERO_ANGLE)+ZERO_FULL_LOCK))
+
+            # bit shift and mask to get the most significant bits 
             self.steering_data[5] = int(steering_map >> 24 & self.MASKER)    
             self.steering_data[4] = int(steering_map >> 16 & self.MASKER)    
             self.steering_data[3]= int(steering_map >> 8 & self.MASKER)
@@ -213,11 +230,9 @@ class CanDriver:
         # 5 seconds of power messages until control can be sent
         TIME_DELAY = 5
 
-        # # desired frequency
-        # FREQUENCY_DESIRED = 20
-        
         # period between each set of messages
         OVERALL_PERIOD = 0.05
+
         # period between power and control messages
         POWER_CONTROL_PERIOD = 0.025
         
