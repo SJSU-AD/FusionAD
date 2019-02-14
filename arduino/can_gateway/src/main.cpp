@@ -65,12 +65,13 @@ void loop()
     OSV_CAN.sendMsgBuf(PROPULSION_CONTROL_ID, STD_FRAME, 8, propulsion_message_data);      
     IsPropulsionPowerMessageSent = false;
   }
+  /*
   // Check if hold steering position is false
   if(!HoldSteeringValue)
   {
     // Send steering control data if hold is false
     OSV_CAN.sendMsgBuf(STEERING_ARB_ID, EXT_FRAME, 8, steering_message_data);      
-  }
+  }*/
 
   // Debug messages
   SendDebugMessages();     
@@ -130,8 +131,8 @@ bool InitializeCommunication()
 bool InitializeDBWSystem()
 {
   // Perform Steering CAN BUS Initialization
-  OSV_CAN.sendMsgBuf(STEERING_ARB_ID, EXT_FRAME, 8, Steering_Set_Zero_Data);        // Set steering position to zero
-  OSV_CAN.sendMsgBuf(STEERING_ARB_ID, EXT_FRAME, 8, Steering_Set_Center_Data);      // Center steering wheel
+  //OSV_CAN.sendMsgBuf(STEERING_ARB_ID, EXT_FRAME, 8, Steering_Set_Zero_Data);        // Set steering position to zero
+  //OSV_CAN.sendMsgBuf(STEERING_ARB_ID, EXT_FRAME, 8, Steering_Set_Center_Data);      // Center steering wheel
 
   // Send 5 seconds long of power signals 
   unsigned long propulsion_power_init_current_time = millis();

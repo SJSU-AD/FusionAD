@@ -3,7 +3,7 @@
 
   <!-- ATM machines = -6.0, North Garage = 7.493 -->
   <arg name="height" value="-6.0" /> <!-- Measured in meters -->
-  <arg name="chosen_path" value="student_union_straight_long.txt" />
+  <arg name="chosen_path" value="campus_uPath.txt" />
 
   <node type="path_interpolation.py" pkg="geodesy" name="path_interpolator" output="screen">
     <param name="~fixed_height" value="$(arg height)" /> 
