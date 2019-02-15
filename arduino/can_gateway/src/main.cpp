@@ -25,11 +25,11 @@ Timer can_timer;
 ros::NodeHandle can_ros_nh;
 
 // Declare the outgoing message
-//interface::Can_Interface received_can_message;
+interface::Can_Interface received_can_message;
 interface::Can_Interface_Debug can_debug_message;
 
 // Declare ros publisher and subscriber for relaying the CAN message
-//ros::Publisher can_relay_pub("/can_gateway/receive", &received_can_message);
+ros::Publisher can_relay_pub("/can_gateway/received", &received_can_message);
 ros::Publisher can_relay_debug_pub("/can_gateway/debug", &can_debug_message);
 ros::Subscriber<interface::Can_Interface> can_relay_sub("/can_gateway/send", &ROSGatewaySendCallback);
 ros::Subscriber<std_msgs::Bool> can_relay_mode_sub("/can_gateway/mode", &ROSGatewayModeCallback);
@@ -72,6 +72,9 @@ void loop()
     // Send steering control data if hold is false
     OSV_CAN.sendMsgBuf(STEERING_ARB_ID, EXT_FRAME, 8, steering_message_data);      
   }*/
+
+  // Check receive and send to ROS
+  CheckIncomingMessage();
 
   // Debug messages
   SendDebugMessages();     
@@ -168,4 +171,26 @@ void SendDebugMessages()
 void TimerRosSpinCallback()
 {
   can_ros_nh.spinOnce();  
+}
+
+void CheckIncomingMessage()
+{
+  uint8_t len = 0;
+  uint8_t buf[8];
+
+  if(CAN_MSGAVAIL == OSV_CAN.checkReceive())            // check if data coming
+  {
+    OSV_CAN.readMsgBuf(&len, buf);    // read data,  len: data length, buf: data buf
+
+    uint32_t canId = OSV_CAN.getCanId();
+
+    if(canId == STEERING_FEEDBACK_ARB_ID)
+    {
+      for(int i = 0; i <len ; i++)
+      {
+        received_can_message.steering_can_data[i] = buf[i];
+      }
+      can_relay_pub.publish(&received_can_message);
+    }
+  }  
 }

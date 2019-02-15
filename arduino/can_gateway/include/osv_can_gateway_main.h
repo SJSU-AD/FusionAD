@@ -37,6 +37,8 @@
 #define STEERING_ARB_ID 0x18FF00F9
 #define PROPULSION_POWER_ID 0x204
 #define PROPULSION_CONTROL_ID 0x304
+#define STEERING_FEEDBACK_ARB_ID 0x18FF0113
+
 // CAN Message Frames for Init
 const uint8_t Steering_Set_Zero_Data[8] = {0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 const uint8_t Steering_Set_Center_Data[8] = {0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x66};
@@ -56,4 +58,8 @@ void SendDebugMessages();
 // Timer Callbacks
 void TimerPropulsionPowerCallback();
 void TimerRosSpinCallback();
+
+// Check if incoming message received
+void CheckIncomingMessage();
+
 #endif //OSV_CAN_GATEWAY_MAIN_H_
