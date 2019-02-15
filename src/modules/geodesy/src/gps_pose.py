@@ -30,7 +30,7 @@ class GPSDataConverter(object):
         Msg: nav_msgs/Odometry.msg
     """
     
-    def __init__(self):
+    def __init__(self, useCustomRadarPnt=True):
         self.odomPublisher = rospy.Publisher("/gps/geodesy_odom", Odometry, queue_size=1000)
         rospy.loginfo("Instantiated gps_pose publishers")
         # self.rate = rospy.Rate(1)
@@ -49,6 +49,8 @@ class GPSDataConverter(object):
 
         filePath = rospy.get_param("~file_path")
         
+        radarLat = rospy.get_param("~radar_lat")
+        radarLon = rospy.get_param("~radar_lon")
         height = rospy.get_param("~fixed_height")
         # height = -6.0
 

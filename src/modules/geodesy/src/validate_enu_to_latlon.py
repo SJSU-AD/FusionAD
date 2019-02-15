@@ -287,7 +287,7 @@ def enu_to_latlon(properties, eData, nData, uData):
     latData = []
     lonData = []
 
-    enuConverter = GeodesyConverterENU(eData, nData, uData)
+    enuConverter = GeodesyConverterENU(eData, nData, uData)#, radarPoint=(37.335292, -121.881295, -6.0))
 
     xData, yData, zData = enuConverter.ENU_data_to_ECEF_data(eData, nData, uData, 
                                                              lat0=properties["initialLatitude"],
