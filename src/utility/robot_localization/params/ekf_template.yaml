@@ -1,7 +1,7 @@
 # The frequency, in Hz, at which the filter will output a position estimate. Note that the filter will not begin
 # computation until it receives at least one message from one of the inputs. It will then run continuously at the
 # frequency specified here, regardless of whether it receives more measurements. Defaults to 30 if unspecified.
-frequency: 30
+frequency: 50
 
 # The period, in seconds, after which we consider a sensor to have timed out. In this event, we carry out a predict
 # cycle on the EKF without correcting it. This parameter can be thought of as the minimum frequency with which the
@@ -36,7 +36,7 @@ debug: false
 debug_out_file: /path/to/debug/file.txt
 
 # Whether to broadcast the transformation over the /tf topic. Defaults to true if unspecified.
-publish_tf: false
+publish_tf: true
 
 # Whether to publish the acceleration state. Defaults to false if unspecified.
 # publish_acceleration: true
@@ -60,9 +60,9 @@ publish_tf: false
 #     3a. Set your "world_frame" to your map_frame value
 #     3b. MAKE SURE something else is generating the odom->base_link transform. Note that this can even be another state
 #         estimation node from robot_localization! However, that instance should *not* fuse the global data.
-map_frame: map              # Defaults to "map" if unspecified
+map_frame: map
 odom_frame: odom           # Defaults to "odom" if unspecified
-base_link_frame: base_imu_link  # Defaults to "base_link" if unspecified
+base_link_frame: base_link  # Defaults to "base_link" if unspecified
 world_frame: odom          # Defaults to the value of odom_frame if unspecified
 
 # The filter accepts an arbitrary number of inputs from each input message type (nav_msgs/Odometry,
@@ -81,7 +81,7 @@ odom0: /localization/geodesy_tf
 # has no pose information, so the first six values would be meaningless in that case. Each vector defaults to all false
 # if unspecified, effectively making this parameter required for each sensor.
 odom0_config: [true,  true,  false,
-               false, false, false,
+               false, false, true,
                false, false, false,
                false, false, false,
                false, false, false]
@@ -118,20 +118,20 @@ odom0_relative: false
 # For messages that have both pose and twist data, the parameter specifies to which part of the message we are applying
 # the thresholds.
 
-# odom0_pose_rejection_threshold: 50
+# odom0_pose_rejection_threshold: 5
 # odom0_twist_rejection_threshold: 1
 
 # Further input parameter examples
 odom1: /localization/wheel_odom
-odom1_config: [true, true, false,
+odom1_config: [false, false, false,
                false, false, false,
-               true, true, false,
+               true, false,  false,
                false, false, false,
                false, false, false] 
 odom1_differential: false
 odom1_relative: false
 odom1_queue_size: 1000
-# odom1_pose_rejection_threshold: 5
+# odom1_pose_rejection_threshold: 0.05
 # odom1_twist_rejection_threshold: 0.5
 odom1_nodelay: false
 
@@ -172,7 +172,7 @@ odom1_nodelay: false
 
 imu0: /localization/rotated_imu
 imu0_config: [false, false, false,
-              true,  true,  true,
+              false,  false,  false,
               false, false, false,
               true,  true,  true,
               true,  true,  true] 
@@ -207,17 +207,17 @@ stamped_control: false
 # The last issued control command will be used in prediction for this period. Defaults to 0.2.
 control_timeout: 0.2
 # Which velocities are being controlled. Order is vx, vy, vz, vroll, vpitch, vyaw.
-control_config: [true, false, false, false, false, true]
+control_config: [true, true, false, false, false, true]
 # Places limits on how large the acceleration term will be. Should match your robot's kinematics.
-acceleration_limits: [1.3, 0.0, 0.0, 0.0, 0.0, 3.4]
+acceleration_limits: [1.3, 1.3, 0.0, 0.0, 0.0, 3.4]
 # Acceleration and deceleration limits are not always the same for robots.
-deceleration_limits: [1.3, 0.0, 0.0, 0.0, 0.0, 4.5]
+deceleration_limits: [1.3, 1.3, 0.0, 0.0, 0.0, 4.5]
 # If your robot cannot instantaneously reach its acceleration limit, the permitted change can be controlled with these
 # gains
-acceleration_gains: [0.8, 0.0, 0.0, 0.0, 0.0, 0.9]
+acceleration_gains: [0.8, 0.8, 0.0, 0.0, 0.0, 0.9]
 # If your robot cannot instantaneously reach its deceleration limit, the permitted change can be controlled with these
 # gains
-deceleration_gains: [1.0, 0.0, 0.0, 0.0, 0.0, 1.0]
+deceleration_gains: [1.0, 1.0, 0.0, 0.0, 0.0, 1.0]
 
 # [ADVANCED] The process noise covariance matrix can be difficult to tune, and can vary for each application, so it is
 # exposed as a configuration parameter. This matrix represents the noise we add to the total error after each
@@ -227,20 +227,23 @@ deceleration_gains: [1.0, 0.0, 0.0, 0.0, 0.0, 1.0]
 # to be larger, which will cause the filter to trust the incoming measurement more during correction. The values are
 # ordered as x, y, z, roll, pitch, yaw, vx, vy, vz, vroll, vpitch, vyaw, ax, ay, az. Defaults to the matrix below if
 # unspecified.
-process_noise_covariance: [17, 0,    0,    0,    0,    0,    0,     0,     0,    0,    0,    0,    0,    0,    0,
-                           0,    17, 0,    0,    0,    0,    0,     0,     0,    0,    0,    0,    0,    0,    0,
+
+# dynamic_process_noise_covariance: true
+
+process_noise_covariance: [1, 0,    0,    0,    0,    0,    0,     0,     0,    0,    0,    0,    0,    0,    0,
+                           0,    1, 0,    0,    0,    0,    0,     0,     0,    0,    0,    0,    0,    0,    0,
                            0,    0,    0.06, 0,    0,    0,    0,     0,     0,    0,    0,    0,    0,    0,    0,
                            0,    0,    0,    0.03, 0,    0,    0,     0,     0,    0,    0,    0,    0,    0,    0,
                            0,    0,    0,    0,    0.03, 0,    0,     0,     0,    0,    0,    0,    0,    0,    0,
-                           0,    0,    0,    0,    0,    0.06, 0,     0,     0,    0,    0,    0,    0,    0,    0,
-                           0,    0,    0,    0,    0,    0,    0.025, 0,     0,    0,    0,    0,    0,    0,    0,
-                           0,    0,    0,    0,    0,    0,    0,     0.025, 0,    0,    0,    0,    0,    0,    0,
+                           0,    0,    0,    0,    0,    0.005, 0,     0,     0,    0,    0,    0,    0,    0,    0,
+                           0,    0,    0,    0,    0,    0,    1, 0,     0,    0,    0,    0,    0,    0,    0,
+                           0,    0,    0,    0,    0,    0,    0,     1, 0,    0,    0,    0,    0,    0,    0,
                            0,    0,    0,    0,    0,    0,    0,     0,     0.04, 0,    0,    0,    0,    0,    0,
                            0,    0,    0,    0,    0,    0,    0,     0,     0,    0.01, 0,    0,    0,    0,    0,
                            0,    0,    0,    0,    0,    0,    0,     0,     0,    0,    0.01, 0,    0,    0,    0,
-                           0,    0,    0,    0,    0,    0,    0,     0,     0,    0,    0,    0.02, 0,    0,    0,
-                           0,    0,    0,    0,    0,    0,    0,     0,     0,    0,    0,    0,    0.01, 0,    0,
-                           0,    0,    0,    0,    0,    0,    0,     0,     0,    0,    0,    0,    0,    0.01, 0,
+                           0,    0,    0,    0,    0,    0,    0,     0,     0,    0,    0,    0.01, 0,    0,    0,
+                           0,    0,    0,    0,    0,    0,    0,     0,     0,    0,    0,    0,    0.1, 0,    0,
+                           0,    0,    0,    0,    0,    0,    0,     0,     0,    0,    0,    0,    0,    0.1, 0,
                            0,    0,    0,    0,    0,    0,    0,     0,     0,    0,    0,    0,    0,    0,    0.015]
 
 # [ADVANCED] This represents the initial value for the state estimate error covariance matrix. Setting a diagonal
@@ -248,14 +251,14 @@ process_noise_covariance: [17, 0,    0,    0,    0,    0,    0,     0,     0,   
 # question. Users should take care not to use large values for variables that will not be measured directly. The values
 # are ordered as x, y, z, roll, pitch, yaw, vx, vy, vz, vroll, vpitch, vyaw, ax, ay, az. Defaults to the matrix below
 #if unspecified.
-initial_estimate_covariance: [1, 0,    0,    0,    0,    0,    0,    0,    0,    0,     0,     0,     0,    0,    0,
-                              0,    1, 0,    0,    0,    0,    0,    0,    0,    0,     0,     0,     0,    0,    0,
+initial_estimate_covariance: [0.1, 0,    0,    0,    0,    0,    0,    0,    0,    0,     0,     0,     0,    0,    0,
+                              0,    0.1, 0,    0,    0,    0,    0,    0,    0,    0,     0,     0,     0,    0,    0,
                               0,    0,    1e-9, 0,    0,    0,    0,    0,    0,    0,     0,     0,     0,    0,    0,
                               0,    0,    0,    0.1, 0,    0,    0,    0,    0,    0,     0,     0,     0,    0,    0,
                               0,    0,    0,    0,    0.1, 0,    0,    0,    0,    0,     0,     0,     0,    0,    0,
                               0,    0,    0,    0,    0,    0.1, 0,    0,    0,    0,     0,     0,     0,    0,    0,
-                              0,    0,    0,    0,    0,    0,    1e-9, 0,    0,    0,     0,     0,     0,    0,    0,
-                              0,    0,    0,    0,    0,    0,    0,    1e-9, 0,    0,     0,     0,     0,    0,    0,
+                              0,    0,    0,    0,    0,    0,    0.1, 0,    0,    0,     0,     0,     0,    0,    0,
+                              0,    0,    0,    0,    0,    0,    0,    0.1, 0,    0,     0,     0,     0,    0,    0,
                               0,    0,    0,    0,    0,    0,    0,    0,   1e-9, 0,     0,     0,     0,    0,    0,
                               0,    0,    0,    0,    0,    0,    0,    0,    0,    0.1,  0,     0,     0,    0,    0,
                               0,    0,    0,    0,    0,    0,    0,    0,    0,    0,     0.1,  0,     0,    0,    0,
@@ -263,4 +266,3 @@ initial_estimate_covariance: [1, 0,    0,    0,    0,    0,    0,    0,    0,   
                               0,    0,    0,    0,    0,    0,    0,    0,    0,    0,     0,     0,     0.1, 0,    0,
                               0,    0,    0,    0,    0,    0,    0,    0,    0,    0,     0,     0,     0,    0.1, 0,
                               0,    0,    0,    0,    0,    0,    0,    0,    0,    0,     0,     0,     0,    0,    0.1]
-
