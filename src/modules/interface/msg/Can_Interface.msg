@@ -7,3 +7,4 @@ uint8[8]  propulsion_can_data
 
 # Steering Hold
 bool hold_steering_position     # If this variable is true, the CAN gateway will not send a steering message
+  

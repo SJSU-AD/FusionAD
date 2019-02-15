@@ -73,7 +73,10 @@ void loop()
   }
 
   // Check receive and send to ROS
-  CheckIncomingMessage();
+  if(IsDBWInitialized)
+  {
+    CheckIncomingMessage();
+  }
 
   // Debug messages
   SendDebugMessages();     
@@ -109,7 +112,7 @@ bool InitializeCommunication()
   can_ros_nh.getHardware()->setBaud(ROSSERIAL_BAUD);    // Set Rosserial baud to 500 kbps
   can_ros_nh.initNode();                                // init ros node  
   // Init Publisher
-  //can_ros_nh.advertise(can_relay_pub);   
+  can_ros_nh.advertise(can_relay_pub);   
   can_ros_nh.advertise(can_relay_debug_pub);                  
   // Init Subscriber
   can_ros_nh.subscribe(can_relay_sub);                  
@@ -148,7 +151,6 @@ bool InitializeDBWSystem()
     can_timer.update();
     propulsion_power_init_current_time = millis();
   }
-  
   return true;
 }
 
