@@ -74,7 +74,7 @@ namespace interface
     }
 
     const char * getType(){ return "interface/Can_Interface"; };
-    const char * getMD5(){ return "bbef8b8f29fffda27ca4b5edaaf2fafb"; };
+    const char * getMD5(){ return "f84665dbdb135e6f325e4dd302d43e4a"; };
 
   };
 
