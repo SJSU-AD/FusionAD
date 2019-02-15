@@ -73,7 +73,10 @@ void loop()
   }
 
   // Check receive and send to ROS
-  CheckIncomingMessage();
+  if(IsDBWInitialized)
+  {
+    CheckIncomingMessage();
+  }
 
   // Debug messages
   SendDebugMessages();     
@@ -148,7 +151,6 @@ bool InitializeDBWSystem()
     can_timer.update();
     propulsion_power_init_current_time = millis();
   }
-  
   return true;
 }
 
