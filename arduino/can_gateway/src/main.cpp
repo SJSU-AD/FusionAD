@@ -109,7 +109,7 @@ bool InitializeCommunication()
   can_ros_nh.getHardware()->setBaud(ROSSERIAL_BAUD);    // Set Rosserial baud to 500 kbps
   can_ros_nh.initNode();                                // init ros node  
   // Init Publisher
-  //can_ros_nh.advertise(can_relay_pub);   
+  can_ros_nh.advertise(can_relay_pub);   
   can_ros_nh.advertise(can_relay_debug_pub);                  
   // Init Subscriber
   can_ros_nh.subscribe(can_relay_sub);                  

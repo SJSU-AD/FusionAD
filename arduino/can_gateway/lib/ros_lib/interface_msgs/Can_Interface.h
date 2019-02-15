@@ -15,8 +15,8 @@ namespace interface
     public:
       typedef std_msgs::Header _header_type;
       _header_type header;
-      int8_t steering_can_data[8];
-      int8_t propulsion_can_data[8];
+      uint8_t steering_can_data[8];
+      uint8_t propulsion_can_data[8];
       typedef bool _hold_steering_position_type;
       _hold_steering_position_type hold_steering_position;
 
@@ -33,21 +33,11 @@ namespace interface
       int offset = 0;
       offset += this->header.serialize(outbuffer + offset);
       for( uint32_t i = 0; i < 8; i++){
-      union {
-        int8_t real;
-        uint8_t base;
-      } u_steering_can_datai;
-      u_steering_can_datai.real = this->steering_can_data[i];
-      *(outbuffer + offset + 0) = (u_steering_can_datai.base >> (8 * 0)) & 0xFF;
+      *(outbuffer + offset + 0) = (this->steering_can_data[i] >> (8 * 0)) & 0xFF;
       offset += sizeof(this->steering_can_data[i]);
       }
       for( uint32_t i = 0; i < 8; i++){
-      union {
-        int8_t real;
-        uint8_t base;
-      } u_propulsion_can_datai;
-      u_propulsion_can_datai.real = this->propulsion_can_data[i];
-      *(outbuffer + offset + 0) = (u_propulsion_can_datai.base >> (8 * 0)) & 0xFF;
+      *(outbuffer + offset + 0) = (this->propulsion_can_data[i] >> (8 * 0)) & 0xFF;
       offset += sizeof(this->propulsion_can_data[i]);
       }
       union {
@@ -65,23 +55,11 @@ namespace interface
       int offset = 0;
       offset += this->header.deserialize(inbuffer + offset);
       for( uint32_t i = 0; i < 8; i++){
-      union {
-        int8_t real;
-        uint8_t base;
-      } u_steering_can_datai;
-      u_steering_can_datai.base = 0;
-      u_steering_can_datai.base |= ((uint8_t) (*(inbuffer + offset + 0))) << (8 * 0);
-      this->steering_can_data[i] = u_steering_can_datai.real;
+      this->steering_can_data[i] =  ((uint8_t) (*(inbuffer + offset)));
       offset += sizeof(this->steering_can_data[i]);
       }
       for( uint32_t i = 0; i < 8; i++){
-      union {
-        int8_t real;
-        uint8_t base;
-      } u_propulsion_can_datai;
-      u_propulsion_can_datai.base = 0;
-      u_propulsion_can_datai.base |= ((uint8_t) (*(inbuffer + offset + 0))) << (8 * 0);
-      this->propulsion_can_data[i] = u_propulsion_can_datai.real;
+      this->propulsion_can_data[i] =  ((uint8_t) (*(inbuffer + offset)));
       offset += sizeof(this->propulsion_can_data[i]);
       }
       union {
