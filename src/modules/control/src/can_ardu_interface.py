@@ -44,7 +44,7 @@ class CanDriver(object):
     # initializing the node
     def __init__(self):
         """Initialize can message publisher and data for the can messages"""
-        self.canMsgPublisher = rospy.Publisher("/control/can_controlcmd", Can_Interface, queue_size=1000)
+        self.canMsgPublisher = rospy.Publisher("/can_gateway/send", Can_Interface, queue_size=1000)
 
         self.steering_arbitration_id = 0x18FF00F9
         self.braking_arbitration_id = 0xFF0000

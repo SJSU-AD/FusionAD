@@ -34,8 +34,7 @@ class CanListener(object):
         negative_steering_slope = 0.2733129308
         positive_steering_slope = 0.2224731787
 
-        print(input_can_msg)
-        unpacked_steering_data = self.bytearray_to_float(2, 5, input_can_msg)
+        unpacked_steering_data = self.bytearray_to_float(0, 3, input_can_msg)
         self.feedback_msg.steeringAngle = unpacked_steering_data * steering_conversion
         
         if(self.feedback_msg.steeringAngle <= 0):
@@ -51,7 +50,7 @@ class CanListener(object):
 
     def can_data_converter(self):
         """Take the CAN steering data, convert to radians, republish"""
-        rospy.Subscriber("/control/can_controlcmd", Can_Interface, self.steering_callback)
+        rospy.Subscriber("/can_gateway/received", Can_Interface, self.steering_callback)
         rospy.spin()
 
 def main():

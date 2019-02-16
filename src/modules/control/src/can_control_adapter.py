@@ -210,7 +210,7 @@ class CanDriver:
         steering_zero_msg = can.Message(arbitration_id = self.steering_arbitration_id, data = self.zero_steering_data, extended_id = True)
         # braking_zero_msg = can.Message(arbitration_id = self.braking_arbitration_id, data = self.zero_braking_data, extended_id = True)
 
-        self.bus.send(steering_zero_msg)
+        # self.bus.send(steering_zero_msg)
         # self.bus.send(braking_zero_msg)
 
         # 5 seconds of power messages until control can be sent
@@ -234,7 +234,7 @@ class CanDriver:
             # braking_msg = can.Message(arbitration_id = self.braking_arbitration_id, data = self.braking_data, extended_id = True)
             propulsion_msg = can.Message(arbitration_id = self.propulsion_arbitration_id, data = self.prop_data, extended_id = False)
             
-            self.bus.send(steering_msg)
+            # self.bus.send(steering_msg)
             
             # self.bus.send(braking_msg)
             self.bus.send(power_propulsion_msg)
