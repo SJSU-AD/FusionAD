@@ -34,7 +34,7 @@ def main():
         except rospy.ROSInterruptException:
             pass
     elif conversionType == "ENU":
-        interpolatorENU = PathInterpolatorENU(inputLatitudes, inputLongitudes, inputHeights, centimetersPerPoint=10)#, radarPoint=radarPoint)
+        interpolatorENU = PathInterpolatorENU(inputLatitudes, inputLongitudes, inputHeights, centimetersPerPoint=10, radarPoint=radarPoint)
         
         try:
             rospy.loginfo("ENU Conversion publishing...")

@@ -101,15 +101,12 @@ class GeodesyConverterENU(GeodesyConverterECEF):
         """
         return
 
-    def ENU_to_ECEF_point(self, east, north, up, lat0=None, lon0=None, h0=None):
+    def ENU_to_ECEF_point(self, east, north, up):
         """Taken from: https://gist.github.com/govert/1b373696c9a27ff4c72a"""
-
-        if lat0 == None:
-            lat0 = self.latitudesData[0]
-        if lon0 == None:
-            lon0 = self.longitudesData[0]
-        if h0 == None:
-            h0 = self.heightsData[0]
+        
+        lat0 = self.radarLat
+        lon0 = self.radarLon        
+        h0 = self.radarHeight
 
         lambdaValue = math.radians(lat0)
         phiValue = math.radians(lon0)
@@ -135,13 +132,13 @@ class GeodesyConverterENU(GeodesyConverterECEF):
 
         return x, y, z
 
-    def ENU_data_to_ECEF_data(self, eData, nData, uData, lat0=None, lon0=None, h0=None):
+    def ENU_data_to_ECEF_data(self, eData, nData, uData):
         xData = []
         yData = []
         zData = []
 
         for i in range(min(len(eData), len(nData), len(uData))):
-            x, y, z = self.ENU_to_ECEF_point(eData[i], nData[i], uData[i], lat0, lon0, h0)
+            x, y, z = self.ENU_to_ECEF_point(eData[i], nData[i], uData[i])
             xData.append(x)
             yData.append(y)
             zData.append(z)

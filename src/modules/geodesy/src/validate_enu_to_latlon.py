@@ -106,6 +106,7 @@ def get_cmd_input():
                         dest="gpsTopic")
 
     optional_args = vars(parser.parse_args())
+    print("optional args:", optional_args)
 
     _validate_bag_location(optional_args)
     _validate_filtering_rate(optional_args)
@@ -192,19 +193,20 @@ def generate_latlon_files(properties):
     """
 
     bagFilePath = properties["bagFilePath"]
+    enuRadarPnt = (properties["initialLatitude"], properties["initialLongitude"], properties["initialAltitude"])
 
     rospack = rospkg.RosPack()
     output_filepath_path_validation = rospack.get_path("geodesy") + "/geodesy_data/data_validation/" + properties["pathFileName"]
     output_filepath_gps_validation = rospack.get_path("geodesy") + "/geodesy_data/data_validation/" + properties["gpsFileName"]
 
     eData, nData, uData = parse_enu_data(properties, bagFilePath, properties["pathTopic"])
-    latData, lonData = enu_to_latlon(properties, eData, nData, uData)
+    latData, lonData = enu_to_latlon(properties, eData, nData, uData, enuRadarPnt)
     # write '.txt' for path data
     with open(output_filepath_path_validation, "wb") as pathFile:
         write_latlon_data(latData, lonData, pathFile, output_filepath_path_validation)
         
     eData, nData, uData = parse_enu_data(properties, bagFilePath, properties["gpsTopic"])
-    latData, lonData = enu_to_latlon(properties, eData, nData, uData)
+    latData, lonData = enu_to_latlon(properties, eData, nData, uData, enuRadarPnt)
     # write '.txt' for gps data
     with open(output_filepath_gps_validation, "wb") as pathFile:
         write_latlon_data(latData, lonData, pathFile, output_filepath_gps_validation)
@@ -279,7 +281,7 @@ def parse_enu_data(properties, bagFilePath, chosenTopic):
 
     return eData, nData, uData
     
-def enu_to_latlon(properties, eData, nData, uData):
+def enu_to_latlon(properties, eData, nData, uData, radarPnt):
     """Convert ENU data to lat/lon data"""
 
     print("Now converting ENU data to lat/lon data")
@@ -287,12 +289,9 @@ def enu_to_latlon(properties, eData, nData, uData):
     latData = []
     lonData = []
 
-    enuConverter = GeodesyConverterENU(eData, nData, uData)#, radarPoint=(37.335292, -121.881295, -6.0))
+    enuConverter = GeodesyConverterENU(eData, nData, uData, radarPoint=radarPnt)
 
-    xData, yData, zData = enuConverter.ENU_data_to_ECEF_data(eData, nData, uData, 
-                                                             lat0=properties["initialLatitude"],
-                                                             lon0=properties["initialLongitude"],
-                                                             h0=properties["initialAltitude"])
+    xData, yData, zData = enuConverter.ENU_data_to_ECEF_data(eData, nData, uData)
 
     latData, lonData = enuConverter.ECEF_data_to_geodetic_data(xData, yData, zData)
 
