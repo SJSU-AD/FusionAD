@@ -81,6 +81,7 @@ class ControlNode
     std::vector<float>::size_type dynamicArraySize;
     float waypoint_proximity_range;
     float waypoint_heading_error_range;
+    float waypoint_lookahead_range;
 
     int getTargetWaypoint(const interface::Chassis_state& current_position);
     bool checkAutonomousMode() const;

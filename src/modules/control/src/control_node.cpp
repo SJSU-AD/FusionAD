@@ -22,6 +22,7 @@ namespace node
     waypoint_proximity_range = 0;
     waypoint_heading_error_range = 0;
     controlGain_soft = 0;
+    waypoint_lookahead_range = 0;
   }
 
   ControlNode::~ControlNode()
@@ -87,12 +88,22 @@ namespace node
     {
       ROS_WARN("Param Waypoint Proximity Range not set, using default - 1 meter");
       return false;
-    }    
+    }
+    if(!control_nh.param<float>(node_name+"/waypoint_lookahead_range", waypoint_lookahead_range, 0.5))
+    {
+      ROS_WARN("Param Waypoint lookahead Range not set, using default - 0.5 meter");
+      return false;
+    }        
     if(!control_nh.param<float>(node_name+"/waypoint_heading_error_range", waypoint_heading_error_range, M_PI_2))
     {
       ROS_WARN("Param Waypoint Heading Error Range not set, using default - PI/2 Radians");
       return false;
     }        
+    if(waypoint_proximity_range <= waypoint_lookahead_range)
+    {
+      ROS_INFO_ONCE("Waypoint proximity distance is less than lookahead range");
+      return false;
+    }
     ROS_INFO_ONCE("-------- Param Retrieved - Good --------");
     return true;    
   }
@@ -151,7 +162,7 @@ namespace node
       {
         // Check if the waypoint is within proximity
         float waypoint_distance = path.getWaypointRelativePlaneDistance(i, current_position.Position.pose.position);
-        if(waypoint_distance <= waypoint_proximity_range)
+        if((waypoint_distance <= waypoint_proximity_range) && (waypoint_distance >= waypoint_lookahead_range))
         {
           // Check if the waypoint is ahead of the vehicle
           if(path.isWaypointAhead(i, current_position.Position.pose))
