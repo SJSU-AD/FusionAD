@@ -52,10 +52,10 @@ class GPSDataConverter(object):
         radarLat = rospy.get_param("~radar_lat")
         radarLon = rospy.get_param("~radar_lon")
         height = rospy.get_param("~fixed_height")
-        # height = -6.0
+        radarPnt = (radarLat, radarLon, height)
 
         self.lat0, self.lon0, self.h0 = map(float, gps_parser.read_file_coarse_points(filePath, height, oneLineOnly=True))
-        self.toENUConverter = GeodesyConverterENU(self.lat0, self.lon0, self.h0)
+        self.toENUConverter = GeodesyConverterENU(self.lat0, self.lon0, self.h0, radarPoint=radarPnt)
         rospy.loginfo("Found and initialized intial lat/lon/altitude values")
         rospy.loginfo("Initial latitude: %f", self.toENUConverter.latitudesData)
         rospy.loginfo("Initial latitude: %f", self.toENUConverter.longitudesData)
