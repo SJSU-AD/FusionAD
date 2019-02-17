@@ -85,6 +85,7 @@ class ControlNode
 
     int getTargetWaypoint(const interface::Chassis_state& current_position);
     bool checkAutonomousMode() const;
+    bool checkIfEndOfPath();
 
     void pathCallback(const nav_msgs::Path& trajectory_msg);
     void stateCallback(const interface::Chassis_state& veh_state_msg);
