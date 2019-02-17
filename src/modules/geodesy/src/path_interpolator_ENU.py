@@ -54,16 +54,11 @@ class PathInterpolatorENU(GeodesyConverterENU):
         # Vanilla case: for all points except final point
         if i <= numberOfCoarsePoints - 1:
             
-            print("radar point:", self.radarLat, self.radarLon, self.radarHeight)
-            print("eData[i]: {}, nData[i]: {}, uData[i]: {}, eData[i+1]: {}, nData[i+1]: {}, uData[i+1]: {}".format(eData[i], nData[i], uData[i], eData[i+1], nData[i+1], uData[i+1]))
-            print("ECEF start:", self.ENU_to_ECEF_point(eData[i], nData[i], uData[i]))
-            print("ECEF end:", self.ENU_to_ECEF_point(eData[i+1], nData[i+1], uData[i+1]))
             # OPTION 2: Fixed distance option (variable point density)
             # Number of points between each interpolated point
             pointDensity = self.get_point_density_ENU(eData[i], nData[i], uData[i], 
                                                        eData[i+1], nData[i+1], uData[i+1])
             ##### pointDensity is type float right now #####
-            print("========pointDensity:", pointDensity)
             
             # Declare the first and second positions for interpolation
             e0 = eData[i]     
