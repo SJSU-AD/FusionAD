@@ -41,14 +41,14 @@ bool IsPropulsionPowerMessageSent = false;
 bool HoldSteeringValue = true;
 
 // Declare Global timer value
-unsigned long int next_propulsion_control_event = 0;
+//unsigned long int next_propulsion_control_event = 0;
 
 // Declare Global timer event
-int propulsion_power_event;
+//int propulsion_power_event;
 
 // Declare Global CAN message frame
 uint8_t steering_message_data[8] = {0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x66};        // Data is set to set steering straight by default
-uint8_t propulsion_message_data[8] = {0x00, 0x00, 0xFF, 0x7F, 0x00, 0x0D, 0x00, 0x00};      // Data is set to set zero rpm by default
+//uint8_t propulsion_message_data[8] = {0x00, 0x00, 0xFF, 0x7F, 0x00, 0x0D, 0x00, 0x00};      // Data is set to set zero rpm by default
 
 void setup() 
 {
@@ -59,21 +59,24 @@ void setup()
 void loop() 
 {
   // Checks to see if it is time to send the propulsion control message
-  if((millis() >= next_propulsion_control_event) && IsDBWInitialized && IsPropulsionPowerMessageSent)
-  {
-    // Send propulsion control data
-    OSV_CAN.sendMsgBuf(PROPULSION_CONTROL_ID, STD_FRAME, 8, propulsion_message_data);      
-    IsPropulsionPowerMessageSent = false;
-  }
+  // if((millis() >= next_propulsion_control_event) && IsDBWInitialized && IsPropulsionPowerMessageSent)
+  // {
+  //   // Send propulsion control data
+  //   OSV_CAN.sendMsgBuf(PROPULSION_CONTROL_ID, STD_FRAME, 8, propulsion_message_data);      
+  //   IsPropulsionPowerMessageSent = false;
+  // }
   // Check if hold steering position is false
-  if(!HoldSteeringValue)
+  if(!HoldSteeringValue && IsDBWInitialized)
   {
     // Send steering control data if hold is false
     OSV_CAN.sendMsgBuf(STEERING_ARB_ID, EXT_FRAME, 8, steering_message_data);      
   }
 
   // Check receive and send to ROS
-  CheckIncomingMessage();
+  if(IsDBWInitialized)
+  {
+    CheckIncomingMessage();
+  }
 
   // Debug messages
   SendDebugMessages();     
@@ -87,7 +90,7 @@ void ROSGatewaySendCallback(const interface::Can_Interface &can_outgoing_msg)
   for(uint8_t i = 0; i < 8; i++)
   {
     steering_message_data[i] = can_outgoing_msg.steering_can_data[i];
-    propulsion_message_data[i] = can_outgoing_msg.propulsion_can_data[i];
+    //propulsion_message_data[i] = can_outgoing_msg.propulsion_can_data[i];
   }
   HoldSteeringValue = can_outgoing_msg.hold_steering_position;
 }
@@ -109,7 +112,7 @@ bool InitializeCommunication()
   can_ros_nh.getHardware()->setBaud(ROSSERIAL_BAUD);    // Set Rosserial baud to 500 kbps
   can_ros_nh.initNode();                                // init ros node  
   // Init Publisher
-  //can_ros_nh.advertise(can_relay_pub);   
+  can_ros_nh.advertise(can_relay_pub);   
   can_ros_nh.advertise(can_relay_debug_pub);                  
   // Init Subscriber
   can_ros_nh.subscribe(can_relay_sub);                  
@@ -137,28 +140,27 @@ bool InitializeDBWSystem()
   OSV_CAN.sendMsgBuf(STEERING_ARB_ID, EXT_FRAME, 8, Steering_Set_Center_Data);      // Center steering wheel
 
   // Send 5 seconds long of power signals 
-  unsigned long propulsion_power_init_current_time = millis();
-  const unsigned long propulsion_power_init_end_time = propulsion_power_init_current_time + 5000;
+  //unsigned long propulsion_power_init_current_time = millis();
+  //const unsigned long propulsion_power_init_end_time = propulsion_power_init_current_time + 5000;
   
   // Initialize timer event on propulsion power callback every 50 ms or at a freq of 20Hz
-  propulsion_power_event = can_timer.every(50, TimerPropulsionPowerCallback);
-  while(propulsion_power_init_current_time < propulsion_power_init_end_time)
-  {
-    // Block the program during the 5 seconds init period for propulsion
-    can_timer.update();
-    propulsion_power_init_current_time = millis();
-  }
-  
+  //propulsion_power_event = can_timer.every(50, TimerPropulsionPowerCallback);
+  // while(propulsion_power_init_current_time < propulsion_power_init_end_time)
+  // {
+  //   // Block the program during the 5 seconds init period for propulsion
+  //   can_timer.update();
+  //   propulsion_power_init_current_time = millis();
+  // }
   return true;
 }
 
-void TimerPropulsionPowerCallback()
-{
-  // Send Propulsion Power Data Frame
-  OSV_CAN.sendMsgBuf(PROPULSION_POWER_ID, STD_FRAME, 8, Propulsion_Power_Data);
-  next_propulsion_control_event = millis() + 25;
-  IsPropulsionPowerMessageSent = true;
-}
+// void TimerPropulsionPowerCallback()
+// {
+//   // Send Propulsion Power Data Frame
+//   OSV_CAN.sendMsgBuf(PROPULSION_POWER_ID, STD_FRAME, 8, Propulsion_Power_Data);
+//   next_propulsion_control_event = millis() + 25;
+//   IsPropulsionPowerMessageSent = true;
+// }
 
 void SendDebugMessages()
 {
