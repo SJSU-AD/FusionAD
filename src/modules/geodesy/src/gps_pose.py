@@ -52,14 +52,23 @@ class GPSDataConverter(object):
         radarLat = rospy.get_param("~radar_lat")
         radarLon = rospy.get_param("~radar_lon")
         height = rospy.get_param("~fixed_height")
-        # height = -6.0
+
+        radarPnt = None
+        if radarLat != "None" and radarLon != "None":
+            radarPnt = (float(radarLat), float(radarLon), float(height))
 
         self.lat0, self.lon0, self.h0 = map(float, gps_parser.read_file_coarse_points(filePath, height, oneLineOnly=True))
-        self.toENUConverter = GeodesyConverterENU(self.lat0, self.lon0, self.h0)
+        self.toENUConverter = GeodesyConverterENU([self.lat0], [self.lon0], [self.h0], radarPoint=radarPnt)
         rospy.loginfo("Found and initialized intial lat/lon/altitude values")
-        rospy.loginfo("Initial latitude: %f", self.toENUConverter.latitudesData)
-        rospy.loginfo("Initial latitude: %f", self.toENUConverter.longitudesData)
-        rospy.loginfo("Initial latitude: %f", self.toENUConverter.heightsData)
+        
+        if radarLat != "None" and radarLon != "None":
+            rospy.loginfo("Initial latitude: %f", radarLat)
+            rospy.loginfo("Initial latitude: %f", radarLon)
+            rospy.loginfo("Initial latitude: %f", height)
+        else:
+            rospy.loginfo("Initial latitude: %f", self.lat0)
+            rospy.loginfo("Initial latitude: %f", self.lon0)
+            rospy.loginfo("Initial latitude: %f", self.h0)
 
     def GPS_to_ENU_callback(self, gpsMsg):
         """Callback for subscribing to GPS data"""
@@ -71,7 +80,7 @@ class GPSDataConverter(object):
         rospy.logdebug("Received latitude: %f, longitude: %f, altitude: %f", self.latitude, self.longitude, self.altitude)
         rospy.logdebug("Received GPS Covariance: [%s]", ", ".join([str(covar) for covar in self.gpsCovar]))
 
-        e, n, u = self.toENUConverter.geodetic_to_ENU_point(self.latitude, self.longitude, self.altitude, lat0=self.lat0, lon0=self.lon0, h0=self.h0)
+        e, n, u = self.toENUConverter.geodetic_to_ENU_point(self.latitude, self.longitude, self.altitude)
         rospy.logdebug("Converted values: east = %f, north = %f, up = %f", e, n, u)
 
         ############################
