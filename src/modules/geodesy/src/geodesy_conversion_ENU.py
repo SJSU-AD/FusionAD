@@ -26,16 +26,17 @@ class GeodesyConverterENU(GeodesyConverterECEF):
             latitudesData, longitudesData, heightsData)
         
         if radarPoint != None:
+            rospy.loginfo("Using custom point as radar point!!!")
             self.radarLat = radarPoint[0]
             self.radarLon = radarPoint[1]
             self.radarHeight = radarPoint[2]
-            rospy.loginfo("Using custom as radar point!!!")
         else:
+            rospy.loginfo("Using initial point in path as radar point!!!")
             self.radarLat = self.latitudesData[0]
             self.radarLon = self.longitudesData[0]
             self.radarHeight = self.heightsData[0]
-            rospy.loginfo("Using initial in path as radar point!!!")
         
+        self.radarLat, self.radarLon, self.radarHeight = map(float, [self.radarLat, self.radarLon, self.radarHeight])
         self.radarPnt = (self.radarLat, self.radarLon, self.radarHeight)
         rospy.loginfo("Radar point: (lat, lon, height): {}".format(radarPoint))
 

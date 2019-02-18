@@ -17,7 +17,9 @@ def main():
     radarLon = rospy.get_param("~radar_lon")
     chosenHeight = rospy.get_param("~fixed_height")
 
-    radarPoint = (radarLat, radarLon, chosenHeight)
+    radarPnt = None
+    if radarLat != "None" and radarLon != "None":
+        radarPnt = (radarLat, radarLon, chosenHeight)
 
     # From https://www.maps.ie/coordinates.html at SJSU
     filePath = rospy.get_param("~file_path")
@@ -29,12 +31,12 @@ def main():
         interpolatorECEF = PathInterpolatorECEF(inputLatitudes, inputLatitudes, inputHeights)
 
         try:
-            rospy.loginfo("ECEF Conversion publishing..,")
+            rospy.loginfo("ECEF Conversion publishing...")
             interpolatorECEF.interpolation_publish_ECEF()
         except rospy.ROSInterruptException:
             pass
     elif conversionType == "ENU":
-        interpolatorENU = PathInterpolatorENU(inputLatitudes, inputLongitudes, inputHeights, centimetersPerPoint=10, radarPoint=radarPoint)
+        interpolatorENU = PathInterpolatorENU(inputLatitudes, inputLongitudes, inputHeights, centimetersPerPoint=10, radarPoint=radarPnt)
         
         try:
             rospy.loginfo("ENU Conversion publishing...")

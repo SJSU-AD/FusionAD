@@ -52,14 +52,23 @@ class GPSDataConverter(object):
         radarLat = rospy.get_param("~radar_lat")
         radarLon = rospy.get_param("~radar_lon")
         height = rospy.get_param("~fixed_height")
-        radarPnt = (radarLat, radarLon, height)
+
+        radarPnt = None
+        if radarLat != "None" or radarLon != "None":
+            radarPnt = (float(radarLat), float(radarLon), float(height))
 
         self.lat0, self.lon0, self.h0 = map(float, gps_parser.read_file_coarse_points(filePath, height, oneLineOnly=True))
-        self.toENUConverter = GeodesyConverterENU(self.lat0, self.lon0, self.h0, radarPoint=radarPnt)
+        self.toENUConverter = GeodesyConverterENU([self.lat0], [self.lon0], [self.h0], radarPoint=radarPnt)
         rospy.loginfo("Found and initialized intial lat/lon/altitude values")
-        rospy.loginfo("Initial latitude: %f", radarLat)
-        rospy.loginfo("Initial latitude: %f", radarLon)
-        rospy.loginfo("Initial latitude: %f", height)
+        
+        if radarLat != "None" and radarLon != "None":
+            rospy.loginfo("Initial latitude: %f", radarLat)
+            rospy.loginfo("Initial latitude: %f", radarLon)
+            rospy.loginfo("Initial latitude: %f", height)
+        else:
+            rospy.loginfo("Initial latitude: %f", self.lat0)
+            rospy.loginfo("Initial latitude: %f", self.lon0)
+            rospy.loginfo("Initial latitude: %f", self.h0)
 
     def GPS_to_ENU_callback(self, gpsMsg):
         """Callback for subscribing to GPS data"""

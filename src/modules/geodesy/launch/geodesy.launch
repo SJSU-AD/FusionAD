@@ -7,6 +7,7 @@
   
   <!-- /////////////////////////////////////////////////////////////// -->
   <!-- Initial lat/lon for ENU conversion -->
+  <!-- Set values to "None" to use first point in path as radar point -->
   <arg name="radar_lat" value="37.335292" />
   <arg name="radar_lon" value="-121.881295" />
 
