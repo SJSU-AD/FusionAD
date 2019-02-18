@@ -54,7 +54,7 @@ class GPSDataConverter(object):
         height = rospy.get_param("~fixed_height")
 
         radarPnt = None
-        if radarLat != "None" or radarLon != "None":
+        if radarLat != "None" and radarLon != "None":
             radarPnt = (float(radarLat), float(radarLon), float(height))
 
         self.lat0, self.lon0, self.h0 = map(float, gps_parser.read_file_coarse_points(filePath, height, oneLineOnly=True))
