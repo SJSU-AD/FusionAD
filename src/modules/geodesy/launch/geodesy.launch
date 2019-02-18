@@ -1,14 +1,27 @@
 <launch>
   <!-- Get GPS Coordinates parameter file in .txt format from here: http://www.gpsvisualizer.com/draw/ -->
-  <include file="$(find swiftnav_ros)/launch/swiftnav_ros.launch" />
+
+  <!-- ATM machines = -6.0, North Garage = 7.493 -->
+  <arg name="height" value="-6.0" /> <!-- Measured in meters -->
+  <arg name="chosen_path" value="student_union_straight_long.txt" />
   
+  <!-- /////////////////////////////////////////////////////////////// -->
+  <!-- Initial lat/lon for ENU conversion -->
+  <arg name="radar_lat" value="37.335292" />
+  <arg name="radar_lon" value="-121.881295" />
+
   <node type="path_interpolation.py" pkg="geodesy" name="path_interpolator" output="screen">
-    <param name="~file_path" value="$(find geodesy)/geodesy_data/gps_coarse_points/student_union_straight.txt" />
+    <param name="~radar_lat" value="$(arg radar_lat)" />
+    <param name="~radar_lon" value="$(arg radar_lon)" />
+    <param name="~fixed_height" value="$(arg height)" />
+    <param name="~file_path" value="$(find geodesy)/geodesy_data/gps_coarse_points/$(arg chosen_path)" />
     <param name="~conversion_type" value="ENU" />
-    <param name="~cm_per_point" value="10" />
   </node>
 
-  <node type="gps_pose.py" pkg="geodesy" name="gps_pose_converter" output="screen">
-    <param name="~file_path" value="$(find geodesy)/geodesy_data/gps_coarse_points/student_union_straight.txt" />
-  </node>
+  <!-- <node type="gps_pose.py" pkg="geodesy" name="gps_pose_converter" output="screen">
+    <param name="~radar_lat" value="$(arg radar_lat)" />
+    <param name="~radar_lon" value="$(arg radar_lon)" />
+    <param name="~fixed_height" value="$(arg height)" />
+    <param name="~file_path" value="$(find geodesy)/geodesy_data/gps_coarse_points/$(arg chosen_path)" />
+  </node> -->
 </launch>

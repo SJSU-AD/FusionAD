@@ -1,0 +1,4 @@
+type	latitude	longitude	name
+W	37.3372614	-121.8799223	pt1
+W	37.3369852	-121.8796930	pt2
+

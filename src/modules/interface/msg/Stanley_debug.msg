@@ -1,25 +1,28 @@
 Header header
 
-bool debugContoller                  #Debug Boolean
+# Vehicle State
+geometry_msgs/Point vehicle_Position
+float64 vehicle_heading
+float64 vehicle_speed
 
-float64 CTE                          #CrossTrack Error
+# Controller Parameter
+float64 stanleyGain_p
+float64 stanleyGain_d
+float64 control_loop_period
+
+# Control Calculation
+float64 CrosstrackError                          # CrossTrack Error
 float64 headingError 
-float64 pathHeading
-float64 est_pathHeading
-float64 steeringAngle
+float64 pathHeading                              # Fitted Path heading
+float64 steeringAngle                            # Computed Steering Angle 
+float64 CrosstrackError_dot
 
-
-float64 estimated_heading 
-float64 imu_heading
-float64 imu_transformed_heading
-
+# Path Information
 int32 pathSize
 float64 distance_to_wp
 int32 currentWPIndex
 
-float64 stanleyGain
-
-bool pathHeadingCalcInvalid
+# Calculation Error Flags
 bool crossTrackErrorCalcInvalid
 bool headingErrorCalcInvalid
 bool steeringAngleCalcInvalid

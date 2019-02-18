@@ -10,7 +10,7 @@ import math
 from geodesy_conversion_ECEF import GeodesyConverterECEF
 
 class GeodesyConverterENU(GeodesyConverterECEF):
-    def __init__(self, latitudesData, longitudesData, heightsData):
+    def __init__(self, latitudesData, longitudesData, heightsData, radarPoint=None):
         ## TODO: Make ECEF_to_ENU_point() a @staticmethod to reduce unnecessary object instantiation
         ##       OR make setters to get initial GPS position
         # if latitudesData  == None:
@@ -22,6 +22,16 @@ class GeodesyConverterENU(GeodesyConverterECEF):
 
         super(GeodesyConverterENU, self).__init__(
             latitudesData, longitudesData, heightsData)
+        
+        if radarPoint != None:
+            print("==========USING CUSTOM POINT!!!")
+            self.radarLat = radarPoint[0]
+            self.radarLon = radarPoint[1]
+            self.radarHeight = radarPoint[2]
+        else:
+            self.radarLat = self.latitudesData[0]
+            self.radarLon = self.longitudesData[0]
+            self.radarHeight = self.heightsData[0]
 
     def geodetic_to_ENU_point(self, latitudeCoord, longitudeCoord, heightCoord, lat0=None, lon0=None, h0=None):
         """Convert relative ECEF coordinates to (East, North, Up) coordinates.
@@ -38,11 +48,11 @@ class GeodesyConverterENU(GeodesyConverterECEF):
             latitudeCoord, longitudeCoord, heightCoord)
 
         if lat0 == None:
-            lat0 = self.latitudesData[0]
+            lat0 = self.radarLat
         if lon0 == None:
-            lon0 = self.longitudesData[0]
+            lon0 = self.radarLon
         if h0 == None:
-            h0 = self.heightsData[0]
+            h0 = self.radarHeight
 
         lambdaValue = math.radians(lat0)
         phiValue = math.radians(lon0)
@@ -91,15 +101,12 @@ class GeodesyConverterENU(GeodesyConverterECEF):
         """
         return
 
-    def ENU_to_ECEF_point(self, east, north, up, lat0=None, lon0=None, h0=None):
+    def ENU_to_ECEF_point(self, east, north, up):
         """Taken from: https://gist.github.com/govert/1b373696c9a27ff4c72a"""
-
-        if lat0 == None:
-            lat0 = self.latitudesData[0]
-        if lon0 == None:
-            lon0 = self.longitudesData[0]
-        if h0 == None:
-            h0 = self.heightsData[0]
+        
+        lat0 = self.radarLat
+        lon0 = self.radarLon        
+        h0 = self.radarHeight
 
         lambdaValue = math.radians(lat0)
         phiValue = math.radians(lon0)

@@ -9,6 +9,14 @@
 #include <iostream>
 #include <limits>
 #include <interface/Stanley_debug.h>
+#include <interface/Chassis_state.h>
+#include <geometry_msgs/Pose.h>
+#include <algorithm>
+#include <stdexcept>
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2/LinearMath/Matrix3x3.h>
+#include <tf2/convert.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 //Namespace declaration
 namespace fusionad
@@ -20,19 +28,16 @@ namespace lat_controller
 class Stanley
 {
   public:
-    Stanley();
+    Stanley(float loop_time = 1);
     ~Stanley();
     interface::Stanley_debug debug_info;
     // Steering Limit is set to 21 deg
     float steering_limit = 0.36652;
-    float computeSteeringAngle(const Eigen::Vector2f &vehPos,const std::vector<float> &routeX,
-                                const std::vector<float> &routeY,const float &vehSpeed,
-                                const int &wpIndex, const float &vehTheta,const float &gain, const int &pathSize);
+    float previous_crossTrackError = 0;
+    float control_interval;
+    float computeSteeringAngle(const geometry_msgs::Pose waypoint_pose, const interface::Chassis_state vehicle_state,
+                               const float &p_gain, const float &soft_gain, const float &d_gain);
   private:
-    float pathSlope;
-    typedef Eigen::Matrix<float, 4, 2> pathMatrix42f; 
-    float computePathHeading(const std::vector<float> &navX, const std::vector<float> &navY ,const int &targetIndex, const int &navSize);
-    float estimatePathHeading(const std::vector<float> &pathX, const std::vector<float> &pathY, const int &index);
     float computeCrossTrackError(const float &routeTheta, const float &dx, const float &delta_y);
 };
 }

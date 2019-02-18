@@ -9,20 +9,20 @@ namespace node
   ControlNode::ControlNode():
   pathInitialized(false),
   stateInitialized(false),
-  imuInitialized(false),
   autonomousDrivingFlag(false),
   obstacleDetected(false),
   debug(false),
   internalFailFlag(false),
   externalFailFlag(false)
   {
-    roll = 0;
-    pitch = 0;
-    yaw = 0;
-    controlGain = 0;
+    controlGain_p = 0;
+    controlGain_d = 0;
     targetPointIndex = 0;
     dynamicArraySize = 0;
-    //estimated_orientation = 0;
+    waypoint_proximity_range = 0;
+    waypoint_heading_error_range = 0;
+    controlGain_soft = 0;
+    waypoint_lookahead_range = 0;
   }
 
   ControlNode::~ControlNode()
@@ -31,8 +31,8 @@ namespace node
 
   void ControlNode::initRosComm()
   {
-    //Create Timer Function for running the control stack, currently set to 25 hz
-    control_cmd_timer = control_nh.createTimer(ros::Duration(0.04), &ControlNode::masterTimerCallback, this);  
+    //Create Timer Function for running the control stack
+    control_cmd_timer = control_nh.createTimer(ros::Duration(control_loop_time), &ControlNode::masterTimerCallback, this);  
     
     //Control Main publisher
     control_main_pub = control_nh.advertise<interface::Controlcmd>("/control/controlcmd", 100);
@@ -51,10 +51,7 @@ namespace node
 
     //Control State Subscriber
     localization_sub = control_nh.subscribe("/localization/state", 100, &ControlNode::stateCallback, this);
-    ROS_INFO_ONCE("Control Node Path Subscriber Set!");
-
-    imu_sub = control_nh.subscribe("/imu", 100, &ControlNode::imuCallback, this);
-    ROS_INFO_ONCE("Control Node IMU Subscriber Set!");
+    ROS_INFO_ONCE("Control Node State Subscriber Set!");
 
     obstacle_sub = control_nh.subscribe("/localization/obstacle", 100, &ControlNode::obstacleCallback, this);
     ROS_INFO_ONCE("Control Node Obstacle Subscriber Set!");
@@ -67,7 +64,7 @@ namespace node
   {
     //Obtain parameter to initialize the node
     std::string node_name = ros::this_node::getName();
-    if(!control_nh.param<float>(node_name+"/control_gain",controlGain, 1 ))
+    if(!control_nh.param<float>(node_name+"/control_p_gain",controlGain_p, 1 ))
     {
       ROS_WARN("Param control gain not set, using default - 1");
       return false;
@@ -77,6 +74,42 @@ namespace node
       ROS_WARN("Param control debug not set, using default - false");
       return false;
     }
+    if(!control_nh.param<float>(node_name+"/control_d_gain",controlGain_d, 1))
+    {
+      ROS_WARN("Param control derivative gain not set, using default - 1");
+      return false;
+    }
+    if(!control_nh.param<float>(node_name+"/control_soft_gain",controlGain_soft, 0.5))
+    {
+      ROS_WARN("Param control soft gain not set, using default - 0.5");
+      return false;
+    }    
+    if(!control_nh.param<float>(node_name+"/waypoint_proximity_range", waypoint_proximity_range, 1))
+    {
+      ROS_WARN("Param Waypoint Proximity Range not set, using default - 1 meter");
+      return false;
+    }
+    if(!control_nh.param<float>(node_name+"/waypoint_lookahead_range", waypoint_lookahead_range, 0.5))
+    {
+      ROS_WARN("Param Waypoint lookahead Range not set, using default - 0.5 meter");
+      return false;
+    }        
+    if(!control_nh.param<float>(node_name+"/waypoint_heading_error_range", waypoint_heading_error_range, M_PI_2))
+    {
+      ROS_WARN("Param Waypoint Heading Error Range not set, using default - PI/2 Radians");
+      return false;
+    }        
+    if(waypoint_proximity_range <= waypoint_lookahead_range)
+    {
+      ROS_FATAL("Waypoint proximity distance is less than lookahead range");
+      return false;
+    }
+    // The donut belt is smaller than 0.5 meters
+    if(std::abs(waypoint_proximity_range - waypoint_lookahead_range) < 0.5)
+    { 
+      ROS_FATAL("Waypoint selector donut belt is too small! Less than 0.5 meters!");
+      return false;
+    }    
     ROS_INFO_ONCE("-------- Param Retrieved - Good --------");
     return true;    
   }
@@ -85,27 +118,7 @@ namespace node
 
   void ControlNode::pathCallback(const nav_msgs::Path& trajectory_msg)
   {
-    //Flush all vectors at the end
-    pathPointListX.clear();
-    pathPointListY.clear(); 
-    dynamicArraySize = trajectory_msg.poses.size();
-    
-    lat_control.debug_info.pathSize = dynamicArraySize;
-    //pathPointListX.resize(dynamicArraySize);
-    //pathPointListY.resize(dynamicArraySize);
-    if(pathPointListX.empty())
-    {
-      for(size_t i = 0; i < trajectory_msg.poses.size(); i++)
-      {
-        pathPointListX.push_back(trajectory_msg.poses[i].pose.position.x);
-        pathPointListY.push_back(trajectory_msg.poses[i].pose.position.y);
-      }
-    }
-    else
-    {
-      internalFailFlag = true;
-      ROS_FATAL("Path List not flushed! Abort!");
-    }
+    path.setPath(trajectory_msg);
 
     if(!pathInitialized)
     {
@@ -115,88 +128,13 @@ namespace node
 
   void ControlNode::stateCallback(const interface::Chassis_state& veh_state_msg)
   {
-    //float veh_theta = 0;
-    /*if(!autonomousDrivingFlag && pathInitialized)
-    {
-      veh_theta = std::atan2(pathPointListY[1] - pathPointListY[0], 
-                             pathPointListX[1] - pathPointListX[0]);
-      estimated_orientation = veh_theta;
-      // Transformation to front axle - Red car measures around 34 inchs from GPS to front axle
-      // 34 in = 0.8636 m
-      position(0) = veh_state_msg.Position.pose.position.x + (0.8636 * std::cos(estimated_orientation));
-      position(1) = veh_state_msg.Position.pose.position.y + (0.8636 * std::sin(estimated_orientation));
-    }
-    else
-    {
-      // Transformation to front axle - Red car measures around 34 inchs from GPS to front axle
-      // 34 in = 0.8636 m
-      position(0) = veh_state_msg.Position.pose.position.x + (0.8636 * std::cos(estimated_orientation));
-      position(1) = veh_state_msg.Position.pose.position.y + (0.8636 * std::sin(estimated_orientation));
-      //linear_velocity = veh_state_msg.Speed.twist.linear.x;
-      linear_velocity = 0.5;
-      //std::cout << position(0) << std::endl;
-      orientation_pos_vector(0) = position(0) - prev_pos[0];   //X delta
-      orientation_pos_vector(1) = position(1) - prev_pos[1];   //Y delta
-      veh_theta = std::atan2(orientation_pos_vector(1), orientation_pos_vector(0));
-      
-      estimated_orientation = veh_theta;
-      prev_pos[0] = position(0);
-      prev_pos[1] = position(1);
-    }*/
 
-    position(0) = veh_state_msg.Position.pose.position.x + (0.8636 * std::cos(vehicle_heading));
-    position(1) = veh_state_msg.Position.pose.position.y + (0.8636 * std::sin(vehicle_heading));    
+    vehicle_state_msg = veh_state_msg;
+
   
-    /*if(std::isfinite(estimated_orientation))
-    {
-      lat_control.debug_info.estimated_heading = estimated_orientation;
-    }
-    else
-    {
-      std::cout << "Heading Error Calculation Is Not Finite!" << std::endl;
-      internalFailFlag = true;
-    }   */
-
     if(!stateInitialized)
     {
       stateInitialized = true;
-    }
-  }
-
-  void ControlNode::imuCallback(const sensor_msgs::Imu& inertial_msg)
-  {
-    tf::Quaternion chassis_quaternion(inertial_msg.orientation.x,
-                                      inertial_msg.orientation.y,
-                                      inertial_msg.orientation.z,
-                                      inertial_msg.orientation.w);
-    tf::Matrix3x3 temp_rotation_matrix(chassis_quaternion);
-    temp_rotation_matrix.getRPY(roll, pitch, yaw);
-
-    lat_control.debug_info.imu_heading = yaw;
-
-
-    // Declination and IMU transform to ENU
-    float adjusted_yaw = yaw + magnetic_declination_rad + imu_residual_offset;
-
-    if(adjusted_yaw > M_PI)
-    {
-      vehicle_heading = adjusted_yaw - 2*M_PI;
-    }
-    else if(adjusted_yaw < (-1)*M_PI)
-    {
-      vehicle_heading = (2*M_PI) + adjusted_yaw;
-    }
-    else
-    {
-      vehicle_heading = adjusted_yaw;
-    }  
-
-    lat_control.debug_info.imu_transformed_heading = vehicle_heading;
-
-
-    if(!imuInitialized)
-    {
-      imuInitialized = true;
     }
   }
 
@@ -210,6 +148,100 @@ namespace node
     autonomousDrivingFlag = autonomous_mode_msg.data;
   }
 
+  int ControlNode::getTargetWaypoint(const interface::Chassis_state& current_position)
+  {
+    double roll, pitch, yaw;    
+    // Unpack orientation of the vehicle
+    tf2::Quaternion quaternion;
+    tf2::convert(current_position.Position.pose.orientation, quaternion);
+    tf2::Matrix3x3 quaternion_matrix(quaternion);
+    quaternion_matrix.getRPY(roll, pitch, yaw);
+    float vehicle_heading = static_cast<float>(yaw);
+
+    // Create vector to store the filtered list
+    std::vector<int> filtered_index;
+
+    
+
+    // If the path class is not empty
+    if(!path.isPathEmpty())
+    {
+      for(size_t i = 0; i < path.getPathSize(); i++)      // Note: Consider a faster or smarter search algo in the future
+      {
+        // Check if the waypoint is within proximity
+        float waypoint_distance = path.getWaypointRelativePlaneDistance(i, current_position.Position.pose.position);
+        if((waypoint_distance <= waypoint_proximity_range) && (waypoint_distance >= waypoint_lookahead_range))
+        {
+          // Check if the waypoint is ahead of the vehicle
+          if(path.isWaypointAhead(i, current_position.Position.pose))
+          {
+            // Check if the waypoint is aligned with the vehicle
+            if(path.isWaypointAligned(i, vehicle_heading, waypoint_heading_error_range))
+            {
+              filtered_index.push_back(i);
+            }
+          }
+        }
+      }
+      int targetPointIndex = 0;
+      float least_distance = 0;
+
+      // Now search within the filtered out points for the closest waypoint
+      if(filtered_index.size() == 0)
+      {
+        ROS_FATAL("There is no waypoint that meets all the requirement of the waypoint selector or END OF PATH REACHED");
+        throw std::runtime_error("No waypoint meets the waypoint selector requirement.");
+      }
+      else
+      {
+        // Find the closest waypoint from the list of filtered waypoint.
+        least_distance = path.getWaypointRelativePlaneDistance(filtered_index[0], current_position.Position.pose.position);
+        targetPointIndex = filtered_index[0];
+
+        for(size_t j=0; j < filtered_index.size(); j++)
+        {
+          float current_wp_distance = path.getWaypointRelativePlaneDistance(filtered_index[j], current_position.Position.pose.position);
+          if(least_distance > current_wp_distance)
+          {
+            least_distance = current_wp_distance;
+            targetPointIndex = filtered_index[j];
+          }
+        }        
+      }
+      lat_control.debug_info.currentWPIndex = targetPointIndex;
+      lat_control.debug_info.distance_to_wp = least_distance;
+
+      return targetPointIndex;
+    }
+  }
+
+  bool ControlNode::checkAutonomousMode() const
+  {
+    return (stateInitialized) && (pathInitialized) && (!obstacleDetected) && (!internalFailFlag) && (!goalReached) && (autonomousDrivingFlag) && (!externalFailFlag) && (!path.isPathEmpty());
+  }
+
+  bool ControlNode::checkIfEndOfPath()
+  {
+    //Check if goal is reached
+    /* 
+    Goal reached definition:
+      - Vehicle's relative distance to the last waypoint is less than waypoint lookahead range
+    */    
+    float distance_to_last_waypoint = path.getWaypointRelativePlaneDistance(path.getPathSize() - 1, vehicle_state_msg.Position.pose.position);
+    if(distance_to_last_waypoint <= waypoint_lookahead_range)    
+    {
+      //Goal reached
+      goalReached = true;
+      ROS_INFO("Goal reached. End of Path. Autonomy mode set to manual.");
+      autonomousDrivingFlag = false;
+      return true;
+    }
+    else
+    {
+      return false;
+    }
+  }
+
   void ControlNode::masterTimerCallback(const ros::TimerEvent& controlTimeEvent)
   {
     interface::Controlcmd control_core_command;
@@ -218,84 +250,85 @@ namespace node
       ROS_WARN("Obstacle Ahead, Vehicle Stopped!");
     }
 
+    // Timestamp debug message
+    lat_control.debug_info.header.stamp = ros::Time::now();
+
+    // Initialize the steering angle and linear velocity variables
     float steering_angle = 0;
     float cmd_linear_vel = 0;   
 
-    if((imuInitialized) && (stateInitialized) && (pathInitialized) && (!obstacleDetected) && (!internalFailFlag) && (!goalReached) && (autonomousDrivingFlag) && (!externalFailFlag))
+    // Initilaize path selection process flag
+    bool is_path_good = false;
+
+    // Check if autonomous mode is on:
+    if(checkAutonomousMode())
     {
-      std::cout << "Entered Timer loop " << std::endl;
-      //TODO: Add new backward search prevention algo
-      //Compute the closest waypoint
-      std::vector<float> distance;
-      for(size_t i = 0; i < pathPointListX.size(); i++)
+      int target_waypoint_index = 0;
+      
+      // Try getting the target waypoint
+      try
       {
-        distance.push_back(std::sqrt(std::pow((position(0) - pathPointListX[i]),2)
-                               + std::pow((position(1) - pathPointListY[i]),2)));
+        target_waypoint_index = getTargetWaypoint(vehicle_state_msg);
+        is_path_good = true;
+        lat_control.debug_info.pathSize = path.getPathSize();
+
+      }
+      catch(const std::runtime_error& runtime_err)
+      {
+        if(checkIfEndOfPath())
+        {
+          cmd_linear_vel = 0;
+          steering_angle = 0;
+          is_path_good = false;
+        }
+        else
+        {
+          ROS_FATAL("%s", runtime_err.what());
+          is_path_good = false;
+        }        
       }
 
-      float least_distance = distance[0];
-
-      for(size_t j=0; j < distance.size(); j++)
+      // Perform path tracking if the path selection process is successful
+      if(is_path_good)
       {
-        if(least_distance > distance[j])
+        if(checkIfEndOfPath())
         {
-          least_distance = distance[j];
-          targetPointIndex = j;
+          cmd_linear_vel = 0;
+          steering_angle = 0;
+        }
+        else    // If goal is not reached, do regular path tracking
+        {
+          try
+          {
+            steering_angle = lat_control.computeSteeringAngle(path.getWaypointPose(target_waypoint_index),
+                                                              vehicle_state_msg, controlGain_p, controlGain_soft,
+                                                              controlGain_d);
+          }
+          catch(const std::domain_error& domain_err)
+          {
+            steering_angle = 0;
+            cmd_linear_vel = 0; 
+            ROS_FATAL("%s", domain_err.what());
+          }
+          
+          //TODO: Implement longitudinal Control --> blocker: Planning
+          //TODO: Replace throttle function with a lamda function --> lamda(throttle, brake)
+          cmd_linear_vel = 50; //In percentage
         }
       }
-
-      lat_control.debug_info.currentWPIndex = targetPointIndex;
-      lat_control.debug_info.distance_to_wp = least_distance;
-
-      //Check if goal is reached
-      /* Goal reached definition:
-          - Reference index is last index
-          - Vehicle's relative distance to the last index waypoint is less than 20 cm
-      */
-      if((targetPointIndex == (distance.size() - 1)) && (least_distance <= 20))
-      {
-        //Goal reached
-        goalReached = true;
-        ROS_WARN("Goal reached. End of Path. Autonomy mode set to manual.");
-        autonomousDrivingFlag = false;
-        return;
-      }
-
-      //Changed the controller to run on estimation 
-      /*steering_angle = lat_control.computeSteeringAngle(position,
-                                                pathPointListX,
-                                                pathPointListY,
-                                                linear_velocity,
-                                                targetPointIndex,
-                                                estimated_orientation,
-                                                controlGain,
-                                                dynamicArraySize
-                                                );*/
-      steering_angle = lat_control.computeSteeringAngle(position,
-                                                        pathPointListX,
-                                                        pathPointListY,
-                                                        linear_velocity,
-                                                        targetPointIndex,
-                                                        vehicle_heading,
-                                                        controlGain,
-                                                        dynamicArraySize
-                                                        );
-      //TODO: Implement longitudinal Control --> blocker: Planning
-      //TODO: Replace throttle function with a lamda function --> lamda(throttle, brake)
-      cmd_linear_vel = 50; //In percentage
+      
 
       //IF DEBUG IS TRUE
       if(debug)
       {
-        control_core_command.debugControl = true;
-        lat_control.debug_info.stanleyGain = controlGain;
+        lat_control.debug_info.stanleyGain_p = controlGain_p;
+        lat_control.debug_info.stanleyGain_d = controlGain_d;
         //lat_control.debug_info.estimated_heading = estimated_orientation;
         control_debug_pub.publish(lat_control.debug_info);
       }   
 
         // Check calculation integrity of lateral controller, invalid calculation will bring vehicle to halt
-      if(lat_control.debug_info.pathHeadingCalcInvalid     || 
-         lat_control.debug_info.crossTrackErrorCalcInvalid ||
+      if(lat_control.debug_info.crossTrackErrorCalcInvalid ||
          lat_control.debug_info.headingErrorCalcInvalid    || 
          lat_control.debug_info.steeringAngleCalcInvalid)
       {

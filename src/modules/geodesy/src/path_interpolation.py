@@ -12,14 +12,18 @@ from path_interpolator_ENU  import PathInterpolatorENU
 def main():
     rospy.init_node('interpolation_node', anonymous = True)
 
-    chosenHeight = -6.0 # meters
+    # radar points for ENU conversion
+    radarLat = rospy.get_param("~radar_lat")
+    radarLon = rospy.get_param("~radar_lon")
+    chosenHeight = rospy.get_param("~fixed_height")
+
+    radarPoint = (radarLat, radarLon, chosenHeight)
 
     # From https://www.maps.ie/coordinates.html at SJSU
     filePath = rospy.get_param("~file_path")
     inputLatitudes, inputLongitudes, inputHeights = gps_parser.read_file_coarse_points(filePath, chosenHeight)
     
     conversionType = rospy.get_param("~conversion_type")
-    cmPerPoint = float(rospy.get_param("~cm_per_point"))
 
     if conversionType == "ECEF":
         interpolatorECEF = PathInterpolatorECEF(inputLatitudes, inputLatitudes, inputHeights)
@@ -30,7 +34,7 @@ def main():
         except rospy.ROSInterruptException:
             pass
     elif conversionType == "ENU":
-        interpolatorENU = PathInterpolatorENU(inputLatitudes, inputLongitudes, inputHeights, centimetersPerPoint=cmPerPoint)
+        interpolatorENU = PathInterpolatorENU(inputLatitudes, inputLongitudes, inputHeights, centimetersPerPoint=10, radarPoint=radarPoint)
         
         try:
             rospy.loginfo("ENU Conversion publishing...")
