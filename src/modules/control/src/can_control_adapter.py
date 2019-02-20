@@ -68,7 +68,7 @@ class CanDriver:
         # 8 byte message for requesting power to the propulsion motor
         self.prop_power_request_data = [0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
         # 8 byte message for moving the propulsion motor @ 511 rpm
-        self.prop_data = [0x00, 0x00, 0xFF, 0x7F, 0x00, 0x0D, 0x00, 0x00]
+        self.prop_data = [0x00, 0x00, 0xFF, 0x7F, 0x00, 0x00, 0x00, 0x00]
 
         # 8 byte message for moving the linear actuator
         """
@@ -149,21 +149,30 @@ class CanDriver:
 
         MAX_PROP_INPUT = 100
         MIN_PROP_INPUT = 0
+        NEG_PROP_INPUT = -100
         
-        if prop_input < MIN_PROP_INPUT:
-            prop_input = MIN_PROP_INPUT
+        # if prop_input < MIN_PROP_INPUT:
+        #     prop_input = MIN_PROP_INPUT
+        if prop_input < NEG_PROP_INPUT:
+            prop_input = NEG_PROP_INPUT
         if prop_input > MAX_PROP_INPUT:
             prop_input = MAX_PROP_INPUT
 
         # map the desired propulsion value and output a hex representation
-        if (prop_input >= MIN_PROP_INPUT) and (prop_input <= MAX_PROP_INPUT):
+        # if (prop_input >= MIN_PROP_INPUT) and (prop_input <= MAX_PROP_INPUT):
+        if (prop_input >= NEG_PROP_INPUT) and (prop_input <= MAX_PROP_INPUT):
             propulsion_map = int(round((prop_input-MIN_PROP_INPUT)*(MAX_PROP_MESSAGE-MIN_PROP_MESSAGE)/(MAX_PROP_INPUT-MIN_PROP_INPUT)+MIN_PROP_MESSAGE))
 
             self.prop_data[1] = int(propulsion_map >> 8 & self.MASKER)
-            self.prop_data[0] = int(propulsion_map & self.MASKER)     
+            self.prop_data[0] = int(propulsion_map & self.MASKER)
+            self.prop_data[5] = 0x0D
+
+            if(prop_input == 0):
+                self.prop_data[5] = 0x00
         else:
             self.prop_data[0] = 0x00
             self.prop_data[1] = 0x00
+            self.prop_data[5] = 0x00
 
     def steering_control(self, desired_steering):
         """Function to assemble the hex data for the steering message"""
