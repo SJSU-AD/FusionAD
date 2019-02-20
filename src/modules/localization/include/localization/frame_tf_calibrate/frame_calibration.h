@@ -14,12 +14,6 @@ NOTE: The covariance in the eth-zurich swift package provides a filtered gps sig
       25 [m^2] covariance is filtered and smooth, the two covariances are swapped. This allows the EKF to take in the 
       previously 25 [m^2] measurements and apply a larger Kalman Gain (trusting this measurement more). 
       
-      The heading is calculated from the gps measurements and includes a tuneable range of tolerance allowed for measurements
-      given by (+/-) the heading_threshold value in the state_estimation.launch launch file.
-
-      A median filter and low-pass filter have been included in the code in the event that more filtering is required (outside of
-      the EKF). These two extra filters have been commented out.
-      
 Subscribers
 --------------------------------------------------
 Topic:  /gps/geodesy_odom
@@ -27,6 +21,8 @@ Topic:  /gps/geodesy_odom
 Topic:  /imu
             Msg: sensor_msgs::Imu
 Topic:  /localization/loam_odom_with_covar
+            Msg: nav_msgs::Odometry
+Topic:  /localization/wheel_odom
             Msg: nav_msgs::Odometry
 
 TF Listeners: Geodesy TF Message
@@ -77,16 +73,18 @@ class FrameCalibrationNode
         bool geodesy_is_calibrated = false;
 
         // counters to keep track of # of samples
-        unsigned int yaw_samples_counter = 0;
-        unsigned int geodesy_samples_counter = 0;
+        // unsigned int yaw_samples_counter = 0;
+        // unsigned int geodesy_samples_counter = 0;
 
         // variables to store samples
         float yaw_accumulation = 0; 
-        float geodesy_x_accumulation = 0;
-        float geodesy_y_accumulation = 0;
+        // float geodesy_x_accumulation = 0;
+        // float geodesy_y_accumulation = 0;
+        float gps_heading_accumulation = 0;
+        float gps_calibration_heading = 0;
 
-        float geodesy_calibrated_x_value = 0;
-        float geodesy_calibrated_y_value = 0;
+        // float geodesy_calibrated_x_value = 0;
+        // float geodesy_calibrated_y_value = 0;
 
         // initializing nodehandle
         ros::NodeHandle frameCalibrationNode_nh;
@@ -103,6 +101,7 @@ class FrameCalibrationNode
         ros::Subscriber geodesy_sub;
         ros::Subscriber imu_sub;
         ros::Subscriber lidar_sub;
+        ros::Subscriber odom_sub;
 
         // inputs to the calibration message
         float calibrated_yaw;
@@ -123,6 +122,9 @@ class FrameCalibrationNode
         tf::TransformListener geodesy_listener;
         tf::TransformListener lidar_listener;
 
+        bool speed_threshold_met = false;
+        bool calibration_in_progress = true;
+        
         // message threshold for calibration
         const int MSG_THRESHOLD = 100;
         unsigned int heading_sample_counter = 0;
@@ -131,6 +133,7 @@ class FrameCalibrationNode
         void geodesyCallback(const nav_msgs::Odometry& geodesy_msg);
         void yawCallback(const sensor_msgs::Imu& imu_msg);
         void lidarCallback(const nav_msgs::Odometry& lidar_msg);
+        void odomCallback(const nav_msgs::Odometry& odom_msg);
 };
 }// frame_calibration_node
 }// localization
