@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 """
-Takes steering and throttle input from the high level control and then generates the appropriate CAN
-messages to send to the steering and propulsion motors.
+Takes throttle input from the high level control and then generates the appropriate CAN
+messages to send to the propulsion motors.
+
+NOTE: Currently commented out the steering CAN messages logic as we have two separate CAN networks. 
 
 NOTE: Must be plugged into the CAN device with a completed CAN network to work
 Hardware Included: USB2CAN Device
@@ -32,14 +34,11 @@ import can
 import time
 import os
 
-# os.system('sudo /sbin/ip link set can0 up type can bitrate 250000')
-
 class CanDriver:
     """Converts high-lvl input into appropriate CAN Message and sends the message"""
     # initializing the node
     def __init__(self):
         rospy.init_node('can_controller', anonymous = True)
-        # establishing the CAN connection and setting bitrate to 250 kbps
 
         # initializing the bus to channel 0 and bustype 'socketcan_ctypes'
         self.bus = can.interface.Bus(channel='can0', bustype='socketcan_ctypes')
@@ -142,31 +141,30 @@ class CanDriver:
         prop_input = desired_propulsion
 
         # 500 RPM Max
-        MAX_PROP_MESSAGE = 0x01F4
+        max_prop_msg = 0x01F4
         # 250 RPM Max
-        # MAX_PROP_MESSAGE = 0x00FA
-        MIN_PROP_MESSAGE = 0x0000
+        # max_prop_msg = 0x00FA
+        min_prop_msg = 0x0000
 
-        MAX_PROP_INPUT = 100
-        MIN_PROP_INPUT = 0
-        NEG_PROP_INPUT = -100
+        max_prop_input = 100
+        min_prop_input = 0
+        neg_prop_input = -100
         
-        # if prop_input < MIN_PROP_INPUT:
-        #     prop_input = MIN_PROP_INPUT
-        if prop_input < NEG_PROP_INPUT:
-            prop_input = NEG_PROP_INPUT
-        if prop_input > MAX_PROP_INPUT:
-            prop_input = MAX_PROP_INPUT
+        if prop_input < neg_prop_input:
+            prop_input = neg_prop_input
+        if prop_input > max_prop_input:
+            prop_input = max_prop_input
 
         # map the desired propulsion value and output a hex representation
-        # if (prop_input >= MIN_PROP_INPUT) and (prop_input <= MAX_PROP_INPUT):
-        if (prop_input >= NEG_PROP_INPUT) and (prop_input <= MAX_PROP_INPUT):
-            propulsion_map = int(round((prop_input-MIN_PROP_INPUT)*(MAX_PROP_MESSAGE-MIN_PROP_MESSAGE)/(MAX_PROP_INPUT-MIN_PROP_INPUT)+MIN_PROP_MESSAGE))
+        if (prop_input >= neg_prop_input) and (prop_input <= max_prop_input):
+            propulsion_map = int(round((prop_input-min_prop_input)*(max_prop_msg-min_prop_msg)/(max_prop_input-min_prop_input)+min_prop_msg))
 
             self.prop_data[1] = int(propulsion_map >> 8 & self.MASKER)
             self.prop_data[0] = int(propulsion_map & self.MASKER)
+            # enable the propulsion motor 
             self.prop_data[5] = 0x0D
 
+            # disable the propulsion motor if there is no desired propulsion input
             if(prop_input == 0):
                 self.prop_data[5] = 0x00
         else:
@@ -182,27 +180,27 @@ class CanDriver:
         steering_input = desired_steering
 
         # positive full lock bytes
-        POS_FULL_LOCK = 0x00180000
+        pos_full_lock = 0x00180000
         # zero full lock bytes
-        ZERO_FULL_LOCK = 0x00000000
+        zero_full_lock = 0x00000000
 
         # steering limits determined experimentally
         # maximum number of radians (positive)
-        MAX_ANGLE = 1.4833248751
+        max_angle = 1.4833248751
         # 0 REVOLUTIONS
-        ZERO_ANGLE = 0
+        zero_angle = 0
         # minimum number of radians (negative)
-        NEG_ANGLE = -1.2074071982
+        neg_angle = -1.2074071982
 
         # establishing the limits of the joy node (from -0.33 to 0.33)
-        if steering_input > MAX_ANGLE:
-            steering_input = MAX_ANGLE
-        if steering_input < NEG_ANGLE:
-            steering_input = NEG_ANGLE
+        if steering_input > max_angle:
+            steering_input = max_angle
+        if steering_input < neg_angle:
+            steering_input = neg_angle
 
         # map the desired steering value and output a hex representation 
-        if (steering_input <= MAX_ANGLE) and (steering_input >= NEG_ANGLE):
-            steering_map = int(round(((-1)*steering_input-ZERO_ANGLE)*(POS_FULL_LOCK-ZERO_FULL_LOCK)/(MAX_ANGLE-ZERO_ANGLE)+ZERO_FULL_LOCK))
+        if (steering_input <= max_angle) and (steering_input >= neg_angle):
+            steering_map = int(round(((-1)*steering_input-zero_angle)*(pos_full_lock-zero_full_lock)/(max_angle-zero_angle)+zero_full_lock))
             self.steering_data[5] = int(steering_map >> 24 & self.MASKER)    
             self.steering_data[4] = int(steering_map >> 16 & self.MASKER)    
             self.steering_data[3]= int(steering_map >> 8 & self.MASKER)
@@ -216,7 +214,7 @@ class CanDriver:
     def main(self):
         start_time = time.clock()
 
-        steering_zero_msg = can.Message(arbitration_id = self.steering_arbitration_id, data = self.zero_steering_data, extended_id = True)
+        # steering_zero_msg = can.Message(arbitration_id = self.steering_arbitration_id, data = self.zero_steering_data, extended_id = True)
         # braking_zero_msg = can.Message(arbitration_id = self.braking_arbitration_id, data = self.zero_braking_data, extended_id = True)
 
         # self.bus.send(steering_zero_msg)
@@ -224,9 +222,6 @@ class CanDriver:
 
         # 5 seconds of power messages until control can be sent
         TIME_DELAY = 5
-
-        # # desired frequency
-        # FREQUENCY_DESIRED = 20
         
         # period between each set of messages
         OVERALL_PERIOD = 0.05
@@ -239,12 +234,11 @@ class CanDriver:
             present_time = time.clock()
             
             power_propulsion_msg = can.Message(arbitration_id = self.prop_power_arbitration_id, data = self.prop_power_request_data, extended_id = False)
-            steering_msg = can.Message(arbitration_id = self.steering_arbitration_id, data = self.steering_data, extended_id = True)
+            # steering_msg = can.Message(arbitration_id = self.steering_arbitration_id, data = self.steering_data, extended_id = True)
             # braking_msg = can.Message(arbitration_id = self.braking_arbitration_id, data = self.braking_data, extended_id = True)
             propulsion_msg = can.Message(arbitration_id = self.propulsion_arbitration_id, data = self.prop_data, extended_id = False)
             
             # self.bus.send(steering_msg)
-            
             # self.bus.send(braking_msg)
             self.bus.send(power_propulsion_msg)
             

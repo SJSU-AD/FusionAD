@@ -1,6 +1,11 @@
 #!/usr/bin/env python
 """
-Monitors the CAN Network messages and parses the steering encoder and torque feedback messages
+Monitors the Arduino feedback from the CAN Network and parses the steering data from its respective CAN message
+
+Subscribes
+----------
+Topic: /can_gateway/received
+    Msg: interface/Can_Interface
 
 Publisher
 ---------
@@ -45,6 +50,7 @@ class CanListener(object):
         self.steeringFeedbackPub.publish(self.feedback_msg)  
     
     def bytearray_to_float(self, first_byte, last_byte, input_message):
+        """Function to convert the incoming array of ints into a single float"""
         new_data = struct.unpack('i', input_message[first_byte:(last_byte+1)])
         return new_data[0]
 

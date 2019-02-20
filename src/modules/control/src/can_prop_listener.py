@@ -60,6 +60,7 @@ class CanListener(object):
         if(pot_msg is not None):
             throttle_data = self.bytearray_to_float(0, 1, pot_msg.data)
             
+            # mapping the throttle input from 0 to 100
             self.controlCommand.throttle = (throttle_data - input_min) * (output_max - output_min) / (input_max - input_min) + output_min
 
             if(self.switch_data == 0) or (self.switch_data == 8):
@@ -71,6 +72,7 @@ class CanListener(object):
             self.throttleDesiredPub.publish(self.controlCommand)
 
     def bytearray_to_float(self, first_byte, last_byte, input_message):
+        """Take the CAN steering data, convert to radians, republish"""
         new_data = struct.unpack('h', input_message[first_byte:(last_byte+1)])
         return new_data[0]
 
