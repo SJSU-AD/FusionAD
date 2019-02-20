@@ -1,4 +1,5 @@
 #include "localization/frame_tf_calibrate/frame_calibration.h"
+
 /*
 NOTE: This node listens to the tf broadcasts and performs the homogeneous transforms.
       Another major function of this node is to "calibrate" the initial position and orientation
@@ -11,6 +12,12 @@ NOTE: The covariance in the eth-zurich swift package provides a filtered gps sig
       25 [m^2] has been filtered. Because the 1 [m^2] covariance is typically noisy due to the lack of filtering and the 
       25 [m^2] covariance is filtered and smooth, the two covariances are swapped. This allows the EKF to take in the 
       previously 25 [m^2] measurements and apply a larger Kalman Gain (trusting this measurement more). 
+      
+      The heading is calculated from the gps measurements and includes a tuneable range of tolerance allowed for measurements
+      given by (+/-) the heading_threshold value in the state_estimation.launch launch file.
+
+      A median filter and low-pass filter have been included in the code in the event that more filtering is required (outside of
+      the EKF). These two extra filters have been commented out.
 
 Subscribers
 --------------------------------------------------
@@ -68,69 +75,35 @@ namespace frame_calibration_node
 
     void FrameCalibrationNode::yawCallback(const sensor_msgs::Imu& imu_msg)
     {
-        double roll = 0, pitch = 0, yaw = 0, vehicle_heading = 0;
-        const float imu_residual_offset = -0.3567612546;
-        const float yaw_offset = M_PI_2;
-
         rot_msg = imu_msg;
 
-        // rename the imu frame to base_link, which is much more common within ROS
+        // rename the imu frame to base_link
         rot_msg.header.frame_id = "base_link";
-
-        tf::Quaternion imu_quaternion(imu_msg.orientation.x,
-                                      imu_msg.orientation.y,
-                                      imu_msg.orientation.z,
-                                      imu_msg.orientation.w);
-        tf::Matrix3x3 temporary_rot_matrix(imu_quaternion);
-        temporary_rot_matrix.getRPY(roll, pitch, yaw);
-
-        float adjusted_yaw = yaw + yaw_offset + imu_residual_offset;
-
-        if(adjusted_yaw > M_PI)
-        {
-            vehicle_heading = adjusted_yaw - 2*M_PI;
-        }
-        else if(adjusted_yaw < (-1)*M_PI)
-        {
-            vehicle_heading = (2*M_PI) + adjusted_yaw;
-        }
-        else
-        {
-            vehicle_heading = adjusted_yaw;
-        }
-
-        tf::Quaternion new_imu_quaternion = tf::createQuaternionFromRPY(roll, pitch, vehicle_heading);
-
-        rot_msg.orientation.x = new_imu_quaternion[0];
-        rot_msg.orientation.y = new_imu_quaternion[1];
-        rot_msg.orientation.z = new_imu_quaternion[2];
-        rot_msg.orientation.w = new_imu_quaternion[3];
-
         imu_tf_pub.publish(rot_msg);
 
-        // perform while yaw is not calibrated
-        if(!yaw_is_calibrated)
-        {
+        // // perform while yaw is not calibrated
+        // if(!yaw_is_calibrated)
+        // {
             
-            ROS_INFO_ONCE("Collecting Yaw Samples");
+        //     ROS_INFO_ONCE("Collecting Yaw Samples");
 
-            // accumulate samples
-            yaw_accumulation += vehicle_heading;
+        //     // accumulate samples
+        //     yaw_accumulation += vehicle_heading;
 
-            // increment sample counter
-            yaw_samples_counter++;
+        //     // increment sample counter
+        //     yaw_samples_counter++;
 
-            // calculate average of samples once threshold is hit
-            if(yaw_samples_counter >= MSG_THRESHOLD)
-            {
-                // store and calculate calibrated data
-                calibrated_yaw = yaw_accumulation / yaw_samples_counter;
+        //     // calculate average of samples once threshold is hit
+        //     if(yaw_samples_counter >= MSG_THRESHOLD)
+        //     {
+        //         // store and calculate calibrated data
+        //         calibrated_yaw = yaw_accumulation / yaw_samples_counter;
 
-                // yaw is now calibrated
-                ROS_INFO("Yaw Calibration Completed");
-                yaw_is_calibrated = true;
-            }
-        }
+        //         // yaw is now calibrated
+        //         ROS_INFO("Yaw Calibration Completed");
+        //         yaw_is_calibrated = true;
+        //     }
+        // }
     }
 
     void FrameCalibrationNode::geodesyCallback(const nav_msgs::Odometry& geodesy_msg)
@@ -147,16 +120,19 @@ namespace frame_calibration_node
         {
             geodesy_tf_msg.pose.covariance[0] = 25;
             geodesy_tf_msg.pose.covariance[7] = 25;
+            geodesy_tf_msg.pose.covariance[35] = 1;
         }
         else if (geodesy_msg.pose.covariance[0] == 25)
         {
             geodesy_tf_msg.pose.covariance[0] = 1;
             geodesy_tf_msg.pose.covariance[7] = 1;
+            geodesy_tf_msg.pose.covariance[35] = 0.5;
         }
         else
         {
             geodesy_tf_msg.pose.covariance[0] = geodesy_msg.pose.covariance[0];
             geodesy_tf_msg.pose.covariance[7] = geodesy_msg.pose.covariance[7];
+            geodesy_tf_msg.pose.covariance[35] = 0.005;
         }
         
         // creating a temporary geometry PoseStamped message to facilitate homogeneous transform
@@ -193,18 +169,48 @@ namespace frame_calibration_node
                 }
                 else
                 {
-                    // calculate the euclidian distance between point (n) and point (n-1)
                     float distance_comparison;
                     float gps_threshold;
+                    float vehicle_heading_from_gps;
 
                     frameCalibrationNode_nh.getParam("/frame_calibration/gps_threshold", gps_threshold);
-                    distance_comparison = std::sqrt(std::pow(geodesy_tf_msg.pose.pose.position.x - previous_geodesy_tf_msg.pose.pose.position.x, 2) + std::pow(geodesy_tf_msg.pose.pose.position.y - previous_geodesy_tf_msg.pose.pose.position.y, 2));
+                    // calculate the euclidian distance between point (n) and point (n-1)
+                    distance_comparison = std::sqrt(std::pow(geodesy_tf_msg.pose.pose.position.x - previous_geodesy_tf_msg.pose.pose.position.x, 2) + std::pow(geodesy_tf_msg.pose.pose.position.y - previous_geodesy_tf_msg.pose.pose.position.y, 2));                    
                     
+                    // calculating vehicle heading from gps point n and gps point n-1
+                    vehicle_heading_from_gps = std::atan2((geodesy_msg.pose.pose.position.y - previous_geodesy_point.y), (geodesy_msg.pose.pose.position.x - previous_geodesy_point.x));
+
+                    // if the vehicle heading estimate is drastically different from the previous heading estimate, then make the current estimate equal to the previous estimate
+                    heading_sample_counter++;
+                    
+                    // if 200 samples have been collected, then start applying the heading threshold
+                    if(heading_sample_counter >= 200)
+                    {
+                        float heading_threshold;
+                        frameCalibrationNode_nh.getParam("/frame_calibration/heading_threshold", heading_threshold);
+                        if(std::abs(std::abs(previous_vehicle_heading) - std::abs(vehicle_heading_from_gps)) >= heading_threshold)                            
+                        {
+                            vehicle_heading_from_gps = previous_vehicle_heading;
+                            ROS_INFO("Rejected Heading Estimate");
+                        }
+                    }
+
+                    // pack the new vehicle heading into a temporary quaternion message
+                    tf::Quaternion vehicle_heading_quaternion = tf::createQuaternionFromRPY(0, 0, vehicle_heading_from_gps);
+
+                    // place the temporary quaternion message into the geodesy_tf_msg 
+                    geodesy_tf_msg.pose.pose.orientation.x = vehicle_heading_quaternion[0];
+                    geodesy_tf_msg.pose.pose.orientation.y = vehicle_heading_quaternion[1];
+                    geodesy_tf_msg.pose.pose.orientation.z = vehicle_heading_quaternion[2];
+                    geodesy_tf_msg.pose.pose.orientation.w = vehicle_heading_quaternion[3];
+
                     // if the distance between point (n) and point (n-1) is less than the threshold, then publish the gps msg
                     if(std::abs(distance_comparison) <= gps_threshold)
                     {
                         geodesy_tf_pub.publish(geodesy_tf_msg);
                     }
+
+                    previous_vehicle_heading = vehicle_heading_from_gps;
                 }
 
                 ROS_INFO("gps: (%.2f, %.2f) -----> odom: (%.2f, %.2f) at time %.2f",
@@ -214,6 +220,10 @@ namespace frame_calibration_node
                 // store previous messages for distance calculation
                 previous_geodesy_tf_msg.pose.pose.position.x = geodesy_tf_msg.pose.pose.position.x;
                 previous_geodesy_tf_msg.pose.pose.position.y = geodesy_tf_msg.pose.pose.position.y;
+                
+                // store previous geodesy messages for heading calculation
+                previous_geodesy_point.x = geodesy_msg.pose.pose.position.x;
+                previous_geodesy_point.y = geodesy_msg.pose.pose.position.y;
             }
             catch(tf::TransformException& geodesy_exception)
             {

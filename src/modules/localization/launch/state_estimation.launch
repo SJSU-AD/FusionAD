@@ -5,12 +5,16 @@
     <node type="frame_calibration" pkg="localization" name="frame_calibration" output="screen">
         <param name="threshold_pose_std_dev" value="5" />
         <param name="gps_threshold" value="0.5" />
+        <param name="heading_threshold" value="0.5" />
     </node>
     
     <node type="master_tf" pkg="master_transforms" name="master_tf" output="screen">
     </node>
 
     <node type="odom_to_chassis_state.py" pkg="localization" name="odom_converter_node" output="screen">
+    </node>
+
+    <node type="ekf_orientation_to_imu.py" pkg="localization" name="imu_converter_node" output="screen">
     </node>
 
     <include file="$(find robot_localization)/launch/ekf_template.launch" />
