@@ -22,6 +22,7 @@ namespace node
     waypoint_proximity_range = 0;
     waypoint_heading_error_range = 0;
     controlGain_soft = 0;
+    waypoint_lookahead_range = 0;
   }
 
   ControlNode::~ControlNode()
@@ -87,12 +88,28 @@ namespace node
     {
       ROS_WARN("Param Waypoint Proximity Range not set, using default - 1 meter");
       return false;
-    }    
+    }
+    if(!control_nh.param<float>(node_name+"/waypoint_lookahead_range", waypoint_lookahead_range, 0.5))
+    {
+      ROS_WARN("Param Waypoint lookahead Range not set, using default - 0.5 meter");
+      return false;
+    }        
     if(!control_nh.param<float>(node_name+"/waypoint_heading_error_range", waypoint_heading_error_range, M_PI_2))
     {
       ROS_WARN("Param Waypoint Heading Error Range not set, using default - PI/2 Radians");
       return false;
     }        
+    if(waypoint_proximity_range <= waypoint_lookahead_range)
+    {
+      ROS_FATAL("Waypoint proximity distance is less than lookahead range");
+      return false;
+    }
+    // The donut belt is smaller than 0.5 meters
+    if(std::abs(waypoint_proximity_range - waypoint_lookahead_range) < 0.5)
+    { 
+      ROS_FATAL("Waypoint selector donut belt is too small! Less than 0.5 meters!");
+      return false;
+    }    
     ROS_INFO_ONCE("-------- Param Retrieved - Good --------");
     return true;    
   }
@@ -144,6 +161,8 @@ namespace node
     // Create vector to store the filtered list
     std::vector<int> filtered_index;
 
+    
+
     // If the path class is not empty
     if(!path.isPathEmpty())
     {
@@ -151,7 +170,7 @@ namespace node
       {
         // Check if the waypoint is within proximity
         float waypoint_distance = path.getWaypointRelativePlaneDistance(i, current_position.Position.pose.position);
-        if(waypoint_distance <= waypoint_proximity_range)
+        if((waypoint_distance <= waypoint_proximity_range) && (waypoint_distance >= waypoint_lookahead_range))
         {
           // Check if the waypoint is ahead of the vehicle
           if(path.isWaypointAhead(i, current_position.Position.pose))
@@ -170,7 +189,7 @@ namespace node
       // Now search within the filtered out points for the closest waypoint
       if(filtered_index.size() == 0)
       {
-        ROS_FATAL("There is no waypoint that meets all the requirement of the waypoint selector");
+        ROS_FATAL("There is no waypoint that meets all the requirement of the waypoint selector or END OF PATH REACHED");
         throw std::runtime_error("No waypoint meets the waypoint selector requirement.");
       }
       else
@@ -199,6 +218,28 @@ namespace node
   bool ControlNode::checkAutonomousMode() const
   {
     return (stateInitialized) && (pathInitialized) && (!obstacleDetected) && (!internalFailFlag) && (!goalReached) && (autonomousDrivingFlag) && (!externalFailFlag) && (!path.isPathEmpty());
+  }
+
+  bool ControlNode::checkIfEndOfPath()
+  {
+    //Check if goal is reached
+    /* 
+    Goal reached definition:
+      - Vehicle's relative distance to the last waypoint is less than waypoint lookahead range
+    */    
+    float distance_to_last_waypoint = path.getWaypointRelativePlaneDistance(path.getPathSize() - 1, vehicle_state_msg.Position.pose.position);
+    if(distance_to_last_waypoint <= waypoint_lookahead_range)    
+    {
+      //Goal reached
+      goalReached = true;
+      ROS_INFO("Goal reached. End of Path. Autonomy mode set to manual.");
+      autonomousDrivingFlag = false;
+      return true;
+    }
+    else
+    {
+      return false;
+    }
   }
 
   void ControlNode::masterTimerCallback(const ros::TimerEvent& controlTimeEvent)
@@ -234,27 +275,26 @@ namespace node
       }
       catch(const std::runtime_error& runtime_err)
       {
-        ROS_FATAL("%s", runtime_err.what());
-        is_path_good = false;
+        if(checkIfEndOfPath())
+        {
+          cmd_linear_vel = 0;
+          steering_angle = 0;
+          is_path_good = false;
+        }
+        else
+        {
+          ROS_FATAL("%s", runtime_err.what());
+          is_path_good = false;
+        }        
       }
 
       // Perform path tracking if the path selection process is successful
       if(is_path_good)
       {
-        //Check if goal is reached
-        /* 
-        Goal reached definition:
-          - Vehicle's relative distance to the last waypoint is less than 0.3 meters
-        */
-        float distance_to_last_waypoint = path.getWaypointRelativePlaneDistance(path.getPathSize() - 1, vehicle_state_msg.Position.pose.position);
-        if(distance_to_last_waypoint <= 0.5)    
+        if(checkIfEndOfPath())
         {
-          //Goal reached
-          goalReached = true;
-          ROS_INFO("Goal reached. End of Path. Autonomy mode set to manual.");
-          autonomousDrivingFlag = false;
+          cmd_linear_vel = 0;
           steering_angle = 0;
-          cmd_linear_vel = 0; 
         }
         else    // If goal is not reached, do regular path tracking
         {

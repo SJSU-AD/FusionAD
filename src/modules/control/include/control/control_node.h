@@ -81,9 +81,11 @@ class ControlNode
     std::vector<float>::size_type dynamicArraySize;
     float waypoint_proximity_range;
     float waypoint_heading_error_range;
+    float waypoint_lookahead_range;
 
     int getTargetWaypoint(const interface::Chassis_state& current_position);
     bool checkAutonomousMode() const;
+    bool checkIfEndOfPath();
 
     void pathCallback(const nav_msgs::Path& trajectory_msg);
     void stateCallback(const interface::Chassis_state& veh_state_msg);
