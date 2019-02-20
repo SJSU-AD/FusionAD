@@ -23,9 +23,16 @@ def main():
 
     # From https://www.maps.ie/coordinates.html at SJSU
     filePath = rospy.get_param("~file_path")
-    inputLatitudes, inputLongitudes, inputHeights = gps_parser.read_file_coarse_points(filePath, chosenHeight)
-    
     conversionType = rospy.get_param("~conversion_type")
+    
+    if filePath[-3:] not in ["txt", "csv"]:
+        raise ValueError("Expected '.txt' or '.csv' file for input path")
+
+    if conversionType not in ["ECEF", "ENU", "UTM"]:
+        raise NameError("'{}' is not a valid conversion. Please provide valid conversion in launch file\n".format(conversionType))
+    
+    if filePath[-3:] == "txt":
+        inputLatitudes, inputLongitudes, inputHeights = gps_parser.read_file_coarse_points(filePath, chosenHeight)
 
     if conversionType == "ECEF":
         interpolatorECEF = PathInterpolatorECEF(inputLatitudes, inputLatitudes, inputHeights)
@@ -52,8 +59,6 @@ def main():
             interpolatorUTM.interpolation_publish_UTM()
         except rospy.ROSInterruptException:
             pass
-    else:
-        raise NameError("'{}' is not a valid conversion. Please provide valid conversion in launch file\n".format(conversionType))
 
 if __name__ == '__main__':
     main()
