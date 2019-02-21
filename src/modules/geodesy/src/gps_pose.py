@@ -57,7 +57,7 @@ class GPSDataConverter(object):
         if radarLat != "None" and radarLon != "None":
             radarPnt = (float(radarLat), float(radarLon), float(height))
 
-        self.lat0, self.lon0, self.h0 = map(float, gps_parser.read_file_coarse_points(filePath, height, oneLineOnly=True))
+        self.lat0, self.lon0, self.h0 = map(float, gps_parser.read_file_coarse_points_LatLon(filePath, height, oneLineOnly=True))
         self.toENUConverter = GeodesyConverterENU([self.lat0], [self.lon0], [self.h0], radarPoint=radarPnt)
         rospy.loginfo("Found and initialized intial lat/lon/altitude values")
         
