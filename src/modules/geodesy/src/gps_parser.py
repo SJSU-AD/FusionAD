@@ -34,20 +34,17 @@ def read_file_coarse_points_XYZ(fileName):
     inputYPoints = []
     inputZPoints = []
 
-    try:
-        with open(fileName, "r") as file:
-            for line in file:
-                currentLine = line.split(",")
-                
-                number_of_coordinates = 3
-                if len(currentLine) != number_of_coordinates:
-                    raise XYZFileFormatError("Detected line that does not have exactly {} coordinates".format(number_of_coordinates))
-
+    with open(fileName, "r") as file:
+        for line in file:
+            currentLine = line.split(",")
+            
+            number_of_coordinates = 3
+            if len(currentLine) != number_of_coordinates:
+                print("Detected line that does not have exactly {} coordinates".format(number_of_coordinates))
+            else:
                 inputXPoints.append(float(currentLine[0]))
-                inputXPoints.append(float(currentLine[1]))
-                inputXPoints.append(float(currentLine[2]))
-    except XYZFileFormatError:
-        print("Wrong file format. Each line should have `east, north, up` format.")
+                inputYPoints.append(float(currentLine[1]))
+                inputZPoints.append(float(currentLine[2]))
 
     return inputXPoints, inputYPoints, inputZPoints
 
