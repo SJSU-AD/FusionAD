@@ -7,10 +7,12 @@ from __future__ import division
 
 import math
 
+import rospy
+
 from geodesy_conversion_ECEF import GeodesyConverterECEF
 
 class GeodesyConverterENU(GeodesyConverterECEF):
-    def __init__(self, latitudesData, longitudesData, heightsData):
+    def __init__(self, latitudesData, longitudesData, heightsData, radarPoint=None):
         ## TODO: Make ECEF_to_ENU_point() a @staticmethod to reduce unnecessary object instantiation
         ##       OR make setters to get initial GPS position
         # if latitudesData  == None:
@@ -22,8 +24,23 @@ class GeodesyConverterENU(GeodesyConverterECEF):
 
         super(GeodesyConverterENU, self).__init__(
             latitudesData, longitudesData, heightsData)
+        
+        if radarPoint != None:
+            rospy.loginfo("Using custom point as radar point!!!")
+            self.radarLat = radarPoint[0]
+            self.radarLon = radarPoint[1]
+            self.radarHeight = radarPoint[2]
+        else:
+            rospy.loginfo("Using initial point in path as radar point!!!")
+            self.radarLat = self.latitudesData[0]
+            self.radarLon = self.longitudesData[0]
+            self.radarHeight = self.heightsData[0]
+        
+        self.radarLat, self.radarLon, self.radarHeight = map(float, [self.radarLat, self.radarLon, self.radarHeight])
+        self.radarPnt = (self.radarLat, self.radarLon, self.radarHeight)
+        rospy.loginfo("Radar point: (lat, lon, height): {}".format(radarPoint))
 
-    def geodetic_to_ENU_point(self, latitudeCoord, longitudeCoord, heightCoord, lat0=None, lon0=None, h0=None):
+    def geodetic_to_ENU_point(self, latitudeCoord, longitudeCoord, heightCoord):
         """Convert relative ECEF coordinates to (East, North, Up) coordinates.
 
         NOTE: Uses initial geodetic point as reference for initial position if lat0, lon0, or h0 are not given
@@ -37,12 +54,9 @@ class GeodesyConverterENU(GeodesyConverterECEF):
         x, y, z = super(GeodesyConverterENU, self).geodetic_to_ECEF_point(
             latitudeCoord, longitudeCoord, heightCoord)
 
-        if lat0 == None:
-            lat0 = self.latitudesData[0]
-        if lon0 == None:
-            lon0 = self.longitudesData[0]
-        if h0 == None:
-            h0 = self.heightsData[0]
+        lat0 = self.radarLat
+        lon0 = self.radarLon
+        h0 = self.radarHeight
 
         lambdaValue = math.radians(lat0)
         phiValue = math.radians(lon0)
@@ -91,15 +105,12 @@ class GeodesyConverterENU(GeodesyConverterECEF):
         """
         return
 
-    def ENU_to_ECEF_point(self, east, north, up, lat0=None, lon0=None, h0=None):
+    def ENU_to_ECEF_point(self, east, north, up):
         """Taken from: https://gist.github.com/govert/1b373696c9a27ff4c72a"""
-
-        if lat0 == None:
-            lat0 = self.latitudesData[0]
-        if lon0 == None:
-            lon0 = self.longitudesData[0]
-        if h0 == None:
-            h0 = self.heightsData[0]
+        
+        lat0 = self.radarLat
+        lon0 = self.radarLon        
+        h0 = self.radarHeight
 
         lambdaValue = math.radians(lat0)
         phiValue = math.radians(lon0)
@@ -125,13 +136,13 @@ class GeodesyConverterENU(GeodesyConverterECEF):
 
         return x, y, z
 
-    def ENU_data_to_ECEF_data(self, eData, nData, uData, lat0=None, lon0=None, h0=None):
+    def ENU_data_to_ECEF_data(self, eData, nData, uData):
         xData = []
         yData = []
         zData = []
 
         for i in range(min(len(eData), len(nData), len(uData))):
-            x, y, z = self.ENU_to_ECEF_point(eData[i], nData[i], uData[i], lat0, lon0, h0)
+            x, y, z = self.ENU_to_ECEF_point(eData[i], nData[i], uData[i])
             xData.append(x)
             yData.append(y)
             zData.append(z)

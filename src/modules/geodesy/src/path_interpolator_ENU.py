@@ -25,8 +25,8 @@ import gps_parser
 from geodesy_conversion_ENU import GeodesyConverterENU
 
 class PathInterpolatorENU(GeodesyConverterENU):
-    def __init__(self, latitudesData, longitudesData, heightsData, centimetersPerPoint=25):
-        super(PathInterpolatorENU, self).__init__(latitudesData, longitudesData, heightsData)
+    def __init__(self, latitudesData, longitudesData, heightsData, centimetersPerPoint=25, radarPoint=None):
+        super(PathInterpolatorENU, self).__init__(latitudesData, longitudesData, heightsData, radarPoint=radarPoint)
         self.heightsData = heightsData
         self.centimetersPerPoint = centimetersPerPoint
 
