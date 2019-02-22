@@ -2,7 +2,6 @@
   <!-- Get GPS Coordinates parameter file in .txt format from here: http://www.gpsvisualizer.com/draw/ -->
 
   <!-- ATM machines = -6.0, North Garage = 7.493 -->
-<<<<<<< HEAD
   <arg name="radar_height" value="-6.0" doc="Chosen fixed height of the path" /> <!-- Measured in meters -->
   <arg name="chosen_path" value="student_union_straight_long.txt" doc="Chosen path to run" />
   
@@ -11,10 +10,6 @@
   <!-- Set values to "None" to use first point in path as radar point -->
   <arg name="radar_lat" value="37.335292" doc="Latitude coordiate for radar point. Set to 'None' to use initial point in path" />
   <arg name="radar_lon" value="-121.881295" doc="Longitude coordiate for radar point. Set to 'None' to use initial point in path" />
-=======
-  <arg name="height" value="-6.0" /> <!-- Measured in meters -->
-  <arg name="chosen_path" value="campus_uPath.txt" />
->>>>>>> 7a0ed2356596de0d0c2a8620855eea548c59a670
 
   <node type="path_interpolation.py" pkg="geodesy" name="path_interpolator" output="screen">
     <param name="~radar_lat" value="$(arg radar_lat)" />
