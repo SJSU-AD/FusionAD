@@ -197,17 +197,18 @@ namespace frame_calibration_node
                     // calculating vehicle heading from gps point n and gps point n-1
                     vehicle_heading_from_gps = std::atan2((geodesy_msg.pose.pose.position.y - previous_geodesy_point.y), (geodesy_msg.pose.pose.position.x - previous_geodesy_point.x));
 
-                    // if the speed threshold has been met, apply heading rejection
+                    // apply heading rejection
+                    float heading_threshold;
+                    frameCalibrationNode_nh.getParam("/frame_calibration/heading_threshold", heading_threshold);
+                    if(std::abs(std::abs(previous_vehicle_heading) - std::abs(vehicle_heading_from_gps)) >= heading_threshold)                            
+                    {
+                        vehicle_heading_from_gps = previous_vehicle_heading;
+                        ROS_INFO("Rejected Heading Estimate");
+                    }
+                    
+                    // if the speed threshold has been met, start the calibration process
                     if(speed_threshold_met)
                     {
-                        float heading_threshold;
-                        frameCalibrationNode_nh.getParam("/frame_calibration/heading_threshold", heading_threshold);
-                        if(std::abs(std::abs(previous_vehicle_heading) - std::abs(vehicle_heading_from_gps)) >= heading_threshold)                            
-                        {
-                            vehicle_heading_from_gps = previous_vehicle_heading;
-                            ROS_INFO("Rejected Heading Estimate");
-                        }
-
                         // apply calibration while vehicle is moving 
                         bool calibration_mode;
                         frameCalibrationNode_nh.getParam("/frame_calibration/calibration_mode", calibration_mode);
