@@ -255,9 +255,9 @@ namespace frame_calibration_node
                     previous_vehicle_heading = vehicle_heading_from_gps;
                 }
 
-                ROS_INFO("gps: (%.2f, %.2f) -----> odom: (%.2f, %.2f) at time %.2f",
-                temp_geodesy_tf_point.point.x, temp_geodesy_tf_point.point.y,
-                geodesy_tf_point.point.x, geodesy_tf_point.point.y, geodesy_tf_point.header.stamp.toSec());
+                // ROS_INFO("gps: (%.2f, %.2f) -----> odom: (%.2f, %.2f) at time %.2f",
+                // temp_geodesy_tf_point.point.x, temp_geodesy_tf_point.point.y,
+                // geodesy_tf_point.point.x, geodesy_tf_point.point.y, geodesy_tf_point.header.stamp.toSec());
                 
                 // store previous messages for distance calculation
                 previous_geodesy_tf_msg.pose.pose.position.x = geodesy_tf_msg.pose.pose.position.x;
