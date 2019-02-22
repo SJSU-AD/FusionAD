@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
-Takes steering and throttle input from the high level control and then generates the appropriate CAN
-messages to send to the steering and propulsion motors.
+Takes steering input from the high level control and then generates the appropriate CAN
+messages to send to the Arduino CAN Gateway for steering control.
 
 NOTE: Must be plugged into the CAN device with a completed CAN network to work
 
@@ -32,7 +32,7 @@ NOTE: Uses interface/Controlcmd.msg
 
         Publishes
         ---------
-        Topic: /control/can_controlcmd
+        Topic: /control/can_gateway/send
             Msg: Can_Interface.msg
 """
 import rospy
@@ -44,7 +44,7 @@ class CanDriver(object):
     # initializing the node
     def __init__(self):
         """Initialize can message publisher and data for the can messages"""
-        self.canMsgPublisher = rospy.Publisher("/control/can_controlcmd", Can_Interface, queue_size=1000)
+        self.canMsgPublisher = rospy.Publisher("/can_gateway/send", Can_Interface, queue_size=1000)
 
         self.steering_arbitration_id = 0x18FF00F9
         self.braking_arbitration_id = 0xFF0000
@@ -64,7 +64,7 @@ class CanDriver(object):
         # 8 byte message for requesting power to the propulsion motor
         self.prop_power_request_data = [0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
         # 8 byte message for moving the propulsion motor @ 511 rpm
-        self.prop_data = [0x00, 0x00, 0xFF, 0x7F, 0x00, 0x0D, 0x00, 0x00]
+        self.prop_data = [0x00, 0x00, 0xFF, 0x7F, 0x00, 0x00, 0x00, 0x00]
 
         # 8 byte message for moving the linear actuator
         """
@@ -126,26 +126,38 @@ class CanDriver(object):
         # Propulsion Logic ##
         #####################
         prop_input = desired_propulsion
-        # 250 RPM
-        MAX_PROP_MESSAGE = 0x00FA
-        MIN_PROP_MESSAGE = 0x0000
 
-        MAX_PROP_INPUT = 100
-        MIN_PROP_INPUT = 0
+        # 500 RPM Max
+        max_prop_msg = 0x01F4
+        # 250 RPM Max
+        # max_prop_msg = 0x00FA
+        min_prop_msg = 0x0000
+
+        max_prop_input = 100
+        min_prop_input = 0
+        neg_prop_input = -100
         
-        if prop_input < MIN_PROP_INPUT:
-            prop_input = MIN_PROP_INPUT
-        if prop_input > MAX_PROP_INPUT:
-            prop_input = MAX_PROP_INPUT
+        if prop_input < neg_prop_input:
+            prop_input = neg_prop_input
+        if prop_input > max_prop_input:
+            prop_input = max_prop_input
 
-        if (prop_input >= MIN_PROP_INPUT) and (prop_input <= MAX_PROP_INPUT):
-            propulsion_map = int(round((prop_input-MIN_PROP_INPUT)*(MAX_PROP_MESSAGE-MIN_PROP_MESSAGE)/(MAX_PROP_INPUT-MIN_PROP_INPUT)+MIN_PROP_MESSAGE))
+        # map the desired propulsion value and output a hex representation
+        if (prop_input >= neg_prop_input) and (prop_input <= max_prop_input):
+            propulsion_map = int(round((prop_input-min_prop_input)*(max_prop_msg-min_prop_msg)/(max_prop_input-min_prop_input)+min_prop_msg))
 
             self.prop_data[1] = int(propulsion_map >> 8 & self.MASKER)
-            self.prop_data[0] = int(propulsion_map & self.MASKER)     
+            self.prop_data[0] = int(propulsion_map & self.MASKER)
+            # enable the propulsion motor 
+            self.prop_data[5] = 0x0D
+
+            # disable the propulsion motor if there is no desired propulsion input
+            if(prop_input == 0):
+                self.prop_data[5] = 0x00
         else:
             self.prop_data[0] = 0x00
             self.prop_data[1] = 0x00
+            self.prop_data[5] = 0x00
 
     def steering_control(self, desired_steering):
         """Function to assemble the hex data for the steering message"""
@@ -155,26 +167,27 @@ class CanDriver(object):
         steering_input = desired_steering
 
         # positive full lock bytes
-        POS_FULL_LOCK = 0x00180000
+        pos_full_lock = 0x00180000
         # zero full lock bytes
-        ZERO_FULL_LOCK = 0x00000000
+        zero_full_lock = 0x00000000
 
         # steering limits determined experimentally
         # maximum number of radians (positive)
-        MAX_ANGLE = 1.4833248751
+        max_angle = 1.4833248751
         # 0 REVOLUTIONS
-        ZERO_ANGLE = 0
+        zero_angle = 0
         # minimum number of radians (negative)
-        NEG_ANGLE = -1.2074071982
+        neg_angle = -1.2074071982
 
         # establishing the limits of the joy node (from -0.33 to 0.33)
-        if steering_input > MAX_ANGLE:
-            steering_input = MAX_ANGLE
-        if steering_input < NEG_ANGLE:
-            steering_input = NEG_ANGLE
+        if steering_input > max_angle:
+            steering_input = max_angle
+        if steering_input < neg_angle:
+            steering_input = neg_angle
 
-        if (steering_input <= MAX_ANGLE) and (steering_input >= NEG_ANGLE):
-            steering_map = int(round(((-1)*steering_input-ZERO_ANGLE)*(POS_FULL_LOCK-ZERO_FULL_LOCK)/(MAX_ANGLE-ZERO_ANGLE)+ZERO_FULL_LOCK))
+        # map the desired steering value and output a hex representation 
+        if (steering_input <= max_angle) and (steering_input >= neg_angle):
+            steering_map = int(round(((-1)*steering_input-zero_angle)*(pos_full_lock-zero_full_lock)/(max_angle-zero_angle)+zero_full_lock))
             self.steering_data[5] = int(steering_map >> 24 & self.MASKER)    
             self.steering_data[4] = int(steering_map >> 16 & self.MASKER)    
             self.steering_data[3]= int(steering_map >> 8 & self.MASKER)
@@ -186,6 +199,7 @@ class CanDriver(object):
             self.steering_data[2] = 0x00
 
     def can_message_assembly(self):
+        """Assemble the CAN messages and send to the Arduino"""
         self.canInterfaceMsg.steering_can_data = self.steering_data
         # self.canInterfaceMsg.propulsion_can_data = self.prop_data
         self.canMsgPublisher.publish(self.canInterfaceMsg)
