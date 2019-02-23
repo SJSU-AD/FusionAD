@@ -3,7 +3,7 @@
 
   <!-- ATM machines = -6.0, North Garage = 7.493 -->
   <arg name="radar_height" value="-6.0" doc="Chosen fixed height of the path" /> <!-- Measured in meters -->
-  <arg name="chosen_path" value="student_union_straight_long.txt" doc="Chosen path to run" />
+  <arg name="chosen_path" value="campus_uPath_smooth.txt" doc="Chosen path to run" />
   
   <!-- /////////////////////////////////////////////////////////////// -->
   <!-- Initial lat/lon for ENU conversion -->
@@ -19,6 +19,7 @@
     <param name="~conversion_type" value="ENU" />
   </node>
 
+  <!-- Default conversion is ENU -->
   <node type="gps_pose.py" pkg="geodesy" name="gps_pose_converter" output="screen">
     <param name="~radar_lat" value="$(arg radar_lat)" />
     <param name="~radar_lon" value="$(arg radar_lon)" />
