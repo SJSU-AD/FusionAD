@@ -32,7 +32,7 @@ Current capabilities of the software modules:
     * [OSV Sim](https://github.com/SJSU-AD/osv_sim)
         * A full fledge vehicle simulator on the Gazebo Simulation Platform
     * [Control SIL](https://github.com/SJSU-AD/FusionAD/wiki/High-Level-Controller-Software-In-the-Loop-(SIL)-Testing)
-        * A Real-time, Software In the Loop testing environment for high-level controller vaidation.  
+        * A Real-time, Software In the Loop testing environment for high-level controller validation.  
           
 ### Operating Systems and Requirements
 * FusionAD is developed on **ROS KINETICS** and **UBUNTU 16.04 LTS**. We do not support other version of ROS or Ubuntu at the moment.
