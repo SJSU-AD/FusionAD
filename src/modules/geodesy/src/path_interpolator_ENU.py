@@ -25,10 +25,12 @@ import gps_parser
 from geodesy_conversion_ENU import GeodesyConverterENU
 
 class PathInterpolatorENU(GeodesyConverterENU):
-    def __init__(self, latitudesData, longitudesData, heightsData, centimetersPerPoint=25, radarPoint=None):
+    def __init__(self, latitudesData, longitudesData, heightsData, centimetersPerPoint=25, radarPoint=None, ENUInputPath=None):
         super(PathInterpolatorENU, self).__init__(latitudesData, longitudesData, heightsData, radarPoint=radarPoint)
         self.heightsData = heightsData
         self.centimetersPerPoint = centimetersPerPoint
+
+        self.ENUInputPath = ENUInputPath
 
     def set_dist_between_points(self, centimetersPerPoint):
         """Set distance between points after interpolation"""
@@ -72,6 +74,11 @@ class PathInterpolatorENU(GeodesyConverterENU):
                 finePointsE.append( e0 + (e1-e0)*(n/pointDensity) )
                 finePointsN.append( n0 + (n1-n0)*(n/pointDensity) )
                 finePointsU.append( u0 + (u1-u0)*(n/pointDensity) )
+            
+            if int(pointDensity) == 0:
+                finePointsE.append(eData[i])
+                finePointsN.append(nData[i])
+                finePointsU.append(uData[i])
 
         return finePointsE, finePointsN, finePointsU
 
@@ -91,7 +98,10 @@ class PathInterpolatorENU(GeodesyConverterENU):
         path_publisher = rospy.Publisher('/planning/trajectory', Path, queue_size=1000)
         rate = rospy.Rate(1)
 
-        eData, nData, uData = super(PathInterpolatorENU, self).geodetic_data_to_ENU_data()
+        if self.ENUInputPath:
+            eData, nData, uData = self.ENUInputPath[0], self.ENUInputPath[1], self.ENUInputPath[2]
+        else:
+            eData, nData, uData = super(PathInterpolatorENU, self).geodetic_data_to_ENU_data()
         
         # Contains lists of fine points, including coarse points
         eInterpolatedPositions = []
