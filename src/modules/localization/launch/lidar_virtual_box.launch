@@ -1,5 +1,5 @@
 <launch>
-    <node type="virtual_box_counter" pkg="perception" name="virtual_box_counter" output="screen">
+    <node type="virtual_box_counter" pkg="localization" name="virtual_box_counter" output="screen">
         <!-- boundaries of the virtual box -->
         <param name="x_lower_bound" value="0" />
         <param name="x_upper_bound" value="10" />

@@ -43,7 +43,8 @@ class PcProcessingNode
 
         // publisher to perception when cluster is identified within virtual box
         ros::Publisher cluster_pub;
-
+        ros::Publisher pc_pub;
+        
         // subscriber to velodyne pointcloud publisher
         ros::Subscriber lidar_sub;
 
