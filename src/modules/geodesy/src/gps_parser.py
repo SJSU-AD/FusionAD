@@ -15,9 +15,40 @@ class GPSFormatError(Error):
 
 class GPSFileFormatError(Error):
     """Raised when file does not end in '.txt' extension"""
-    pass 
+    pass
 
-def read_file_coarse_points(fileName, chosenHeight, oneLineOnly=False):
+class XYZFileFormatError(Error):
+    """Raised when file does not end in '.csv' extension"""
+    pass
+
+def read_file_coarse_points_XYZ(fileName):
+    """Read XYZ coordinates from '.csv' file and output as lists."""
+
+    try:
+        if not fileName.endswith(".txt"):
+            raise XYZFileFormatError
+    except XYZFileFormatError:
+        print("Wrong file extension. Expected '.csv' format for XYZ file read")
+
+    inputXPoints = []
+    inputYPoints = []
+    inputZPoints = []
+
+    with open(fileName, "r") as file:
+        for line in file:
+            currentLine = line.split(",")
+            
+            number_of_coordinates = 3
+            if len(currentLine) != number_of_coordinates:
+                print("Detected line that does not have exactly {} coordinates".format(number_of_coordinates))
+            else:
+                inputXPoints.append(float(currentLine[0]))
+                inputYPoints.append(float(currentLine[1]))
+                inputZPoints.append(float(currentLine[2]))
+
+    return inputXPoints, inputYPoints, inputZPoints
+
+def read_file_coarse_points_LatLon(fileName, chosenHeight, oneLineOnly=False):
     """Reads GPS coordinates from text file and returns latitude and longitude values in decimal
     
     Data taken from: http://www.gpsvisualizer.com/draw/
@@ -27,12 +58,11 @@ def read_file_coarse_points(fileName, chosenHeight, oneLineOnly=False):
         if not fileName.endswith(".txt"):
             raise GPSFileFormatError
     except GPSFileFormatError:
-        print("Wrong file extension. Expected '.txt' format")
+        print("Wrong file extension. Expected '.txt' format for lat/lon conversion")
 
     inputLatitudes = []
     inputLongitudes = []
     inputHeights = []
-
 
     try:
         with open(fileName, "r") as file:
@@ -48,11 +78,7 @@ def read_file_coarse_points(fileName, chosenHeight, oneLineOnly=False):
                     inputHeights.append(chosenHeight)
                 if oneLineOnly == True:
                     return currentLine[1], currentLine[2], chosenHeight
-
     except GPSFormatError:
         print("Problem with file format. Make sure to use '.txt' version of file from http://www.gpsvisualizer.com/draw/")
     
     return inputLatitudes, inputLongitudes, inputHeights
-
-def main():
-    pass
