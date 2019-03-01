@@ -145,7 +145,7 @@ include_directories(
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable()
 
-add_executable(virtual_box_counter src/lidar_virtual_box/virtual_box_counter.cpp)
+#add_executable(virtual_box_counter src/lidar_virtual_box/virtual_box_counter.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -157,14 +157,14 @@ add_executable(virtual_box_counter src/lidar_virtual_box/virtual_box_counter.cpp
 ## same as for the library above
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-add_dependencies(virtual_box_counter ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+#add_dependencies(virtual_box_counter ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 # target_link_libraries(${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 
-target_link_libraries(virtual_box_counter
-  ${catkin_LIBRARIES}
-)
+#target_link_libraries(virtual_box_counter
+#  ${catkin_LIBRARIES}
+#)
 
 #############
 ## Install ##

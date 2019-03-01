@@ -51,7 +51,7 @@ class PcProcessingNode
         void lidarCallback(const sensor_msgs::PointCloud2& lidar_msg);
 }; // PcProcessingNode
 }  // pc_processing_node
-}  // perception
+}  // localization
 }  // fusionad
 
 #endif
