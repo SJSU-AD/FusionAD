@@ -1,5 +1,5 @@
-#ifndef PC2_TO_XYZ_H
-#define PC2_TO_XYZ_H
+#ifndef VIRTUAL_BOX_COUNTER_H
+#define VIRTUAL_BOX_COUNTER_H
 
 /*
 This node listens to the lidar callback and then segments the point cloud data into
@@ -49,9 +49,9 @@ class PcProcessingNode
 
         // callback for lidar 
         void lidarCallback(const sensor_msgs::PointCloud2& lidar_msg);
-};
-}
-}
-}
+}; // PcProcessingNode
+}  // pc_processing_node
+}  // perception
+}  // fusionad
 
 #endif
