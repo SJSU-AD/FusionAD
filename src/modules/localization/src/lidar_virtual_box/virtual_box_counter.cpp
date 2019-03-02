@@ -43,10 +43,9 @@ namespace pc_processing_node
 
         unsigned int points_in_box = 0;
         
-        for(int i = 0; i <= (out_cloud.points.size()-1); i++)
+        for(int i = 0; i < out_cloud.points.size(); i++)
         {
             // check for the # of points within the virtual box
-            // NOTE: this portion is currently making node die (run time error) 
             if((out_cloud.points[i].x >= x_lower_bound) && (out_cloud.points[i].x <= x_upper_bound) && 
                (out_cloud.points[i].y >= y_lower_bound) && (out_cloud.points[i].y <= y_upper_bound) && 
                (out_cloud.points[i].z >= z_lower_bound) && (out_cloud.points[i].z <= z_upper_bound))

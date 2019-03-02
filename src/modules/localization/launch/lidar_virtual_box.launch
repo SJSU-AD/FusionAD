@@ -7,8 +7,8 @@
         <param name="y_lower_bound" value="-5" />
         <param name="y_upper_bound" value="5" />
         
-        <param name="z_lower_bound" value="0" />
-        <param name="z_upper_bound" value="1" />
+        <param name="z_lower_bound" value="2" />
+        <param name="z_upper_bound" value="4" />
 
         <!-- threshold for virtual box  -->
         <param name="points_in_box_threshold" value="50" />
