@@ -18,15 +18,15 @@ NOTE: Generates a rectangular box in front of the vehicle in rviz that represent
 """
 
 import rospy
-from nav_msgs import Odometry
-from geometry_msgs import PolygonStamped, Point32
+from nav_msgs.msg import Odometry
+from geometry_msgs.msg import PolygonStamped, Point32
 
 class VirtualBox(object):
     """Takes the odometry data from robot localization and publishes a virtual box"""
 
     def __init__(self):
         """Initializing MarkerArray message publisher"""
-        self.virtualBoxPublisher = rospy.Publisher("/virtual_box_visualization", Polygon, queue_size = 0)
+        self.virtualBoxPublisher = rospy.Publisher("/virtual_box_visualization", PolygonStamped, queue_size=1)
 
     def odom_callback(self, odomMsg):
         """Callback subscribed to the odometry message"""
@@ -66,7 +66,7 @@ class VirtualBox(object):
 
     def virtual_box_creation(self):
         """Take the EKF odom data, create a polygon message and publish to rviz for visualization"""
-        rospy.Subscriber("/odometry/filtered", Odometry, self.odom_callback, queue_size=0)
+        rospy.Subscriber("/odometry/filtered", Odometry, self.odom_callback)
         rospy.spin()
 
 def main():
