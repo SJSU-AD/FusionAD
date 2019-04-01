@@ -7,8 +7,8 @@
         <param name="gps_threshold" value="0.5" />
         <param name="heading_threshold" value="0.5" />
         <param name="speed_threshold" value="0.5" />
-        <param name="heading_from_calibration" value="1" />
-        <param name="calibration_mode" value="true" />
+        <param name="heading_from_calibration" value="-1.091741" />
+        <param name="calibration_mode" value="false" />
     </node>
     
     <node type="master_tf" pkg="master_transforms" name="master_tf" output="screen">

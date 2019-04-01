@@ -3,7 +3,7 @@
     <node type="can_control_adapter.py" pkg="control" name="can_controller" output="screen">
     </node>
 
-    <node type="can_prop_listener.py" pkg="control" name="can_listener" output="screen">
+    <node type="can_listener.py" pkg="control" name="can_listener" output="screen">
     </node>
     
 </launch>    
