@@ -3,7 +3,7 @@
 
   <!-- ATM machines = -6.0, North Garage = 7.493 -->
   <arg name="radar_height" value="-6.0" doc="Chosen fixed height of the path" /> <!-- Measured in meters -->
-  <arg name="chosen_path" value="campus_uPath_smooth.txt" doc="Chosen path to run" />
+  <arg name="chosen_path" value="atm_cv2_path.txt" doc="Chosen path to run" />
   
   <!-- /////////////////////////////////////////////////////////////// -->
   <!-- Initial lat/lon for ENU conversion -->
