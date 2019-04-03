@@ -9,7 +9,6 @@ NOTE: Generates two circles in rviz to represent the donut waypoint selector in 
 
 import rospy
 import math
-# from geometry_msgs.msg import PolygonStamped, Point32
 from visualization_msgs.msg import Marker
 from geometry_msgs.msg import Point
 
@@ -34,34 +33,46 @@ class VirtualDonut(object):
         self.innerDonutMsg = Marker()
         self.outerDonutMsg = Marker()
 
-        # inner_donut_bound = rospy.get_param('/control_core/waypoint_lookahead_range')
-        # outer_donut_bound = rospy.get_param('/control_core/waypoint_proximity_range')
-        # point_density = rospy.get_param('/virtual_donut_node/point_density')
+        inner_donut_bound = rospy.get_param('/control_core/waypoint_lookahead_range')
+        outer_donut_bound = rospy.get_param('/control_core/waypoint_proximity_range')
         
-        inner_donut_bound = 1
-        outer_donut_bound = 3
-        point_density = 300
+        point_density = rospy.get_param('/virtual_donut_node/point_density')
 
-        self.innerDonutMsg.scale.x = 0.01
-        self.innerDonutMsg.scale.y = 0.01
-        self.innerDonutMsg.scale.z = 0.01
+        msg_scale = rospy.get_param('/virtual_donut_node/msg_scale')
+        
+        inner_donut_r = rospy.get_param('/virtual_donut_node/inner_donut_r')
+        inner_donut_g = rospy.get_param('/virtual_donut_node/inner_donut_g')
+        inner_donut_b = rospy.get_param('/virtual_donut_node/inner_donut_b')
+        inner_donut_a = rospy.get_param('/virtual_donut_node/inner_donut_a')
 
-        self.outerDonutMsg.scale.x = 0.01
-        self.outerDonutMsg.scale.y = 0.01
-        self.outerDonutMsg.scale.z = 0.01
+        outer_donut_r = rospy.get_param('/virtual_donut_node/outer_donut_r')
+        outer_donut_g = rospy.get_param('/virtual_donut_node/outer_donut_g')
+        outer_donut_b = rospy.get_param('/virtual_donut_node/outer_donut_b')
+        outer_donut_a = rospy.get_param('/virtual_donut_node/outer_donut_a')
+
+        self.innerDonutMsg.scale.x = msg_scale
+        self.innerDonutMsg.scale.y = msg_scale
+        self.innerDonutMsg.scale.z = msg_scale
+
+        self.outerDonutMsg.scale.x = msg_scale
+        self.outerDonutMsg.scale.y = msg_scale
+        self.outerDonutMsg.scale.z = msg_scale
 
         self.innerDonutMsg.type = 8
         self.outerDonutMsg.type = 8
 
-        self.innerDonutMsg.color.a = 1
-        self.innerDonutMsg.color.g = 0.5
-        self.innerDonutMsg.color.b = 1
+        self.innerDonutMsg.color.a = inner_donut_a
+        self.innerDonutMsg.color.r = inner_donut_r
+        self.innerDonutMsg.color.g = inner_donut_g
+        self.innerDonutMsg.color.b = inner_donut_b
         
-        self.outerDonutMsg.color.a = 1
-        self.outerDonutMsg.color.r = 1
+        self.outerDonutMsg.color.a = outer_donut_a
+        self.outerDonutMsg.color.r = outer_donut_r
+        self.outerDonutMsg.color.g = outer_donut_g
+        self.outerDonutMsg.color.b = outer_donut_b
 
         if self.point_initialization_state:
-            # calculate the placement of each point
+            # calculate the placement of each point in polar coordinates
             for i in range(0, point_density):
                 point_density_increment = 360 / point_density
 
