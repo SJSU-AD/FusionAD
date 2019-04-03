@@ -9,34 +9,56 @@ NOTE: Generates two circles in rviz to represent the donut waypoint selector in 
 
 import rospy
 import math
-from geometry_msgs.msg import PolygonStamped, Point32
+# from geometry_msgs.msg import PolygonStamped, Point32
+from visualization_msgs.msg import Marker
+from geometry_msgs.msg import Point
 
 class VirtualDonut(object):
     """Publishes a donut in rviz from parameters in the control launch file"""
 
     def __init__(self):
         """Initializing MarkerArray message publisher"""
-        self.innerDonutPublisher = rospy.Publisher("/inner_donut_visualization", PolygonStamped, queue_size=1)
-        self.outerDonutPublisher = rospy.Publisher("/outer_donut_visualization", PolygonStamped, queue_size=1)
-
-        self.innerDonutMsg = PolygonStamped()
-        self.outerDonutMsg = PolygonStamped()
+        self.innerDonutPublisher = rospy.Publisher("/inner_donut_visualization", Marker, queue_size=1)
+        self.outerDonutPublisher = rospy.Publisher("/outer_donut_visualization", Marker, queue_size=1)
         
         self.point_initialization_state = True
+
+        self.marker_initialization()
     
     def vdonut_callback(self, event):
-        """Timer callback for the polygon, creation @ 20 hz"""
+        """Timer callback for the polygon, creation @ 40 hz"""
         self.create_virtual_donut()
 
-    def create_virtual_donut(self):
-        """Compose and publish PolygonStamped message in the base_link frame"""
+    def marker_initialization(self):
+        """Create the Marker() messages for donut creation"""
+        self.innerDonutMsg = Marker()
+        self.outerDonutMsg = Marker()
+
         # inner_donut_bound = rospy.get_param('/control_core/waypoint_lookahead_range')
         # outer_donut_bound = rospy.get_param('/control_core/waypoint_proximity_range')
         # point_density = rospy.get_param('/virtual_donut_node/point_density')
         
         inner_donut_bound = 1
         outer_donut_bound = 3
-        point_density = 100
+        point_density = 300
+
+        self.innerDonutMsg.scale.x = 0.01
+        self.innerDonutMsg.scale.y = 0.01
+        self.innerDonutMsg.scale.z = 0.01
+
+        self.outerDonutMsg.scale.x = 0.01
+        self.outerDonutMsg.scale.y = 0.01
+        self.outerDonutMsg.scale.z = 0.01
+
+        self.innerDonutMsg.type = 8
+        self.outerDonutMsg.type = 8
+
+        self.innerDonutMsg.color.a = 1
+        self.innerDonutMsg.color.g = 0.5
+        self.innerDonutMsg.color.b = 1
+        
+        self.outerDonutMsg.color.a = 1
+        self.outerDonutMsg.color.r = 1
 
         if self.point_initialization_state:
             # calculate the placement of each point
@@ -49,14 +71,16 @@ class VirtualDonut(object):
                 x_outer_donut = outer_donut_bound * math.cos(point_density_increment*i)
                 y_outer_donut = outer_donut_bound * math.sin(point_density_increment*i)
 
-                self.innerDonutMsg.polygon.points.append(Point32(x_inner_donut, y_inner_donut, 0))
-                self.outerDonutMsg.polygon.points.append(Point32(x_outer_donut, y_outer_donut, 0))
+                self.innerDonutMsg.points.append(Point(x_inner_donut, y_inner_donut, 0))
+                self.outerDonutMsg.points.append(Point(x_outer_donut, y_outer_donut, 0))
             
             self.point_initialization_state = False
 
         self.innerDonutMsg.header.frame_id = "base_link"
         self.outerDonutMsg.header.frame_id = "base_link"
-        
+
+    def create_virtual_donut(self):
+        """Publish marker messages in the base_link frame"""
         self.innerDonutMsg.header.stamp = rospy.Time.now()
         self.outerDonutMsg.header.stamp = rospy.Time.now()
 
@@ -64,7 +88,7 @@ class VirtualDonut(object):
         self.outerDonutPublisher.publish(self.outerDonutMsg)
         
     def virtual_donut_creation(self):
-        """Create a polygon message and publish to rviz for visualization"""
+        """Create marker messages and publish to rviz for visualization"""
         rospy.Timer(rospy.Duration(0.025), self.vdonut_callback)
         rospy.spin()
 
