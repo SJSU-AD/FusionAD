@@ -4,7 +4,7 @@
 NOTE: Generates two circles in rviz to represent the donut waypoint selector in the control stack.
       ---------
       Topic: /virtual_donut_visualization
-        Msg: geometry_msgs/Polygon
+        Msg: visualization_msgs/Marker
 """
 
 import rospy
