@@ -44,15 +44,6 @@ class VirtualBox(object):
         vbox_z_lower_bound = rospy.get_param('/virtual_box_counter/z_lower_bound')
         vbox_z_upper_bound = rospy.get_param('/virtual_box_counter/z_upper_bound')
 
-        # vbox_x_lower_bound = 0
-        # vbox_x_upper_bound = 1
-
-        # vbox_y_lower_bound = -0.5
-        # vbox_y_upper_bound = 0.5
-
-        # vbox_z_lower_bound = 0
-        # vbox_z_upper_bound = 1
-
         polygonFrontMsg.polygon.points = [Point32(vbox_x_lower_bound, vbox_y_lower_bound, vbox_z_lower_bound),
                                           Point32(vbox_x_lower_bound, vbox_y_lower_bound, vbox_z_upper_bound),
                                           Point32(vbox_x_lower_bound, vbox_y_upper_bound, vbox_z_upper_bound),
@@ -73,15 +64,10 @@ class VirtualBox(object):
                                          Point32(vbox_x_upper_bound, vbox_y_lower_bound, vbox_z_upper_bound),
                                          Point32(vbox_x_upper_bound, vbox_y_lower_bound, vbox_z_lower_bound)]
 
-        # polygonFrontMsg.header.frame_id = "base_link"
-        # polygonRearMsg.header.frame_id = "base_link"
-        # polygonRightMsg.header.frame_id = "base_link"
-        # polygonLeftMsg.header.frame_id = "base_link"
-
-        polygonFrontMsg.header.frame_id = "velodyne"
-        polygonRearMsg.header.frame_id = "velodyne"
-        polygonRightMsg.header.frame_id = "velodyne"
-        polygonLeftMsg.header.frame_id = "velodyne"
+        polygonFrontMsg.header.frame_id = "base_link"
+        polygonRearMsg.header.frame_id = "base_link"
+        polygonRightMsg.header.frame_id = "base_link"
+        polygonLeftMsg.header.frame_id = "base_link"
         
         polygonFrontMsg.header.stamp = rospy.Time.now()
         polygonRearMsg.header.stamp = rospy.Time.now()
