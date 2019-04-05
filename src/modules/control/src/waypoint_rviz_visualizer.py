@@ -22,11 +22,9 @@ class VirtualDonut(object):
         
         self.point_initialization_state = True
 
+        self.callback_interval = rospy.get_param('/virtual_donut_node/callback_interval')
+
         self.marker_initialization()
-    
-    def vdonut_callback(self, event):
-        """Timer callback for the polygon, creation @ 40 hz"""
-        self.create_virtual_donut()
 
     def marker_initialization(self):
         """Create the Marker() messages for donut creation"""
@@ -73,7 +71,7 @@ class VirtualDonut(object):
 
         if self.point_initialization_state:
             # calculate the placement of each point in polar coordinates
-            for i in range(0, point_density):
+            for i in range(point_density):
                 point_density_increment = 360 / point_density
 
                 x_inner_donut = inner_donut_bound * math.cos(point_density_increment*i)
@@ -90,8 +88,8 @@ class VirtualDonut(object):
         self.innerDonutMsg.header.frame_id = "base_link"
         self.outerDonutMsg.header.frame_id = "base_link"
 
-    def create_virtual_donut(self):
-        """Publish marker messages in the base_link frame"""
+    def create_virtual_donut(self, event):
+        """Publish marker messages in the base_link frame @ rate given in launch file param"""
         self.innerDonutMsg.header.stamp = rospy.Time.now()
         self.outerDonutMsg.header.stamp = rospy.Time.now()
 
@@ -100,7 +98,7 @@ class VirtualDonut(object):
         
     def virtual_donut_creation(self):
         """Create marker messages and publish to rviz for visualization"""
-        rospy.Timer(rospy.Duration(0.025), self.vdonut_callback)
+        rospy.Timer(rospy.Duration(self.callback_interval), self.create_virtual_donut)
         rospy.spin()
 
 def main():

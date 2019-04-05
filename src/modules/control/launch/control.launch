@@ -10,6 +10,8 @@
   </node>
 
   <node type="waypoint_rviz_visualizer.py" pkg="control" name="virtual_donut_node" output="screen">
+    <!-- callback time interval -->
+    <param name="callback_interval" value="0.025" />
     <!-- point density desired for the donut waypoint visualizer -->
     <param name="point_density" value="300" />
     <param name="msg_scale" value="0.05" />
