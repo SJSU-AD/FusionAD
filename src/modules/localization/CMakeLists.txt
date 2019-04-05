@@ -153,6 +153,7 @@ add_library(segment_processor
 add_executable(segmenter_node src/segmentation/segmenter_node.cpp)
 add_executable(odometry src/wheel_odom/odometry.cpp)
 add_executable(frame_calibration src/frame_tf_calibrate/frame_calibration.cpp)
+add_executable(virtual_box_counter src/lidar_virtual_box/virtual_box_counter.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -165,6 +166,7 @@ add_executable(frame_calibration src/frame_tf_calibrate/frame_calibration.cpp)
 ##add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(odometry ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(frame_calibration ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(virtual_box_counter ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(segmenter_node
@@ -178,6 +180,10 @@ target_link_libraries(odometry
 )
 
 target_link_libraries(frame_calibration
+  ${catkin_LIBRARIES}
+)
+
+target_link_libraries(virtual_box_counter
   ${catkin_LIBRARIES}
 )
 
