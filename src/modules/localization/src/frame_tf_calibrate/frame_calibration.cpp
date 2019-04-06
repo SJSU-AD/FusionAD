@@ -202,8 +202,11 @@ namespace frame_calibration_node
                     frameCalibrationNode_nh.getParam("/frame_calibration/heading_threshold", heading_threshold);
                     if(std::abs(std::abs(previous_vehicle_heading) - std::abs(vehicle_heading_from_gps)) >= heading_threshold)                            
                     {
-                        vehicle_heading_from_gps = previous_vehicle_heading;
-                        ROS_INFO("Rejected Heading Estimate");
+                        if(!speed_threshold_met)
+                        {
+                            vehicle_heading_from_gps = previous_vehicle_heading;
+                            ROS_INFO("Rejected Heading Estimate");
+                        }
                     }
                     
                     // if the speed threshold has been met, start the calibration process
