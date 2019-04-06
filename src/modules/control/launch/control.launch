@@ -17,8 +17,8 @@
     <param name="msg_scale" value="0.05" />
     
     <param name="inner_donut_r" value="1" />
-    <param name="inner_donut_g" value="0" />
-    <param name="inner_donut_b" value="0" />
+    <param name="inner_donut_g" value="0.5" />
+    <param name="inner_donut_b" value="0.5" />
     <param name="inner_donut_a" value="1" />
 
     <param name="outer_donut_r" value="1" />
