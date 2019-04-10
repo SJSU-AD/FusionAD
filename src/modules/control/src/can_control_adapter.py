@@ -58,7 +58,9 @@ class CanDriver:
         # CAN Data #
         ############
         # 8 byte message for moving the steering motor
-        self.steering_data = [0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x40, 0x02]
+        self.steering_data = [0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0xCC, 0x00]
+        # self.steering_data = [0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x33, 0x00]
+        
         # 8 byte message for zeroing the steering
         self.zero_steering_data = [0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
 
@@ -214,10 +216,10 @@ class CanDriver:
     def main(self):
         start_time = time.clock()
 
-        # steering_zero_msg = can.Message(arbitration_id = self.steering_arbitration_id, data = self.zero_steering_data, extended_id = True)
+        steering_zero_msg = can.Message(arbitration_id = self.steering_arbitration_id, data = self.zero_steering_data, extended_id = True)
         # braking_zero_msg = can.Message(arbitration_id = self.braking_arbitration_id, data = self.zero_braking_data, extended_id = True)
 
-        # self.bus.send(steering_zero_msg)
+        self.bus.send(steering_zero_msg)
         # self.bus.send(braking_zero_msg)
 
         # 5 seconds of power messages until control can be sent
@@ -233,14 +235,14 @@ class CanDriver:
             frequency_state = False
             present_time = time.clock()
             
-            power_propulsion_msg = can.Message(arbitration_id = self.prop_power_arbitration_id, data = self.prop_power_request_data, extended_id = False)
-            # steering_msg = can.Message(arbitration_id = self.steering_arbitration_id, data = self.steering_data, extended_id = True)
+            # power_propulsion_msg = can.Message(arbitration_id = self.prop_power_arbitration_id, data = self.prop_power_request_data, extended_id = False)
+            steering_msg = can.Message(arbitration_id = self.steering_arbitration_id, data = self.steering_data, extended_id = True)
             # braking_msg = can.Message(arbitration_id = self.braking_arbitration_id, data = self.braking_data, extended_id = True)
-            propulsion_msg = can.Message(arbitration_id = self.propulsion_arbitration_id, data = self.prop_data, extended_id = False)
+            # propulsion_msg = can.Message(arbitration_id = self.propulsion_arbitration_id, data = self.prop_data, extended_id = False)
             
-            # self.bus.send(steering_msg)
+            self.bus.send(steering_msg)
             # self.bus.send(braking_msg)
-            self.bus.send(power_propulsion_msg)
+            # self.bus.send(power_propulsion_msg)
             
             control_state = False
 			# only allow messages to go through if cyclic delay is met
@@ -250,7 +252,7 @@ class CanDriver:
                     control_time = time.clock()
                     # regulate the 25 ms period offset required
                     if abs(power_time - control_time) >= POWER_CONTROL_PERIOD:
-                        self.bus.send(propulsion_msg)
+                        # self.bus.send(propulsion_msg)
                         # exiting the send control message loop
                         control_state = True
                         power_time = control_time
