@@ -107,6 +107,10 @@ namespace master_tf_node
                 tf::Transform(tf::Quaternion(0, 0, 0, 1), tf::Vector3(0, 0, 0)),
                     ros::Time::now(), "map", "odom"));
 
+        velodyne_to_base_link.sendTransform(
+            tf::StampedTransform(
+                tf::Transform(tf::Quaternion(0, 0, 0, 1), tf::Vector3(0, 0, 0)),
+                    ros::Time::now(), "base_link", "velodyne"));
         // // if the calibration has been completed, start creating the lidar tf2 message
         // if (calibration_complete)
         // {
