@@ -8,10 +8,10 @@
     <!-- Time is in seconds, wheelbase and positions are in meters, heading is in radians-->
     <param name="simulation_time_step" value="0.001"/>
     <param name="vehicle_wheelbase" value="2.3622"/>
-    <param name="initial_x_position" value="0"/>
-    <param name="initial_y_position" value="0"/>
-    <param name="initial_vehicle_heading" value="2.063"/>
-    <param name="use_sil_hardcoded_planner" value="true"/>
+    <param name="initial_x_position" value="147"/>
+    <param name="initial_y_position" value="247"/>
+    <param name="initial_vehicle_heading" value="-1.0"/>
+    <param name="use_sil_hardcoded_planner" value="false"/>
   </node>
 
   <node type="rviz" name="rviz" pkg="rviz" args="-d $(find control_sil)/rviz/control_sil_rviz.rviz" />
