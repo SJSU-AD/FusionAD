@@ -41,6 +41,7 @@ class VirtualDonut(object):
         heading_error_range = rospy.get_param('/control_core/waypoint_heading_error_range')
 
         heading_shade_density = rospy.get_param('/virtual_donut_node/heading_shade_density')
+        radius_shade_density = rospy.get_param('/virtual_donut_node/radius_shade_density')
         point_density = rospy.get_param('/virtual_donut_node/point_density')
 
         heading_msg_scale = rospy.get_param('/virtual_donut_node/heading_msg_scale')
@@ -108,7 +109,17 @@ class VirtualDonut(object):
             
             # calculate the placement of each point in polar coordinates for heading shade
             for i in range(heading_shade_density):
-                heading_shade_density_increment = (heading_error_range/2) / heading_shade_density
+                # angle for the sweep inside the donut
+                angle_shade_density_increment = (heading_error_range) / heading_shade_density
+
+                for j in range(radius_shade_density):
+                    # outward radius for the sweep inside the donut
+                    radius_shade_density_increment = (outer_donut_bound - inner_donut_bound) / radius_shade_density
+
+                    x_shade_pos = (radius_shade_density_increment*j + inner_donut_bound) * (math.cos(angle_shade_density_increment*i - heading_error_range/2))
+                    y_shade_pos = (radius_shade_density_increment*j + inner_donut_bound) * (math.sin(angle_shade_density_increment*i - heading_error_range/2))
+
+                    self.headingShadeMsg.points.append(Point(x_shade_pos, y_shade_pos, 0))
                 
 
             self.point_initialization_state = False

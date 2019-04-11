@@ -13,7 +13,8 @@
     <!-- callback time interval -->
     <param name="callback_interval" value="0.025" />
     
-    <param name="heading_shade_density" value="1200" />
+    <param name="radius_shade_density" value="100" />
+    <param name="heading_shade_density" value="100" />
     <!-- point density desired for the donut waypoint visualizer -->
     <param name="point_density" value="300" />
     
