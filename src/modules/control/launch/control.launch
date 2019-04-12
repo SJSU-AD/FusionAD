@@ -34,7 +34,7 @@
     <param name="heading_shade_r" value="1" />
     <param name="heading_shade_g" value="0.5" />
     <param name="heading_shade_b" value="1" />
-    <param name="heading_shade_a" value="1" />
+    <param name="heading_shade_a" value="0.1" />
 
   </node>
 
