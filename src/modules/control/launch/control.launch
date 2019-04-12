@@ -5,41 +5,11 @@
     <param name="control_soft_gain" value="1"/>
     <param name="waypoint_proximity_range" value="3"/>
     <param name="waypoint_lookahead_range" value = "2.5"/>
-    <param name="waypoint_heading_error_range" value="2.5"/>
+    <param name="waypoint_heading_error_range" value="3.14159"/>
     <param name="debug" value="true"/>
   </node>
 
-  <node type="waypoint_rviz_visualizer.py" pkg="control" name="virtual_donut_node" output="screen">
-    <!-- callback time interval -->
-    <param name="callback_interval" value="0.025" />
-    
-    <param name="radius_shade_density" value="75" />
-    <param name="heading_shade_density" value="75" />
-    <!-- point density desired for the donut waypoint visualizer -->
-    <param name="point_density" value="300" />
-    
-    <param name="heading_msg_scale" value="0.1" />
-    <param name="msg_scale" value="0.05" />
-    
-    <param name="inner_donut_r" value="1" />
-    <param name="inner_donut_g" value="0.5" />
-    <param name="inner_donut_b" value="0.5" />
-    <param name="inner_donut_a" value="1" />
-
-    <param name="outer_donut_r" value="1" />
-    <param name="outer_donut_g" value="0" />
-    <param name="outer_donut_b" value="0" />
-    <param name="outer_donut_a" value="1" />
-
-    <param name="heading_shade_r" value="1" />
-    <param name="heading_shade_g" value="0.5" />
-    <param name="heading_shade_b" value="1" />
-    <param name="heading_shade_a" value="0.1" />
-
-  </node>
-
-  <!-- <node type="can_control_adapter.py" pkg="control" name="can_controller" output="screen">
-  </node> -->
+  <include file="$(find visualization)/launch/waypoint_visualization.launch" />
 
   <!-- Commented out because this is for red car-->
   <!--node pkg="rosserial_python" type="serial_node.py" name="serial_node">

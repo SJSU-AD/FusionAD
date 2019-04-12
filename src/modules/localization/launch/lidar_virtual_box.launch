@@ -1,19 +1,19 @@
-<launch>
-    <node type="virtual_box_counter" pkg="localization" name="virtual_box_counter" output="screen">
-        <!-- boundaries of the virtual box -->
-        <param name="x_lower_bound" value="0" />
-        <param name="x_upper_bound" value="3" />
-        
-        <param name="y_lower_bound" value="-0.75" />
-        <param name="y_upper_bound" value="0.75" />
-        
-        <param name="z_lower_bound" value="0" />
-        <param name="z_upper_bound" value="1" />
+<launch>    
+  <node type="virtual_box_counter" pkg="localization" name="virtual_box_counter" output="screen">
+    <!-- boundaries of the virtual box -->
+    <param name="x_lower_bound" value="0" />
+    <param name="x_upper_bound" value="3" />
+    
+    <param name="y_lower_bound" value="-0.75" />
+    <param name="y_upper_bound" value="0.75" />
+    
+    <param name="z_lower_bound" value="0" />
+    <param name="z_upper_bound" value="1" />
 
-        <!-- threshold for virtual box  -->
-        <param name="points_in_box_threshold" value="50" />
-    </node>
+    <!-- threshold for virtual box  -->
+    <param name="points_in_box_threshold" value="50" />
+  </node>
 
-    <node type="virtual_box_marker.py" pkg="localization" name="virtual_box_marker_node" output="screen">
-    </node>
+  <include file="$(find visualization)/launch/lidar_virtual_box_visualization.launch" />
+  
 </launch>
