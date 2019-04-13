@@ -1,0 +1,31 @@
+<launch>
+  <node type="waypoint_rviz_visualizer.py" pkg="visualization" name="virtual_donut_node" output="screen">
+    <!-- callback time interval -->
+    <param name="callback_interval" value="0.025" />
+    
+    <param name="radius_shade_density" value="75" />
+    <param name="heading_shade_density" value="75" />
+    <!-- point density desired for the donut waypoint visualizer -->
+    <param name="point_density" value="300" />
+    
+    <param name="heading_msg_scale" value="0.1" />
+    <param name="msg_scale" value="0.05" />
+    
+    <param name="inner_donut_r" value="1" />
+    <param name="inner_donut_g" value="0.5" />
+    <param name="inner_donut_b" value="0.5" />
+    <param name="inner_donut_a" value="0.75" />
+
+    <param name="outer_donut_r" value="1" />
+    <param name="outer_donut_g" value="0" />
+    <param name="outer_donut_b" value="0" />
+    <param name="outer_donut_a" value="0.75" />
+
+    <param name="heading_shade_r" value="1" />
+    <param name="heading_shade_g" value="0.5" />
+    <param name="heading_shade_b" value="1" />
+    <param name="heading_shade_a" value="0.1" />
+    
+  </node>
+
+</launch>

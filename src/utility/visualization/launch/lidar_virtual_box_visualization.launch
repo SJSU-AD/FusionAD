@@ -1,0 +1,6 @@
+<launch>
+
+  <node type="virtual_box_marker.py" pkg="visualization" name="virtual_box_marker_node" output="screen">
+  </node>
+
+</launch>
