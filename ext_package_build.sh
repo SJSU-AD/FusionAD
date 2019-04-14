@@ -25,6 +25,8 @@ sudo apt-get install ros-kinetic-usb-cam
 sudo pip install utm
 sudo apt-get install libgsl2 libgsl-dev libgsl-dbg gsl-bin
 
+pip install python-can
+
 sudo apt install ros-kinetic-robot-localization
 
 rosdep install --from-paths src --ignore-src -r -y

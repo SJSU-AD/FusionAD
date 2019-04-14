@@ -5,7 +5,7 @@
     <param name="control_soft_gain" value="1"/>
     <param name="waypoint_proximity_range" value="3"/>
     <param name="waypoint_lookahead_range" value = "2.5"/>
-    <param name="waypoint_heading_error_range" value="3.14159"/>
+    <param name="waypoint_heading_error_range" value="2.5"/>
     <param name="debug" value="true"/>
   </node>
 
