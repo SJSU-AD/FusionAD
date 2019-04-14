@@ -5,5 +5,6 @@
   <include file="$(find razor_imu_9dof)/launch/razor-pub.launch" />
   <!-- <include file="$(find localization)/launch/localization.launch" /> -->
   <include file="$(find localization)/launch/state_estimation.launch" />
-  <include file="$(find piksi_multi_rtk_ros)/launch/piksi_multi_rover.launch"/>
+  <include file="$(find velodyne_pointcloud)/launch/VLP16_points.launch" />
+  <include file="$(find piksi_multi_rtk_ros)/launch/piksi_multi_rover.launch" />
 </launch>
