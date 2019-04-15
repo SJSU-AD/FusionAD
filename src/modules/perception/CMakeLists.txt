@@ -15,7 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   sensor_msgs
   message_generation
-  usb_cam
+  # usb_cam
   # OpenCV REQUIRED
 )
 find_package(OpenCV REQUIRED)
