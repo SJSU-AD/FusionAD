@@ -23,6 +23,11 @@ Topic: /perception/point_count_detection
 #include "sensor_msgs/PointCloud.h"
 #include "sensor_msgs/point_cloud_conversion.h"
 #include "std_msgs/Bool.h"
+#include <pcl_conversions/pcl_conversions.h>
+#include <pcl/kdtree/kdtree.h>
+#include <pcl/segmentation/extract_clusters.h>
+#include <pcl/point_types.h>
+#include <pcl/conversions.h>
 
 namespace fusionad
 {
