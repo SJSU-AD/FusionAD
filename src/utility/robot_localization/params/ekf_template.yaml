@@ -1,7 +1,7 @@
 # The frequency, in Hz, at which the filter will output a position estimate. Note that the filter will not begin
 # computation until it receives at least one message from one of the inputs. It will then run continuously at the
 # frequency specified here, regardless of whether it receives more measurements. Defaults to 30 if unspecified.
-frequency: 50
+frequency: 40
 
 # The period, in seconds, after which we consider a sensor to have timed out. In this event, we carry out a predict
 # cycle on the EKF without correcting it. This parameter can be thought of as the minimum frequency with which the
@@ -88,7 +88,7 @@ odom0_config: [true,  true,  false,
 
 # If you have high-frequency data or are running with a low frequency parameter value, then you may want to increase
 # the size of the subscription queue so that more measurements are fused.
-odom0_queue_size: 1000
+odom0_queue_size: 0
 
 # [ADVANCED] Large messages in ROS can exhibit strange behavior when they arrive at a high frequency. This is a result
 # of Nagle's algorithm. This option tells the ROS subscriber to use the tcpNoDelay option, which disables Nagle's
@@ -130,7 +130,7 @@ odom1_config: [false, false, false,
                false, false, false] 
 odom1_differential: false
 odom1_relative: false
-odom1_queue_size: 1000
+odom1_queue_size: 0
 # odom1_pose_rejection_threshold: 0.05
 # odom1_twist_rejection_threshold: 0.5
 odom1_nodelay: false
@@ -179,7 +179,7 @@ imu0_config: [false, false, false,
 imu0_nodelay: false
 imu0_differential: false
 imu0_relative: false
-imu0_queue_size: 1000
+imu0_queue_size: 0
 # imu0_pose_rejection_threshold: 0.8                 # Note the difference in parameter names
 # imu0_twist_rejection_threshold: 0.8                #
 # imu0_linear_acceleration_rejection_threshold: 0.8  #
