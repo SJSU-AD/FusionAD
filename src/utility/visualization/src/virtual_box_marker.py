@@ -64,10 +64,10 @@ class VirtualBox(object):
                                          Point32(vbox_x_upper_bound, vbox_y_lower_bound, vbox_z_upper_bound),
                                          Point32(vbox_x_upper_bound, vbox_y_lower_bound, vbox_z_lower_bound)]
 
-        polygonFrontMsg.header.frame_id = "base_link"
-        polygonRearMsg.header.frame_id = "base_link"
-        polygonRightMsg.header.frame_id = "base_link"
-        polygonLeftMsg.header.frame_id = "base_link"
+        polygonFrontMsg.header.frame_id = "velodyne"
+        polygonRearMsg.header.frame_id = "velodyne"
+        polygonRightMsg.header.frame_id = "velodyne"
+        polygonLeftMsg.header.frame_id = "velodyne"
         
         polygonFrontMsg.header.stamp = rospy.Time.now()
         polygonRearMsg.header.stamp = rospy.Time.now()
