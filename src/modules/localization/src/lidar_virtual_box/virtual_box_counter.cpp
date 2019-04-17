@@ -108,6 +108,9 @@ namespace pc_processing_node
                 sensor_msgs::PointCloud2 segmented_pc2;
                 pcl::toROSMsg(*cloud_cluster, segmented_pc2);
                 
+                segmented_pc2.header.stamp = ros::Time::now();
+                segmented_pc2.header.frame_id = "velodyne";
+
                 segment_pub.publish(segmented_pc2);
             }
 
