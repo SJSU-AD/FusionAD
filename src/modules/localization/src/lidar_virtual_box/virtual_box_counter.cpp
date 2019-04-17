@@ -84,11 +84,18 @@ namespace pc_processing_node
             std::vector<pcl::PointIndices> cluster_indices;
             pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
 
-            // make these configurable in launch file in the future
-            // 2 cm tolerance
-            ec.setClusterTolerance(0.02);
-            ec.setMinClusterSize(20);
-            ec.setMaxClusterSize(25000);
+            float cluster_tolerance;
+            pcProcessingNode_nh.getParam("/virtual_box_counter/cluster_tolerance", cluster_tolerance);
+
+            float min_cluster_size;
+            pcProcessingNode_nh.getParam("/virtual_box_counter/min_cluster_size", min_cluster_size);
+
+            float max_cluster_size;
+            pcProcessingNode_nh.getParam("/virtual_box_counter/max_cluster_size", max_cluster_size);
+
+            ec.setClusterTolerance(cluster_tolerance);
+            ec.setMinClusterSize(min_cluster_size);
+            ec.setMaxClusterSize(max_cluster_size);
             ec.setSearchMethod(tree);
             ec.setInputCloud(filtered_cloud);
             ec.extract(cluster_indices);
@@ -108,6 +115,7 @@ namespace pc_processing_node
                 sensor_msgs::PointCloud2 segmented_pc2;
                 pcl::toROSMsg(*cloud_cluster, segmented_pc2);
                 
+                // include scheme to separate the colors amongst the segmented data
                 segmented_pc2.header.stamp = ros::Time::now();
                 segmented_pc2.header.frame_id = "velodyne";
 

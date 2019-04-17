@@ -12,6 +12,12 @@
 
     <!-- threshold for virtual box  -->
     <param name="points_in_box_threshold" value="10" />
+
+    <!-- pcl segmentation parameters -->
+    <param name="cluster_tolerance" value="0.2" />
+    <param name="min_cluster_size" value="20" />
+    <param name="max_cluster_size" value="25000" />
+
   </node>
 
   <include file="$(find visualization)/launch/lidar_virtual_box_visualization.launch" />
