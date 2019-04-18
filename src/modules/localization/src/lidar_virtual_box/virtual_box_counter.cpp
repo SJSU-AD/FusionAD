@@ -88,6 +88,38 @@ namespace pc_processing_node
         return pc_in_box;
     }
 
+    interface::Cluster_bound PcProcessingNode::cluster_bounds_calc(pcl::PointCloud<pcl::PointXYZI> input_seg_cloud, pcl::PointXYZI input_points)
+    {
+        interface::Cluster_bound temp_cluster_boundaries;
+        
+        // calculate the centroid of the point cloud pt
+        pcl::CentroidPoint<pcl::PointXYZI> pc_centroid;
+        pc_centroid.add(input_points);
+        pcl::PointXYZI centroid_points;
+        pc_centroid.get(centroid_points);
+
+        // calculate the min and max bounds of the point cloud pt
+        pcl::PointXYZI min_3d_bound;
+        pcl::PointXYZI max_3d_bound;
+
+        pcl::getMinMax3D(input_seg_cloud, min_3d_bound, max_3d_bound);
+
+        // store centroid and bounds into the Cluster_bounds msg
+        temp_cluster_boundaries.centroid_location.x = centroid_points.x;
+        temp_cluster_boundaries.centroid_location.y = centroid_points.y;
+        temp_cluster_boundaries.centroid_location.z = centroid_points.z;
+
+        temp_cluster_boundaries.min_bound.x = min_3d_bound.x;
+        temp_cluster_boundaries.min_bound.y = min_3d_bound.y;
+        temp_cluster_boundaries.min_bound.z = min_3d_bound.z;
+        
+        temp_cluster_boundaries.max_bound.x = max_3d_bound.x;
+        temp_cluster_boundaries.max_bound.y = max_3d_bound.y;
+        temp_cluster_boundaries.max_bound.z = max_3d_bound.z;
+
+        return temp_cluster_boundaries;
+    }
+
     void PcProcessingNode::segmentation_and_coloration(sensor_msgs::PointCloud& points_in_box)
     {
         sensor_msgs::PointCloud2 pc2_in_box;
@@ -127,6 +159,9 @@ namespace pc_processing_node
         colored_point_cloud->header.frame_id = "velodyne";
         colored_point_cloud->height = 1;
 
+        // Cluster_bounds to store centroid locations and bounding boxes of each point cloud
+        std::vector<interface::Cluster_bound> cluster_bound;
+
         // variable to change the color of the segmented clusters
         int j = 0;
 
@@ -145,6 +180,9 @@ namespace pc_processing_node
                 pt.intensity = j;
                 colored_point_cloud->points.push_back(pt);
                 ++colored_point_cloud->width;
+
+                // calculate the centroid of the point cloud and the boundaries
+                cluster_bound.push_back(cluster_bounds_calc(*cloud_cluster, pt));
             }
 
             cloud_cluster->width = cloud_cluster->points.size();
@@ -156,7 +194,7 @@ namespace pc_processing_node
         final_pc = colored_point_cloud;
         segment_pub.publish(final_pc);
     }
-    
+
 }// pc_processing_node
 }// localization
 }// fusionad

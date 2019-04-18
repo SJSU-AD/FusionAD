@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   sensor_msgs
+  interface
   std_msgs
   pcl_ros
   pcl_conversions

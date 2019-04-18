@@ -14,7 +14,7 @@
     <param name="points_in_box_threshold" value="10" />
 
     <!-- pcl segmentation parameters -->
-    <param name="cluster_tolerance" value="0.2" />
+    <param name="cluster_tolerance" value="0.3" />
     <param name="min_cluster_size" value="20" />
     <param name="max_cluster_size" value="25000" />
 

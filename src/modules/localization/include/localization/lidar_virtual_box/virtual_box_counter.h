@@ -29,6 +29,10 @@ Topic: /perception/point_count_detection
 #include <pcl/point_types.h>
 #include <pcl/conversions.h>
 #include <pcl_ros/point_cloud.h>
+#include <pcl/common/centroid.h>
+#include <interface/Cluster_bound.h>
+#include <interface/Cluster_bound_list.h>
+#include <pcl/common/common.h>
 
 namespace fusionad
 {
@@ -62,7 +66,8 @@ class PcProcessingNode
         // other functions
         sensor_msgs::PointCloud count_points_in_box(sensor_msgs::PointCloud2& input_msg);
         void segmentation_and_coloration(sensor_msgs::PointCloud& points_in_box);
-        
+        interface::Cluster_bound cluster_bounds_calc(pcl::PointCloud<pcl::PointXYZI> input_seg_cloud, pcl::PointXYZI input_points);
+
 }; // PcProcessingNode
 }  // pc_processing_node
 }  // localization
