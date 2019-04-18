@@ -29,8 +29,6 @@ namespace pc_processing_node
         sensor_msgs::convertPointCloud2ToPointCloud(lidar_msg, out_cloud);
 
         sensor_msgs::PointCloud pc_in_box;
-        // sensor_msgs::ChannelFloat32 pc_in_box_channel;
-        // geometry_msgs::Point32 pc_in_box_points;
         
         pc_in_box.header = out_cloud.header;
 
@@ -57,7 +55,7 @@ namespace pc_processing_node
                {
                     // put the points into a new pointcloud message
                     pc_in_box.points.push_back(out_cloud.points[i]);
-                    
+
                     points_in_box++;                    
                }
         }
@@ -76,7 +74,7 @@ namespace pc_processing_node
             pcl::PCLPointCloud2 pcl_pc2;
             pcl_conversions::toPCL(pc2_in_box, pcl_pc2);
             pcl::fromPCLPointCloud2(pcl_pc2, *filtered_cloud);
-    
+
             // creating the KdTree object for the search method of the extraction
             pcl::search::KdTree<pcl::PointXYZI>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZI>);
             tree->setInputCloud(filtered_cloud);
