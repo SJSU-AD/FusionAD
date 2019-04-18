@@ -100,7 +100,7 @@ namespace pc_processing_node
             ec.setInputCloud(filtered_cloud);
             ec.extract(cluster_indices);
 
-            pcl::PointCloud<pcl::PointXYZI>::Ptr colored_point_cloud(new pcl::PointCloud<pcl::PointXYZI>());
+            pcl::PointCloud<pcl::PointXYZI>::Ptr colored_point_cloud(new pcl::PointCloud<pcl::PointXYZI>);
             colored_point_cloud->header.frame_id = "velodyne";
             colored_point_cloud->height = 1;
 
@@ -127,30 +127,17 @@ namespace pc_processing_node
                 cloud_cluster->width = cloud_cluster->points.size();
                 cloud_cluster->height = 1;
                 cloud_cluster->is_dense = true;
-
-                // cloud_cluster->intensity = j;
-
-                // pcl::PointXYZI pt = cloud_cluster->points;
-                // pt.intensity = j;
-
-                // colored_point_cloud->points.push_back(pt);
-                // colored_point_cloud->width = cloud_cluster->points.size();
-
-                // sensor_msgs::PointCloud2 segmented_pc2;
-                // pcl::toROSMsg(*cloud_cluster, segmented_pc2);
-                
-                // include scheme to separate the colors amongst the segmented clusters
-                // segmented_pc2.header.stamp = ros::Time::now();
-                // segmented_pc2.header.frame_id = "velodyne";
-
-                // segment_pub.publish(colored_point_cloud);
             }
             
-            sensor_msgs::PointCloud2 colored_segmented_pc2;
-            pcl::toROSMsg(*colored_point_cloud, colored_segmented_pc2);
+            // sensor_msgs::PointCloud2 colored_segmented_pc2;
+            // pcl::toROSMsg(*colored_point_cloud, colored_segmented_pc2);
             
-            colored_segmented_pc2.header.stamp = ros::Time::now();
-            segment_pub.publish(colored_segmented_pc2);
+            // colored_segmented_pc2.header.stamp = ros::Time::now();
+            // segment_pub.publish(colored_segmented_pc2);
+            
+            pcl::PointCloud<pcl::PointXYZI>::Ptr final_pc;
+            final_pc = colored_point_cloud;
+            segment_pub.publish(final_pc);
 
             std_msgs::Bool points_exceeded_threshold;
             points_exceeded_threshold.data = true;

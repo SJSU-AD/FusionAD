@@ -28,6 +28,7 @@ Topic: /perception/point_count_detection
 #include <pcl/segmentation/extract_clusters.h>
 #include <pcl/point_types.h>
 #include <pcl/conversions.h>
+#include <pcl_ros/point_cloud.h>
 
 namespace fusionad
 {
