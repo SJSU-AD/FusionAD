@@ -70,7 +70,7 @@ namespace pc_processing_node
             sensor_msgs::PointCloud2 pc2_in_box;
             sensor_msgs::convertPointCloudToPointCloud2(pc_in_box, pc2_in_box);        
             
-            pcl::PointCloud<pcl::PointXYZ>::Ptr filtered_cloud (new pcl::PointCloud<pcl::PointXYZ>);
+            pcl::PointCloud<pcl::PointXYZI>::Ptr filtered_cloud (new pcl::PointCloud<pcl::PointXYZI>);
 
             // convert the pc2 inside the box into usable format for pcl library
             pcl::PCLPointCloud2 pcl_pc2;
@@ -78,11 +78,11 @@ namespace pc_processing_node
             pcl::fromPCLPointCloud2(pcl_pc2, *filtered_cloud);
     
             // creating the KdTree object for the search method of the extraction
-            pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ>);
+            pcl::search::KdTree<pcl::PointXYZI>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZI>);
             tree->setInputCloud(filtered_cloud);
 
             std::vector<pcl::PointIndices> cluster_indices;
-            pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
+            pcl::EuclideanClusterExtraction<pcl::PointXYZI> ec;
 
             float cluster_tolerance;
             pcProcessingNode_nh.getParam("/virtual_box_counter/cluster_tolerance", cluster_tolerance);
@@ -99,28 +99,58 @@ namespace pc_processing_node
             ec.setSearchMethod(tree);
             ec.setInputCloud(filtered_cloud);
             ec.extract(cluster_indices);
-    
-            // insert each point from the segmented data into a pcl object
+
+            pcl::PointCloud<pcl::PointXYZI>::Ptr colored_point_cloud(new pcl::PointCloud<pcl::PointXYZI>());
+            colored_point_cloud->header.frame_id = "velodyne";
+            colored_point_cloud->height = 1;
+
+            // variable to change the color of the segmented clusters
             int j = 0;
-            for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin(); it != cluster_indices.end(); ++it)
+
+            // insert each point from the segmented data into a pcl object
+            for(std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin(); it != cluster_indices.end(); ++it)
             {
-                pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_cluster (new pcl::PointCloud<pcl::PointXYZ>);
-                for (std::vector<int>::const_iterator pit = it->indices.begin(); pit != it->indices.end(); ++pit)
-                    cloud_cluster->points.push_back(filtered_cloud->points[*pit]); //*
+                j++;
+
+                pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_cluster (new pcl::PointCloud<pcl::PointXYZI>);
+                
+                for(std::vector<int>::const_iterator pit = it->indices.begin(); pit != it->indices.end(); ++pit)
+                {
+                    cloud_cluster->points.push_back(filtered_cloud->points[*pit]);
+                    
+                    pcl::PointXYZI pt = filtered_cloud->points[*pit];
+                    pt.intensity = j;
+                    colored_point_cloud->points.push_back(pt);
+                    ++colored_point_cloud->width;
+                }
+
                 cloud_cluster->width = cloud_cluster->points.size();
                 cloud_cluster->height = 1;
                 cloud_cluster->is_dense = true;
-                j++;
 
-                sensor_msgs::PointCloud2 segmented_pc2;
-                pcl::toROSMsg(*cloud_cluster, segmented_pc2);
+                // cloud_cluster->intensity = j;
+
+                // pcl::PointXYZI pt = cloud_cluster->points;
+                // pt.intensity = j;
+
+                // colored_point_cloud->points.push_back(pt);
+                // colored_point_cloud->width = cloud_cluster->points.size();
+
+                // sensor_msgs::PointCloud2 segmented_pc2;
+                // pcl::toROSMsg(*cloud_cluster, segmented_pc2);
                 
-                // include scheme to separate the colors amongst the segmented data
-                segmented_pc2.header.stamp = ros::Time::now();
-                segmented_pc2.header.frame_id = "velodyne";
+                // include scheme to separate the colors amongst the segmented clusters
+                // segmented_pc2.header.stamp = ros::Time::now();
+                // segmented_pc2.header.frame_id = "velodyne";
 
-                segment_pub.publish(segmented_pc2);
+                // segment_pub.publish(colored_point_cloud);
             }
+            
+            sensor_msgs::PointCloud2 colored_segmented_pc2;
+            pcl::toROSMsg(*colored_point_cloud, colored_segmented_pc2);
+            
+            colored_segmented_pc2.header.stamp = ros::Time::now();
+            segment_pub.publish(colored_segmented_pc2);
 
             std_msgs::Bool points_exceeded_threshold;
             points_exceeded_threshold.data = true;
