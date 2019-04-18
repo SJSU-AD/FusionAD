@@ -24,9 +24,19 @@ namespace pc_processing_node
 
     void PcProcessingNode::lidarCallback(const sensor_msgs::PointCloud2& lidar_msg)
     {
+        sensor_msgs::PointCloud2 input_pc2_msg = lidar_msg;
+        sensor_msgs::PointCloud points_in_box = count_points_in_box(input_pc2_msg);
+        if(points_threshold_met)
+        {
+            segmentation_and_coloration(points_in_box);
+        }
+    }
+
+    sensor_msgs::PointCloud PcProcessingNode::count_points_in_box(sensor_msgs::PointCloud2& input_msg)
+    {
         // pointcloud msg to parse xyz position of points
         sensor_msgs::PointCloud out_cloud;
-        sensor_msgs::convertPointCloud2ToPointCloud(lidar_msg, out_cloud);
+        sensor_msgs::convertPointCloud2ToPointCloud(input_msg, out_cloud);
 
         sensor_msgs::PointCloud pc_in_box;
         
@@ -65,83 +75,88 @@ namespace pc_processing_node
 
         if(points_in_box >= points_in_box_threshold)
         {
-            sensor_msgs::PointCloud2 pc2_in_box;
-            sensor_msgs::convertPointCloudToPointCloud2(pc_in_box, pc2_in_box);        
-            
-            pcl::PointCloud<pcl::PointXYZI>::Ptr filtered_cloud (new pcl::PointCloud<pcl::PointXYZI>);
-
-            // convert the pc2 inside the box into usable format for pcl library
-            pcl::PCLPointCloud2 pcl_pc2;
-            pcl_conversions::toPCL(pc2_in_box, pcl_pc2);
-            pcl::fromPCLPointCloud2(pcl_pc2, *filtered_cloud);
-
-            // creating the KdTree object for the search method of the extraction
-            pcl::search::KdTree<pcl::PointXYZI>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZI>);
-            tree->setInputCloud(filtered_cloud);
-
-            std::vector<pcl::PointIndices> cluster_indices;
-            pcl::EuclideanClusterExtraction<pcl::PointXYZI> ec;
-
-            float cluster_tolerance;
-            pcProcessingNode_nh.getParam("/virtual_box_counter/cluster_tolerance", cluster_tolerance);
-
-            float min_cluster_size;
-            pcProcessingNode_nh.getParam("/virtual_box_counter/min_cluster_size", min_cluster_size);
-
-            float max_cluster_size;
-            pcProcessingNode_nh.getParam("/virtual_box_counter/max_cluster_size", max_cluster_size);
-
-            ec.setClusterTolerance(cluster_tolerance);
-            ec.setMinClusterSize(min_cluster_size);
-            ec.setMaxClusterSize(max_cluster_size);
-            ec.setSearchMethod(tree);
-            ec.setInputCloud(filtered_cloud);
-            ec.extract(cluster_indices);
-
-            pcl::PointCloud<pcl::PointXYZI>::Ptr colored_point_cloud(new pcl::PointCloud<pcl::PointXYZI>);
-            colored_point_cloud->header.frame_id = "velodyne";
-            colored_point_cloud->height = 1;
-
-            // variable to change the color of the segmented clusters
-            int j = 0;
-
-            // insert each point from the segmented data into a pcl object
-            for(std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin(); it != cluster_indices.end(); ++it)
-            {
-                j++;
-
-                pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_cluster (new pcl::PointCloud<pcl::PointXYZI>);
-                
-                for(std::vector<int>::const_iterator pit = it->indices.begin(); pit != it->indices.end(); ++pit)
-                {
-                    cloud_cluster->points.push_back(filtered_cloud->points[*pit]);
-                    
-                    pcl::PointXYZI pt = filtered_cloud->points[*pit];
-                    pt.intensity = j;
-                    colored_point_cloud->points.push_back(pt);
-                    ++colored_point_cloud->width;
-                }
-
-                cloud_cluster->width = cloud_cluster->points.size();
-                cloud_cluster->height = 1;
-                cloud_cluster->is_dense = true;
-            }
-            
-            // sensor_msgs::PointCloud2 colored_segmented_pc2;
-            // pcl::toROSMsg(*colored_point_cloud, colored_segmented_pc2);
-            
-            // colored_segmented_pc2.header.stamp = ros::Time::now();
-            // segment_pub.publish(colored_segmented_pc2);
-            
-            pcl::PointCloud<pcl::PointXYZI>::Ptr final_pc;
-            final_pc = colored_point_cloud;
-            segment_pub.publish(final_pc);
-
+            points_threshold_met = true;
             std_msgs::Bool points_exceeded_threshold;
             points_exceeded_threshold.data = true;
             cluster_pub.publish(points_exceeded_threshold);
         }
+        else
+        {
+            points_threshold_met = false;
+        }
+
+        return pc_in_box;
     }
+
+    void PcProcessingNode::segmentation_and_coloration(sensor_msgs::PointCloud& points_in_box)
+    {
+        sensor_msgs::PointCloud2 pc2_in_box;
+        sensor_msgs::convertPointCloudToPointCloud2(points_in_box, pc2_in_box);        
+        
+        pcl::PointCloud<pcl::PointXYZI>::Ptr filtered_cloud (new pcl::PointCloud<pcl::PointXYZI>);
+
+        // convert the pc2 inside the box into usable format for pcl library
+        pcl::PCLPointCloud2 pcl_pc2;
+        pcl_conversions::toPCL(pc2_in_box, pcl_pc2);
+        pcl::fromPCLPointCloud2(pcl_pc2, *filtered_cloud);
+
+        // creating the KdTree object for the search method of the extraction
+        pcl::search::KdTree<pcl::PointXYZI>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZI>);
+        tree->setInputCloud(filtered_cloud);
+
+        std::vector<pcl::PointIndices> cluster_indices;
+        pcl::EuclideanClusterExtraction<pcl::PointXYZI> ec;
+
+        float cluster_tolerance;
+        pcProcessingNode_nh.getParam("/virtual_box_counter/cluster_tolerance", cluster_tolerance);
+
+        float min_cluster_size;
+        pcProcessingNode_nh.getParam("/virtual_box_counter/min_cluster_size", min_cluster_size);
+
+        float max_cluster_size;
+        pcProcessingNode_nh.getParam("/virtual_box_counter/max_cluster_size", max_cluster_size);
+
+        ec.setClusterTolerance(cluster_tolerance);
+        ec.setMinClusterSize(min_cluster_size);
+        ec.setMaxClusterSize(max_cluster_size);
+        ec.setSearchMethod(tree);
+        ec.setInputCloud(filtered_cloud);
+        ec.extract(cluster_indices);
+
+        pcl::PointCloud<pcl::PointXYZI>::Ptr colored_point_cloud(new pcl::PointCloud<pcl::PointXYZI>);
+        colored_point_cloud->header.frame_id = "velodyne";
+        colored_point_cloud->height = 1;
+
+        // variable to change the color of the segmented clusters
+        int j = 0;
+
+        // insert each point from the segmented data into a pcl object
+        for(std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin(); it != cluster_indices.end(); ++it)
+        {
+            j++;
+
+            pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_cluster (new pcl::PointCloud<pcl::PointXYZI>);
+            
+            for(std::vector<int>::const_iterator pit = it->indices.begin(); pit != it->indices.end(); ++pit)
+            {
+                cloud_cluster->points.push_back(filtered_cloud->points[*pit]);
+                
+                pcl::PointXYZI pt = filtered_cloud->points[*pit];
+                pt.intensity = j;
+                colored_point_cloud->points.push_back(pt);
+                ++colored_point_cloud->width;
+            }
+
+            cloud_cluster->width = cloud_cluster->points.size();
+            cloud_cluster->height = 1;
+            cloud_cluster->is_dense = true;
+        }
+        
+        pcl::PointCloud<pcl::PointXYZI>::Ptr final_pc;
+        final_pc = colored_point_cloud;
+        segment_pub.publish(final_pc);
+    }
+    
 }// pc_processing_node
 }// localization
 }// fusionad

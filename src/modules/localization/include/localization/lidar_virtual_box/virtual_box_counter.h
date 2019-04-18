@@ -54,8 +54,15 @@ class PcProcessingNode
         // subscriber to velodyne pointcloud publisher
         ros::Subscriber lidar_sub;
 
+        bool points_threshold_met = false;
+
         // callback for lidar 
         void lidarCallback(const sensor_msgs::PointCloud2& lidar_msg);
+
+        // other functions
+        sensor_msgs::PointCloud count_points_in_box(sensor_msgs::PointCloud2& input_msg);
+        void segmentation_and_coloration(sensor_msgs::PointCloud& points_in_box);
+        
 }; // PcProcessingNode
 }  // pc_processing_node
 }  // localization
