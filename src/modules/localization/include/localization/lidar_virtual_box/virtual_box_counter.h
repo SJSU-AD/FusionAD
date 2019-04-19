@@ -7,6 +7,11 @@ individual clusters with the use of the pcl ros library. A virtual rectangular p
 created in 3-D space and the program publishes a bool when there is an object within the
 virtual rectangular prism.
 
+An additional feature is segmentation along with centroid and bounding box calculation of 
+the segmented clusters.
+
+Segmented clusters are published and colored in the /perception/segmented_cloud topic
+
 Subscriber
 -----------
 Topic: /velodyne_points
@@ -16,6 +21,12 @@ Publisher
 ---------
 Topic: /perception/point_count_detection
             Msg: std_msgs::Bool
+       
+Topic: /perception/segmented_cloud
+            Msg: sensor_msgs::PointCloud2
+
+Topic: /perception/cluster_locations
+            Msg: interface::Cluster_bound_list
 */
 
 #include "ros/ros.h"
