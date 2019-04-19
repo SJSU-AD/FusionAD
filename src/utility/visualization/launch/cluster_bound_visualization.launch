@@ -1,15 +1,20 @@
 <launch>
 
   <node type="cluster_bound_visualizer.py" pkg="visualization" name="cluster_visualization_node" output="screen">
-    
+    <!-- cube color and opaqueness parameters -->
     <param name="cube_r" value="1" />
     <param name="cube_g" value="1" />
     <param name="cube_b" value="0.5" />
     <param name="cube_a" value="0.8" />
 
+    <!-- size of the cube in meters -->
+    <param name="scale_x" value="0.1" />
+    <param name="scale_y" value="0.1" />
+    <param name="scale_z" value="0.1" />
+
     <!-- cube lifetime in seconds -->
     <param name="cube_lifetime" value="0.5" />
-    
+
   </node>
 
 </launch>

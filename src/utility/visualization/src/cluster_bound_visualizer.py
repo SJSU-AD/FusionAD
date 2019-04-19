@@ -28,11 +28,16 @@ class ClusterVisuals(object):
         self.marker_array_initialization()
 
     def marker_array_initialization(self):
-        """Function to set the RGBA values of each cube"""
+        """Function to set the RGBA and scale values of each cube"""
         self.cube_r = rospy.get_param('/cluster_visualization_node/cube_r')
         self.cube_g = rospy.get_param('/cluster_visualization_node/cube_g')
         self.cube_b = rospy.get_param('/cluster_visualization_node/cube_b')
         self.cube_a = rospy.get_param('/cluster_visualization_node/cube_a')
+
+        self.scale_x = rospy.get_param('/cluster_visualization_node/scale_x')
+        self.scale_y = rospy.get_param('/cluster_visualization_node/scale_y')
+        self.scale_z = rospy.get_param('/cluster_visualization_node/scale_z')
+
 
     def cluster_callback(self, cluster_msgs):
         """Callback to the Cluster_bound_list msg"""
@@ -54,10 +59,10 @@ class ClusterVisuals(object):
             # add a new marker in this action
             clusterVis.action = 0
 
+            # cube lifetime in rviz
             nano_seconds = rospy.get_param('/cluster_visualization_node/cube_lifetime')
-            # cube_lifetime = rospy.Duration(0, nano_seconds * 1000000000)
+            # nano_seconds*1000000000 nanoseconds to seconds conversion
             clusterVis.lifetime = rospy.Duration(0, nano_seconds * 1000000000)
-            # clusterVis.lifetime = cube_lifetime
 
             # set the color and opaqueness
             clusterVis.color.r = self.cube_r
@@ -76,10 +81,10 @@ class ClusterVisuals(object):
             clusterVis.pose.orientation.z = 0
             clusterVis.pose.orientation.w = 1
 
-            # # set the boundaries of the cube
-            clusterVis.scale.x = 0.1
-            clusterVis.scale.y = 0.1
-            clusterVis.scale.z = 0.1
+            # set the boundaries of the cube
+            clusterVis.scale.x = scale_x
+            clusterVis.scale.y = scale_y
+            clusterVis.scale.z = scale_z
 
             clusterVisArray.markers.append(clusterVis)
         
