@@ -1,0 +1,15 @@
+<launch>
+
+  <node type="cluster_bound_visualizer.py" pkg="visualization" name="cluster_visualization_node" output="screen">
+    
+    <param name="cube_r" value="1" />
+    <param name="cube_g" value="1" />
+    <param name="cube_b" value="0.5" />
+    <param name="cube_a" value="0.8" />
+
+    <!-- cube lifetime in seconds -->
+    <param name="cube_lifetime" value="0.5" />
+    
+  </node>
+
+</launch>
