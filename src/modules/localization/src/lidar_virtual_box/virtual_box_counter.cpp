@@ -206,9 +206,7 @@ namespace pc_processing_node
             cloud_cluster->is_dense = true;
         }
         
-        pcl::PointCloud<pcl::PointXYZI>::Ptr final_pc;
-        final_pc = colored_point_cloud;
-        segment_pub.publish(final_pc);
+        segment_pub.publish(colored_point_cloud);
 
         cluster_bound_list.num_clusters = cluster_count;
         cluster_bounds_pub.publish(cluster_bound_list);
