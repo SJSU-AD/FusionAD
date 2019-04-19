@@ -33,6 +33,7 @@ Topic: /perception/point_count_detection
 #include <interface/Cluster_bound.h>
 #include <interface/Cluster_bound_list.h>
 #include <pcl/common/common.h>
+#include <vector>
 
 namespace fusionad
 {
@@ -52,9 +53,10 @@ class PcProcessingNode
         ros::NodeHandle pcProcessingNode_nh;
 
         // publisher to perception when cluster is identified within virtual box
-        ros::Publisher cluster_pub;
+        ros::Publisher object_detection_pub;
         ros::Publisher segment_pub;
-        
+        ros::Publisher cluster_bounds_pub;
+
         // subscriber to velodyne pointcloud publisher
         ros::Subscriber lidar_sub;
 

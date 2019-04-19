@@ -14,9 +14,13 @@ namespace pc_processing_node
     void PcProcessingNode::initRosComm()
     {
         // publisher for object detected within virtual box
-        cluster_pub = pcProcessingNode_nh.advertise<std_msgs::Bool>("/perception/point_cloud_detection", 10);
+        object_detection_pub = pcProcessingNode_nh.advertise<std_msgs::Bool>("/perception/point_cloud_detection", 10);
 
+        // publisher for segmented colored point cloud
         segment_pub = pcProcessingNode_nh.advertise<sensor_msgs::PointCloud2>("/perception/segmented_cloud", 10);
+
+        // publisher for cluster boundaries and centroid for each segmented cloud
+        cluster_bounds_pub = pcProcessingNode_nh.advertise<interface::Cluster_bound_list>("/perception/cluster_locations", 10);
 
         // subscriber to the lidar
         lidar_sub = pcProcessingNode_nh.subscribe("/velodyne_points", 10, &PcProcessingNode::lidarCallback, this);
@@ -78,7 +82,7 @@ namespace pc_processing_node
             points_threshold_met = true;
             std_msgs::Bool points_exceeded_threshold;
             points_exceeded_threshold.data = true;
-            cluster_pub.publish(points_exceeded_threshold);
+            object_detection_pub.publish(points_exceeded_threshold);
         }
         else
         {
@@ -116,6 +120,9 @@ namespace pc_processing_node
         temp_cluster_boundaries.max_bound.x = max_3d_bound.x;
         temp_cluster_boundaries.max_bound.y = max_3d_bound.y;
         temp_cluster_boundaries.max_bound.z = max_3d_bound.z;
+
+        temp_cluster_boundaries.header.frame_id = "velodyne";
+        temp_cluster_boundaries.header.stamp = ros::Time::now();
 
         return temp_cluster_boundaries;
     }
@@ -160,31 +167,40 @@ namespace pc_processing_node
         colored_point_cloud->height = 1;
 
         // Cluster_bounds to store centroid locations and bounding boxes of each point cloud
-        std::vector<interface::Cluster_bound> cluster_bound;
+        interface::Cluster_bound_list cluster_bound_list;
 
         // variable to change the color of the segmented clusters
         int j = 0;
-
+        
+        int cluster_count = 0;
         // insert each point from the segmented data into a pcl object
         for(std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin(); it != cluster_indices.end(); ++it)
         {
             j++;
 
             pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_cluster (new pcl::PointCloud<pcl::PointXYZI>);
-            
             for(std::vector<int>::const_iterator pit = it->indices.begin(); pit != it->indices.end(); ++pit)
             {
                 cloud_cluster->points.push_back(filtered_cloud->points[*pit]);
-                
-                pcl::PointXYZI pt = filtered_cloud->points[*pit];
-                pt.intensity = j;
+            }
+            
+            // need to calculate cluster bounds out here and perform color calc out here!
+            cluster_count++;
+
+            pcl::PointXYZI pt;
+
+            for(std::vector<int>::const_iterator pit = it->indices.begin(); pit != it->indices.end(); ++pit)
+            {
+                pt = cloud_cluster->points[*pit];
                 colored_point_cloud->points.push_back(pt);
                 ++colored_point_cloud->width;
-
-                // calculate the centroid of the point cloud and the boundaries
-                cluster_bound.push_back(cluster_bounds_calc(*cloud_cluster, pt));
             }
 
+            pt.intensity = j;
+
+            // calculate the centroid of the point cloud and the boundaries
+            cluster_bound_list.cluster_bounds.push_back(cluster_bounds_calc(*cloud_cluster, pt));
+            
             cloud_cluster->width = cloud_cluster->points.size();
             cloud_cluster->height = 1;
             cloud_cluster->is_dense = true;
@@ -193,6 +209,9 @@ namespace pc_processing_node
         pcl::PointCloud<pcl::PointXYZI>::Ptr final_pc;
         final_pc = colored_point_cloud;
         segment_pub.publish(final_pc);
+
+        cluster_bound_list.num_clusters = cluster_count;
+        cluster_bounds_pub.publish(cluster_bound_list);
     }
 
 }// pc_processing_node
