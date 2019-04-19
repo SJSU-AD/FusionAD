@@ -45,6 +45,7 @@ Topic: /perception/cluster_locations
 #include <interface/Cluster_bound_list.h>
 #include <pcl/common/common.h>
 #include <vector>
+#include "Eigen/Dense"
 
 namespace fusionad
 {
@@ -79,7 +80,7 @@ class PcProcessingNode
         // other functions
         sensor_msgs::PointCloud count_points_in_box(sensor_msgs::PointCloud2& input_msg);
         void segmentation_and_coloration(sensor_msgs::PointCloud& points_in_box);
-        interface::Cluster_bound cluster_bounds_calc(pcl::PointCloud<pcl::PointXYZI> input_seg_cloud, pcl::PointXYZI input_points);
+        interface::Cluster_bound cluster_bounds_calc(pcl::PointCloud<pcl::PointXYZI> input_seg_cloud);
 
 }; // PcProcessingNode
 }  // pc_processing_node

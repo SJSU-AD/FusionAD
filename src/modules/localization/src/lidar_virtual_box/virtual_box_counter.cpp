@@ -73,6 +73,7 @@ namespace pc_processing_node
                     points_in_box++;                    
                }
         }
+        
         // if the points in box threshold has been met
         int points_in_box_threshold;
         pcProcessingNode_nh.getParam("/virtual_box_counter/points_in_box_threshold", points_in_box_threshold);
@@ -92,15 +93,13 @@ namespace pc_processing_node
         return pc_in_box;
     }
 
-    interface::Cluster_bound PcProcessingNode::cluster_bounds_calc(pcl::PointCloud<pcl::PointXYZI> input_seg_cloud, pcl::PointXYZI input_points)
+    interface::Cluster_bound PcProcessingNode::cluster_bounds_calc(pcl::PointCloud<pcl::PointXYZI> input_seg_cloud)
     {
         interface::Cluster_bound temp_cluster_boundaries;
         
-        // calculate the centroid of the point cloud pt
-        pcl::CentroidPoint<pcl::PointXYZI> pc_centroid;
-        pc_centroid.add(input_points);
-        pcl::PointXYZI centroid_points;
-        pc_centroid.get(centroid_points);
+        // calculate the centroid of the point cloud
+        Eigen::Vector4f centroid_points;
+        pcl::compute3DCentroid(input_seg_cloud, centroid_points);
 
         // calculate the min and max bounds of the point cloud pt
         pcl::PointXYZI min_3d_bound;
@@ -108,10 +107,10 @@ namespace pc_processing_node
 
         pcl::getMinMax3D(input_seg_cloud, min_3d_bound, max_3d_bound);
 
-        // store centroid and bounds into the Cluster_bounds msg
-        temp_cluster_boundaries.centroid_location.x = centroid_points.x;
-        temp_cluster_boundaries.centroid_location.y = centroid_points.y;
-        temp_cluster_boundaries.centroid_location.z = centroid_points.z;
+        // stuff data into return msg
+        temp_cluster_boundaries.centroid_location.x = centroid_points(0);
+        temp_cluster_boundaries.centroid_location.y = centroid_points(1);
+        temp_cluster_boundaries.centroid_location.z = centroid_points(2);
 
         temp_cluster_boundaries.min_bound.x = min_3d_bound.x;
         temp_cluster_boundaries.min_bound.y = min_3d_bound.y;
@@ -178,28 +177,27 @@ namespace pc_processing_node
         {
             j++;
 
+            // create message to alter the intensity of the point cloud points
+            pcl::PointXYZI pt;
+
             pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_cluster (new pcl::PointCloud<pcl::PointXYZI>);
             for(std::vector<int>::const_iterator pit = it->indices.begin(); pit != it->indices.end(); ++pit)
             {
                 cloud_cluster->points.push_back(filtered_cloud->points[*pit]);
+
+                // add color to the new point cloud points by changing intensity
+                pt = filtered_cloud->points[*pit];
+                pt.intensity = j;
+
+                colored_point_cloud->points.push_back(pt);
+                ++colored_point_cloud->width;
             }
             
             // need to calculate cluster bounds out here and perform color calc out here!
             cluster_count++;
 
-            pcl::PointXYZI pt;
-
-            for(std::vector<int>::const_iterator pit = it->indices.begin(); pit != it->indices.end(); ++pit)
-            {
-                pt = cloud_cluster->points[*pit];
-                colored_point_cloud->points.push_back(pt);
-                ++colored_point_cloud->width;
-            }
-
-            pt.intensity = j;
-
             // calculate the centroid of the point cloud and the boundaries
-            cluster_bound_list.cluster_bounds.push_back(cluster_bounds_calc(*cloud_cluster, pt));
+            cluster_bound_list.cluster_bounds.push_back(cluster_bounds_calc(*cloud_cluster));
             
             cloud_cluster->width = cloud_cluster->points.size();
             cloud_cluster->height = 1;
