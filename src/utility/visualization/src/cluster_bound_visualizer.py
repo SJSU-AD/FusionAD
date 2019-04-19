@@ -82,9 +82,9 @@ class ClusterVisuals(object):
             clusterVis.pose.orientation.w = 1
 
             # set the boundaries of the cube
-            clusterVis.scale.x = scale_x
-            clusterVis.scale.y = scale_y
-            clusterVis.scale.z = scale_z
+            clusterVis.scale.x = self.scale_x
+            clusterVis.scale.y = self.scale_y
+            clusterVis.scale.z = self.scale_z
 
             clusterVisArray.markers.append(clusterVis)
         
