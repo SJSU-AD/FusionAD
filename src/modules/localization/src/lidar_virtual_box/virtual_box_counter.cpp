@@ -128,26 +128,45 @@ namespace pc_processing_node
 
     bool PcProcessingNode::cluster_size_filter(interface::Cluster_bound input_cluster_bound)
     {
-        // TODO: change the logic, currently incorrect to just single size
-        float x_max, x_min, y_max, y_min, z_max, z_min;
-        
-        pcProcessingNode_nh.getParam("/virtual_box_counter/x_max", x_max);
-        pcProcessingNode_nh.getParam("/virtual_box_counter/x_min", x_min);
+        // check whether the cluster size is within the user defined bounds
+        float x_size_lim, y_size_lim, z_size_lim, x_size_min, y_size_min, z_size_min;
+    
+        pcProcessingNode_nh.getParam("/virtual_box_counter/x_size_lim", x_size_lim);
+        pcProcessingNode_nh.getParam("/virtual_box_counter/y_size_lim", y_size_lim);
+        pcProcessingNode_nh.getParam("/virtual_box_counter/z_size_lim", z_size_lim);
 
-        pcProcessingNode_nh.getParam("/virtual_box_counter/y_max", y_max);
-        pcProcessingNode_nh.getParam("/virtual_box_counter/y_min", y_min);
+        pcProcessingNode_nh.getParam("/virtual_box_counter/x_size_min", x_size_min);
+        pcProcessingNode_nh.getParam("/virtual_box_counter/y_size_min", y_size_min);
+        pcProcessingNode_nh.getParam("/virtual_box_counter/z_size_min", z_size_min);
 
-        pcProcessingNode_nh.getParam("/virtual_box_counter/z_max", z_max);
-        pcProcessingNode_nh.getParam("/virtual_box_counter/z_min", z_min);
+        int bounds_passing_threshold;
+        pcProcessingNode_nh.getParam("/virtual_box_counter/bounds_passing_threshold", bounds_passing_threshold);
 
         bool cluster_within_bounds;
+        int bounds_passed = 0;
 
-        if((input_cluster_bound.min_bound.x >= x_min) && (input_cluster_bound.max_bound.x <= x_max) &&
-           (input_cluster_bound.min_bound.y >= y_min) && (input_cluster_bound.max_bound.y <= y_max) &&
-           (input_cluster_bound.min_bound.z >= z_min) && (input_cluster_bound.max_bound.z <= z_max))
-            {
-                cluster_within_bounds = true; 
-            }
+        float x_cluster_size = std::abs(input_cluster_bound.max_bound.x - input_cluster_bound.min_bound.x);
+        float y_cluster_size = std::abs(input_cluster_bound.max_bound.y - input_cluster_bound.min_bound.y);
+        float z_cluster_size = std::abs(input_cluster_bound.max_bound.z - input_cluster_bound.min_bound.z);
+
+        // increase the bounds passed variable by 1 for each condition passed
+        if((x_cluster_size >= x_size_min) && (x_cluster_size <= x_size_lim))
+        {
+            bounds_passed++;
+        }
+        if((y_cluster_size >= y_size_min) && (y_cluster_size <= y_size_lim))
+        {
+            bounds_passed++;
+        }
+        if((z_cluster_size >= z_size_min) && (z_cluster_size <= z_size_lim))
+        {
+            bounds_passed++;
+        }
+
+        if(bounds_passed >= bounds_passing_threshold)
+        {
+            cluster_within_bounds = true;
+        }
         else
         {
             cluster_within_bounds = false;
