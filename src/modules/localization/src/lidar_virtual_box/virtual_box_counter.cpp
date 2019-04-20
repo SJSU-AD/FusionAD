@@ -126,6 +126,36 @@ namespace pc_processing_node
         return temp_cluster_boundaries;
     }
 
+    bool PcProcessingNode::cluster_size_filter(interface::Cluster_bound input_cluster_bound)
+    {
+        // TODO: change the logic, currently incorrect to just single size
+        float x_max, x_min, y_max, y_min, z_max, z_min;
+        
+        pcProcessingNode_nh.getParam("/virtual_box_counter/x_max", x_max);
+        pcProcessingNode_nh.getParam("/virtual_box_counter/x_min", x_min);
+
+        pcProcessingNode_nh.getParam("/virtual_box_counter/y_max", y_max);
+        pcProcessingNode_nh.getParam("/virtual_box_counter/y_min", y_min);
+
+        pcProcessingNode_nh.getParam("/virtual_box_counter/z_max", z_max);
+        pcProcessingNode_nh.getParam("/virtual_box_counter/z_min", z_min);
+
+        bool cluster_within_bounds;
+
+        if((input_cluster_bound.min_bound.x >= x_min) && (input_cluster_bound.max_bound.x <= x_max) &&
+           (input_cluster_bound.min_bound.y >= y_min) && (input_cluster_bound.max_bound.y <= y_max) &&
+           (input_cluster_bound.min_bound.z >= z_min) && (input_cluster_bound.max_bound.z <= z_max))
+            {
+                cluster_within_bounds = true; 
+            }
+        else
+        {
+            cluster_within_bounds = false;
+        }
+
+        return cluster_within_bounds;
+    }
+
     void PcProcessingNode::segmentation_and_coloration(sensor_msgs::PointCloud& points_in_box)
     {
         sensor_msgs::PointCloud2 pc2_in_box;
@@ -171,7 +201,9 @@ namespace pc_processing_node
         // variable to change the color of the segmented clusters
         int j = 0;
         
+        // count the number of clusters
         int cluster_count = 0;
+
         // insert each point from the segmented data into a pcl object
         for(std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin(); it != cluster_indices.end(); ++it)
         {
@@ -192,13 +224,20 @@ namespace pc_processing_node
                 colored_point_cloud->points.push_back(pt);
                 ++colored_point_cloud->width;
             }
-            
-            // need to calculate cluster bounds out here and perform color calc out here!
-            cluster_count++;
 
             // calculate the centroid of the point cloud and the boundaries
-            cluster_bound_list.cluster_bounds.push_back(cluster_bounds_calc(*cloud_cluster));
+            interface::Cluster_bound cluster_boundaries = cluster_bounds_calc(*cloud_cluster);
             
+            bool cluster_within_bounds = cluster_size_filter(cluster_boundaries);
+
+            if(cluster_within_bounds)
+            {
+                cluster_bound_list.cluster_bounds.push_back(cluster_boundaries);
+                
+                // need to calculate cluster bounds out here and perform color calc out here!
+                cluster_count++;
+            }
+
             cloud_cluster->width = cloud_cluster->points.size();
             cloud_cluster->height = 1;
             cloud_cluster->is_dense = true;

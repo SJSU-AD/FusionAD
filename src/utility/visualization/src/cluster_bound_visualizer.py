@@ -18,10 +18,8 @@ NOTE: Takes the Cluster_bound_list msg and then produces Marker cubes for visual
 """
 
 import rospy
-from visualization_msgs.msg import MarkerArray
-from visualization_msgs.msg import Marker
-from interface.msg import Cluster_bound_list
-from interface.msg import Cluster_bound
+from visualization_msgs.msg import MarkerArray, Marker
+from interface.msg import Cluster_bound_list, Cluster_bound
 from geometry_msgs.msg import Point32
 
 class ClusterVisuals(object):

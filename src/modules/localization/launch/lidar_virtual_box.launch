@@ -1,22 +1,33 @@
 <launch>    
   <node type="virtual_box_counter" pkg="localization" name="virtual_box_counter" output="screen">
     <!-- boundaries of the virtual box -->
-    <param name="x_lower_bound" value="0" />
+    <param name="x_lower_bound" value="0.5" />
     <param name="x_upper_bound" value="10" />
     
     <param name="y_lower_bound" value="-5" />
     <param name="y_upper_bound" value="5" />
     
-    <param name="z_lower_bound" value="0" />
-    <param name="z_upper_bound" value="1" />
+    <param name="z_lower_bound" value="-0.5" />
+    <param name="z_upper_bound" value="4" />
 
     <!-- threshold for virtual box  -->
     <param name="points_in_box_threshold" value="10" />
 
     <!-- pcl segmentation parameters -->
+    <!-- in meters -->
     <param name="cluster_tolerance" value="0.3" />
-    <param name="min_cluster_size" value="20" />
-    <param name="max_cluster_size" value="25000" />
+    <param name="min_cluster_size" value="75" />
+    <param name="max_cluster_size" value="350" />
+
+    <!-- parameters to determine cutoffs for cluster bounding box size -->
+    <param name="x_max" value="5" />
+    <param name="x_min" value="-5" />
+
+    <param name="y_max" value="5" />
+    <param name="y_min" value="-5" />
+
+    <param name="z_max" value="5" />
+    <param name="z_min" value="-5" />
 
   </node>
 

@@ -81,6 +81,7 @@ class PcProcessingNode
         sensor_msgs::PointCloud count_points_in_box(sensor_msgs::PointCloud2& input_msg);
         void segmentation_and_coloration(sensor_msgs::PointCloud& points_in_box);
         interface::Cluster_bound cluster_bounds_calc(pcl::PointCloud<pcl::PointXYZI> input_seg_cloud);
+        bool cluster_size_filter(interface::Cluster_bound input_cluster_bound);
 
 }; // PcProcessingNode
 }  // pc_processing_node

@@ -5,7 +5,7 @@
     <param name="cube_r" value="1" />
     <param name="cube_g" value="1" />
     <param name="cube_b" value="0.5" />
-    <param name="cube_a" value="0.8" />
+    <param name="cube_a" value="1" />
 
     <!-- size of the cube in meters -->
     <param name="scale_x" value="0.1" />
