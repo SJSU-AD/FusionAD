@@ -12,6 +12,9 @@
     <param name="scale_y" value="0.1" />
     <param name="scale_z" value="0.1" />
 
+    <!-- size of the line strip in meters -->
+    <param name="line_strip_width" value="0.01" />
+
     <!-- cube lifetime in seconds -->
     <param name="cube_lifetime" value="0.5" />
 
