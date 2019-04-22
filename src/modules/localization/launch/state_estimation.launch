@@ -5,9 +5,9 @@
     <node type="frame_calibration" pkg="localization" name="frame_calibration" output="screen">
         <param name="threshold_pose_std_dev" value="5" />
         <param name="gps_threshold" value="0.5" />
-        <param name="heading_threshold" value="0.5" />
+        <param name="heading_threshold" value="0.2" />
         <param name="speed_threshold" value="0.5" />
-        <param name="heading_from_calibration" value="-1.091741" />
+        <param name="heading_from_calibration" value="-1.099495" />
         <param name="calibration_mode" value="false" />
     </node>
     
