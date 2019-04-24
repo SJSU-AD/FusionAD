@@ -1,0 +1,7 @@
+<launch>
+    <node type="cluster_tracker.py" pkg="localization" name="cluster_tracking_node" output="screen">
+        <!-- tolerance for cluster centroid movement in meters -->
+        <param name="movement_tolerance" value="0.5" />
+    </node>
+
+</launch>
