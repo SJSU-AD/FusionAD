@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+from __future__ import print_function
+from __future__ import division
+
 """
 NOTE: Tracks the cluster centroid velocities and locations over time by transforming to odom frame.
       Velocities are calculated by backward differencing. Produces a MarkerArray arrow for visualization of cluster velocity.
@@ -27,6 +30,7 @@ import rospy
 from interface.msg import Cluster_bound_list, Cluster_bound
 from nav_msgs.msg import Odometry
 import math
+from visualization_msgs.msg import MarkerArray, Marker
 
 class ClusterTracking(object):
     """Class that tracks the movement of clusters"""
@@ -42,6 +46,12 @@ class ClusterTracking(object):
         
         # parameter for tolerance to determine whether the current measurement is of a centroid in a past frame
         self.movement_tolerance = rospy.get_param('cluster_tracking_node/movement_tolerance')
+        
+        # parameter for amount of time before warning the operator that an impact will occur with a cluster
+        self.impact_time_const = rospy.get_param('cluster_tracking_node/impact_time_const')
+        
+        # parameter for the minimum velocity for publishing
+        self.min_velocity_threshold = rospy.get_param('cluster_tracking_node/min_velocity_threshold')
 
         # need to keep track of the previous cluster positions
         self.previous_cluster_list = []
@@ -111,7 +121,11 @@ class ClusterTracking(object):
         cluster_x_vel = (cluster_x_pos - previous_x_pos) / (time_difference)
         cluster_y_vel = (cluster_y_pos - previous_y_pos) / (time_difference)
         cluster_mag_vel = math.sqrt(cluster_x_vel**2 + cluster_y_vel**2)
-        # self.impact_check(cluster_x_vel, cluster_y_vel)
+        
+        vehicle_impact_status = self.impact_check(cluster_x_pos, cluster_y_pos, cluster_x_vel, cluster_y_vel, cluster_mag_vel)
+        
+        if(vehicle_impact_status):
+            print(vehicle_impact_status)
 
         # store the previous time of the cluster
         self.prev_time = time_difference
@@ -119,9 +133,22 @@ class ClusterTracking(object):
 
         print(cluster_mag_vel)
     
-    # def impact_check(self, x_vel, y_vel):
-    #     """Check whether the car will hit the cluster in a configurable amount of time"""
-    #     pass
+    def impact_check(self, x_pos, y_pos, x_vel, y_vel, vel_mag):
+        """Check whether the car will hit the cluster in a configurable amount of time"""
+        vehicle_impact_status = False
+        if(vel_mag >= self.min_velocity_threshold):
+            x_pos_impact_time = (self.vehicle_pos.pose.pose.position.x - x_pos) / (self.vehicle_pos.twist.twist.linear.x - x_vel)
+            y_pos_impact_time = (self.vehicle_pos.pose.pose.position.y - y_pos) / (self.vehicle_pos.twist.twist.linear.y - y_vel)
+
+            if((x_pos_impact_time <= self.impact_time_const) and (y_pos_impact_time <= self.impact_time_const)):
+                vehicle_impact_status = True
+        
+        return vehicle_impact_status
+            
+
+    def velocity_visualization(self):
+        """Display an arrow in rviz that represents the velocity vector of the cluster"""
+        pass
 
     def cluster_tracker(self):
         """Track the position and velocity of the clusters over time"""

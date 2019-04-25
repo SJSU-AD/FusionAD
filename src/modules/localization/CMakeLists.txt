@@ -18,6 +18,7 @@ find_package(catkin REQUIRED COMPONENTS
   velodyne_puck_msgs
   geometry_msgs
   nav_msgs
+  visualization_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -120,6 +121,7 @@ catkin_package(
     pcl_ros
     pcl_conversions
     velodyne_puck_msgs
+    visualization_msgs
 #  DEPENDS system_lib
 )
 
