@@ -29,15 +29,18 @@ TODO: Figure out a way to differentiate b/t different clusters and track them
 import rospy
 from interface.msg import Cluster_bound_list, Cluster_bound
 from nav_msgs.msg import Odometry
+from geometry_msgs.msg import Point32
 import math
 from visualization_msgs.msg import MarkerArray, Marker
 
 class ClusterTracking(object):
     """Class that tracks the movement of clusters"""
     def __init__(self):
-        
+        """Initialize messages and get parameters"""
+        self.clusterVelVisPublisher = rospy.Publisher('/cluster_velocity_visualization', MarkerArray, queue_size = 1)
+
         # keep track of the odometry msgs from the pose callback
-        self.vehicle_pos = Odometry()
+        self.vehiclePos = Odometry()
 
         self.cluster_callback_time = 0
         self.prev_time = 0
@@ -56,11 +59,15 @@ class ClusterTracking(object):
         # need to keep track of the previous cluster positions
         self.previous_cluster_list = []
 
-    def pose_callback(self, odom_msg):
-        """Callback for the current position of the vehicle in odom frame"""
-        self.vehicle_pos = odom_msg
+        self.vel_vector_vis_initialization()
 
-    def cluster_callback(self, cluster_msgs):
+        self.marker_index = 0
+
+    def pose_callback(self, odomMsg):
+        """Callback for the current position of the vehicle in odom frame"""
+        self.vehiclePos = odomMsg
+
+    def cluster_callback(self, clusterMsg):
         """Callback for the clusters"""
         # keep track of the time from each cluster msg
         self.cluster_callback_time = rospy.get_time()
@@ -68,11 +75,11 @@ class ClusterTracking(object):
         # keep track of the current cluster centroid positions
         cluster_tracking_list = []
 
-        for i in range(cluster_msgs.num_clusters):
-            # cluster_tracking_list.append([cluster_msgs.cluster_bounds[i].centroid_location.x, cluster_msgs.cluster_bounds[i].centroid_location.y])
-            
-            curr_x_centroid_pos = cluster_msgs.cluster_bounds[i].centroid_location.x + self.vehicle_pos.pose.pose.position.x
-            curr_y_centroid_pos = cluster_msgs.cluster_bounds[i].centroid_location.y + self.vehicle_pos.pose.pose.position.y    
+        self.velocityVectorVisArray = MarkerArray()
+
+        for i in range(clusterMsg.num_clusters):
+            curr_x_centroid_pos = clusterMsg.cluster_bounds[i].centroid_location.x + self.vehiclePos.pose.pose.position.x
+            curr_y_centroid_pos = clusterMsg.cluster_bounds[i].centroid_location.y + self.vehiclePos.pose.pose.position.y    
             
             cluster_tracking_list.append([curr_x_centroid_pos, curr_y_centroid_pos])
             
@@ -86,9 +93,15 @@ class ClusterTracking(object):
             
             # if the current cluster was in the previous cluster list
             if(cluster_logistics[0]):
-                self.velocity_calc(cluster_msgs.cluster_bounds[i], cluster_logistics[1], cluster_logistics[2])
+                self.velocity_calc(clusterMsg.cluster_bounds[i], cluster_logistics[1], cluster_logistics[2])
+            
+            self.marker_index = i
 
         self.previous_cluster_list = cluster_tracking_list
+
+        if(len(self.velocityVectorVisArray.markers) > 0):
+            self.clusterVelVisPublisher.publish(self.velocityVectorVisArray)
+
 
     def cluster_from_previous(self, input_x_pos, input_y_pos):
         """Function to check whether the input cluster's centroid was from a previous frame"""
@@ -106,11 +119,10 @@ class ClusterTracking(object):
         return [cluster_is_from_previous, previous_cluster_x, previous_cluster_y]
 
     def velocity_calc(self, input_cluster, previous_x_pos, previous_y_pos):
-        """Calculate the velocity of the input cluster
-        TODO: Include method to incorporate previous x,y position of the vehicle in the previous frames"""
+        """Calculate the velocity of the input cluster"""
         # position of cluster with respect to odom frame in x and y
-        cluster_x_pos = input_cluster.centroid_location.x + self.vehicle_pos.pose.pose.position.x
-        cluster_y_pos = input_cluster.centroid_location.y + self.vehicle_pos.pose.pose.position.y
+        cluster_x_pos = input_cluster.centroid_location.x + self.vehiclePos.pose.pose.position.x
+        cluster_y_pos = input_cluster.centroid_location.y + self.vehiclePos.pose.pose.position.y
         
         # time_difference is set at 0.1 to prevent divide by 0 error
         time_difference = 0.1
@@ -127,28 +139,77 @@ class ClusterTracking(object):
         if(vehicle_impact_status):
             print(vehicle_impact_status)
 
+        if(cluster_mag_vel >= self.min_velocity_threshold):
+            self.velocityVectorVisArray.markers.append(self.velocity_visualization(input_cluster.centroid_location.x, input_cluster.centroid_location.y, input_cluster.centroid_location.z, cluster_x_vel, cluster_y_vel))
+        
         # store the previous time of the cluster
         self.prev_time = time_difference
         self.first_set_calculated = True
-
-        print(cluster_mag_vel)
     
     def impact_check(self, x_pos, y_pos, x_vel, y_vel, vel_mag):
         """Check whether the car will hit the cluster in a configurable amount of time"""
         vehicle_impact_status = False
-        if(vel_mag >= self.min_velocity_threshold):
-            x_pos_impact_time = (self.vehicle_pos.pose.pose.position.x - x_pos) / (self.vehicle_pos.twist.twist.linear.x - x_vel)
-            y_pos_impact_time = (self.vehicle_pos.pose.pose.position.y - y_pos) / (self.vehicle_pos.twist.twist.linear.y - y_vel)
 
-            if((x_pos_impact_time <= self.impact_time_const) and (y_pos_impact_time <= self.impact_time_const)):
+        if(vel_mag >= self.min_velocity_threshold):
+            x_pos_impact_time = (self.vehiclePos.pose.pose.position.x - x_pos) / (self.vehiclePos.twist.twist.linear.x - x_vel)
+            y_pos_impact_time = (self.vehiclePos.pose.pose.position.y - y_pos) / (self.vehiclePos.twist.twist.linear.y - y_vel)
+
+            if((x_pos_impact_time <= self.impact_time_const) and (y_pos_impact_time <= self.impact_time_const) and (x_pos_impact_time > 0) and (y_pos_impact_time > 0)):
                 vehicle_impact_status = True
         
         return vehicle_impact_status
             
 
-    def velocity_visualization(self):
+    def velocity_visualization(self, cluster_x_pos, cluster_y_pos, cluster_z_pos, cluster_x_vel, cluster_y_vel):
         """Display an arrow in rviz that represents the velocity vector of the cluster"""
-        pass
+        velVectorMarker = Marker()
+        
+        velVectorMarker.header.frame_id = "/velodyne"
+        velVectorMarker.header.stamp = rospy.Time.now()
+
+        # create arrow 
+        velVectorMarker.type = 0
+
+        # each marker must have a unique ID
+        velVectorMarker.id = self.marker_index
+
+        # add a new marker 
+        velVectorMarker.action = 0
+
+        # RGBA values
+        velVectorMarker.color.r = self.vel_vec_r
+        velVectorMarker.color.g = self.vel_vec_g
+        velVectorMarker.color.b = self.vel_vec_b
+        velVectorMarker.color.a = self.vel_vec_a
+
+        # scale of the vectors, assigned according to the configurable params
+        velVectorMarker.scale.x = self.vel_vec_scale_x
+        velVectorMarker.scale.y = self.vel_vec_scale_y
+        velVectorMarker.scale.z = self.vel_vec_scale_z
+
+        velVectorMarker.lifetime = rospy.Duration(0, self.vel_vec_nano_seconds*1000000000)
+
+        predicted_x_pos = cluster_x_pos + cluster_x_vel*(self.cluster_callback_time - self.prev_time)
+        predicted_y_pos = cluster_y_pos + cluster_y_vel*(self.cluster_callback_time - self.prev_time)
+
+        velVectorMarker.points = [Point32(cluster_x_pos, cluster_y_pos, cluster_z_pos),
+                                    Point32(predicted_x_pos, predicted_y_pos, cluster_z_pos)]
+        
+        return velVectorMarker
+
+
+    def vel_vector_vis_initialization(self):
+        """Initialize the parameter reads for the marker array arrow to visualize velocity vectors"""
+        self.vel_vec_r = rospy.get_param('cluster_tracking_node/vel_vec_r')
+        self.vel_vec_g = rospy.get_param('cluster_tracking_node/vel_vec_g')
+        self.vel_vec_b = rospy.get_param('cluster_tracking_node/vel_vec_b')
+        self.vel_vec_a = rospy.get_param('cluster_tracking_node/vel_vec_a')
+
+        self.vel_vec_scale_x = rospy.get_param('cluster_tracking_node/shaft_diameter')
+        self.vel_vec_scale_y = rospy.get_param('cluster_tracking_node/head_diameter')
+        self.vel_vec_scale_z = rospy.get_param('cluster_tracking_node/head_length')
+
+        self.vel_vec_nano_seconds = rospy.get_param('/cluster_tracking_node/arrow_lifetime')
 
     def cluster_tracker(self):
         """Track the position and velocity of the clusters over time"""
