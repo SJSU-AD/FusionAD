@@ -22,8 +22,6 @@ NOTE: Tracks the cluster centroid velocities and locations over time by transfor
          Topic: /perception/obstacle_collision_prediction
             Msg: std_msgs/Bool
 
-TODO: Take the size of the bounding box and the vehicle boundaries into account for impact calculation
-TODO: Test code in front of car
 """
 
 import rospy
@@ -32,12 +30,14 @@ from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Point32
 import math
 from visualization_msgs.msg import MarkerArray, Marker
+from std_msgs.msg import Bool
 
 class ClusterTracking(object):
     """Class that tracks the movement of clusters"""
     def __init__(self):
         """Initialize messages and get parameters"""
         self.clusterVelVisPublisher = rospy.Publisher('/cluster_velocity_visualization', MarkerArray, queue_size = 1)
+        self.impactPredictionPublisher = rospy.Publisher('/perception/obstacle_collision_prediction', Bool, queue_size = 1)
 
         # keep track of the odometry msgs from the pose callback
         self.vehiclePos = Odometry()
@@ -130,6 +130,9 @@ class ClusterTracking(object):
         if(self.first_set_calculated):
             time_difference = self.cluster_callback_time - self.prev_time
 
+            if(time_difference == 0):
+                time_difference = 0.1
+
         cluster_x_vel = (cluster_x_pos - previous_x_pos) / (time_difference)
         cluster_y_vel = (cluster_y_pos - previous_y_pos) / (time_difference)
         cluster_mag_vel = math.sqrt(cluster_x_vel**2 + cluster_y_vel**2)
@@ -137,13 +140,13 @@ class ClusterTracking(object):
         vehicle_impact_status = self.impact_check(cluster_x_pos, cluster_y_pos, cluster_x_vel, cluster_y_vel, cluster_mag_vel)
         
         if(vehicle_impact_status):
-            print(vehicle_impact_status)
+            self.impactPredictionPublisher.publish(vehicle_impact_status)
 
         if(cluster_mag_vel >= self.min_velocity_threshold):
             self.velocityVectorVisArray.markers.append(self.velocity_visualization(input_cluster.centroid_location.x, input_cluster.centroid_location.y, input_cluster.centroid_location.z, cluster_x_vel, cluster_y_vel))
         
         # store the previous time of the cluster
-        self.prev_time = time_difference
+        self.prev_time = self.cluster_callback_time
         self.first_set_calculated = True
     
     def impact_check(self, x_pos, y_pos, x_vel, y_vel, vel_mag):
