@@ -22,8 +22,8 @@ NOTE: Tracks the cluster centroid velocities and locations over time by transfor
          Topic: /perception/obstacle_collision_prediction
             Msg: std_msgs/Bool
 
-TODO: Figure out a way to differentiate b/t different clusters and track them 
-      individually. Can use current and last position of the cluster as a means of differentiating
+TODO: Take the size of the bounding box and the vehicle boundaries into account for impact calculation
+TODO: Test code in front of car
 """
 
 import rospy
@@ -193,7 +193,7 @@ class ClusterTracking(object):
         predicted_y_pos = cluster_y_pos + cluster_y_vel*(self.cluster_callback_time - self.prev_time)
 
         velVectorMarker.points = [Point32(cluster_x_pos, cluster_y_pos, cluster_z_pos),
-                                    Point32(predicted_x_pos, predicted_y_pos, cluster_z_pos)]
+                                  Point32(predicted_x_pos, predicted_y_pos, cluster_z_pos)]
         
         return velVectorMarker
 

@@ -15,13 +15,13 @@
 
     <!-- pcl segmentation parameters -->
     <!-- in meters -->
-    <param name="cluster_tolerance" value="0.3" />
+    <param name="cluster_tolerance" value="0.25" />
     <param name="min_cluster_size" value="50" />
-    <param name="max_cluster_size" value="450" />
+    <param name="max_cluster_size" value="1000" />
 
     <!-- parameters to determine cutoffs for cluster bounding box size -->
-    <param name="x_size_lim" value="0.5" />
-    <param name="y_size_lim" value="0.5" />
+    <param name="x_size_lim" value="1" />
+    <param name="y_size_lim" value="1" />
     <param name="z_size_lim" value="2" />
 
     <param name="x_size_min" value="0" />
