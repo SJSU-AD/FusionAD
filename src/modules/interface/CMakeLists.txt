@@ -63,6 +63,8 @@ find_package(catkin REQUIRED COMPONENTS
    Tf_rotate.msg
    Trajectory.msg
    Waypoint.msg
+   Cluster_bound.msg
+   Cluster_bound_list.msg
  )
 
 ## Generate services in the 'srv' folder

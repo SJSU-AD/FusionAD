@@ -1,0 +1,28 @@
+<launch>
+    
+    <node type="cluster_tracker.py" pkg="localization" name="cluster_tracking_node" output="screen">
+        <!-- tolerance for cluster centroid movement in meters -->
+        <param name="movement_tolerance" value="1" />
+        
+        <!-- amount of time [seconds] before impact predicted to alert operator -->
+        <param name="impact_time_const" value="10" />
+
+        <!-- minimum velocity to publish velocity vector to rviz -->
+        <param name="min_velocity_threshold" value="0.25" />
+
+        <!-- visualization params for velocity vectors -->
+        <param name="vel_vec_r" value="0" />
+        <param name="vel_vec_g" value="1" />
+        <param name="vel_vec_b" value="1" />
+        <param name="vel_vec_a" value="1" />
+
+        <!-- scale values for arrow msg-->
+        <param name="shaft_diameter" value="0.05" />
+        <param name="head_diameter" value="0.1" />
+        <param name="head_length" value="0.15"/>
+
+        <param name="arrow_lifetime" value="0.5" />
+
+    </node>
+
+</launch>
