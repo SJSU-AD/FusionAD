@@ -15,7 +15,7 @@
 
     <!-- pcl segmentation parameters -->
     <!-- in meters -->
-    <param name="cluster_tolerance" value="0.25" />
+    <param name="cluster_tolerance" value="0.30" />
     <param name="min_cluster_size" value="50" />
     <param name="max_cluster_size" value="1000" />
 

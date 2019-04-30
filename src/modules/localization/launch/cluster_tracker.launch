@@ -8,7 +8,7 @@
         <param name="impact_time_const" value="10" />
 
         <!-- minimum velocity to publish velocity vector to rviz -->
-        <param name="min_velocity_threshold" value="0" />
+        <param name="min_velocity_threshold" value="0.25" />
 
         <!-- visualization params for velocity vectors -->
         <param name="vel_vec_r" value="0" />
