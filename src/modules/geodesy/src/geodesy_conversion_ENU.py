@@ -78,7 +78,7 @@ class GeodesyConverterENU(GeodesyConverterECEF):
 
         # From matrix multiplication
         east = -sinPhi * xd + cosPhi * yd
-        north = -cosPhi * sinLambda * xd - sinLambda * sinPhi * yd + cosLambda + zd
+        north = -cosPhi * sinLambda * xd - sinLambda * sinPhi * yd + cosLambda * zd
         up = cosLambda * cosPhi * xd + cosLambda * sinPhi * yd + sinLambda * zd
 
         return east, north, up
