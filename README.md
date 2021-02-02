@@ -6,7 +6,7 @@ FusionAD is an autonomous driving software stack developed by the SJSU Autonomou
     
 Our challenge is to create a fully functional autonomous driving vehicle within the **1 Year** timeline of a Mechanical Engineering Senior Project at SJSU.
 
-# Our feature by KPIX Bay Area
+# Our feature by KPIX Bay Area on Youtube
 [![](http://img.youtube.com/vi/WfKbCQZTQx8/0.jpg)](http://www.youtube.com/watch?v=WfKbCQZTQx8 "San Jose State Engineering Students Build Self-Driving Vehicle on Shoestring Budget")
 
 ## FusionAD's Software Architecture
